@@ -12,6 +12,13 @@ decisions [`.adr/`](./.adr/) · adding a harness
 [`HARNESS_CONTRIBUTING.md`](./HARNESS_CONTRIBUTING.md) · adding a multiplexer
 [`MUX_CONTRIBUTING.md`](./MUX_CONTRIBUTING.md).
 
+## Project mode — personal vibe coding
+
+This fork is a personal vibe coding project. Make the smallest change that satisfies the user's
+explicit need, verify it with the nearest targeted tests, lint and `bun run build`, then stop.
+Do not enter a full spec / ticket / review workflow, add architecture, refactor adjacent code or run
+the full test / E2E suite unless the user asks or the requested change directly requires it.
+
 ## Decision records — read before reopening a settled question
 
 [`.adr/`](./.adr/) holds the decisions whose reasoning would otherwise live only in a PR thread —
