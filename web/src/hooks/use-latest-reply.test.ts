@@ -5,8 +5,7 @@ import { server } from "@/test/setup";
 import { fixtureTranscript } from "@/test/handlers";
 import { useLatestReply } from "./use-latest-reply";
 
-// What the pane view needs from the journal, and — just as much — what it must NOT do to get it: no
-// fetch when the feature is off, and never a reply left over from the pane you just left.
+// What the pane view needs from the journal, and what it must not carry across pane switches.
 
 /** Count history requests, keeping the default handler's response. */
 function countHistory() {
@@ -28,11 +27,13 @@ function countHistory() {
 }
 
 describe("useLatestReply", () => {
-  it("reads the newest spoken turn as soon as the pane opens", async () => {
+  it("reads the newest spoken turn as soon as the pane opens, with the prompt it answered", async () => {
     const { result } = renderHook(() =>
       useLatestReply({ paneId: "w1:p1", enabled: true, mirrorText: "some output" }),
     );
-    await waitFor(() => expect(result.current?.uuid).toBe("t2"));
+    await waitFor(() => expect(result.current?.reply.uuid).toBe("t2"));
+    // The fixture's turns are "what changed today?" then its answer — the pair is the whole point.
+    expect(result.current?.prompt?.uuid).toBe("t1");
   });
 
   it("fetches nothing while the feature is off", async () => {
@@ -44,12 +45,12 @@ describe("useLatestReply", () => {
     expect(counter.hits()).toBe(0);
   });
 
-  it("does not carry a reply across a pane switch", async () => {
+  it("does not carry an exchange across a pane switch", async () => {
     const { result, rerender } = renderHook(
       ({ paneId }) => useLatestReply({ paneId, enabled: true, mirrorText: "some output" }),
       { initialProps: { paneId: "w1:p1" } },
     );
-    await waitFor(() => expect(result.current?.uuid).toBe("t2"));
+    await waitFor(() => expect(result.current?.reply.uuid).toBe("t2"));
 
     server.use(
       http.get(/\/api\/pane\/[^/]+\/history/, () =>
@@ -88,4 +89,5 @@ describe("useLatestReply", () => {
     renderHook(() => useLatestReply({ paneId: "w1:p1", enabled: true, mirrorText: "" }));
     await waitFor(() => expect(counter.hits()).toBe(0));
   });
+
 });

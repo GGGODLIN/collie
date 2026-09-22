@@ -1,4 +1,4 @@
-import { fold, locateReply, newestReply, PROBE_CHARS, replyProse } from "./latest-reply";
+import { fold, locateReply, newestExchange, newestReply, PROBE_CHARS, replyProse } from "./latest-reply";
 import type { TranscriptEntry, TranscriptPart } from "./types";
 
 // The predicates behind "the mirror is only showing the end of this reply". The cases that matter are
@@ -95,6 +95,23 @@ describe("newestReply", () => {
 
   it("returns null when the agent has not spoken", () => {
     expect(newestReply([turn("user", "hello")])).toBeNull();
+  });
+});
+
+describe("newestExchange", () => {
+  const ask = (text: string, uuid = `u-${text.slice(0, 6)}`) => turn("user", text, { uuid });
+  const say = (text: string, uuid = `a-${text.slice(0, 6)}`) => turn("assistant", text, { uuid });
+
+  it("pairs the newest spoken reply with the prompt above it", () => {
+    const exchange = newestExchange([ask("first q"), say("first a"), ask("second q"), say("second a")]);
+    expect(replyProse(exchange!.reply)).toBe("second a");
+    expect(replyProse(exchange!.prompt!)).toBe("second q");
+  });
+
+  it("ignores a prompt written after the reply", () => {
+    const exchange = newestExchange([ask("the q"), say("the a"), ask("the NEXT q")]);
+    expect(replyProse(exchange!.reply)).toBe("the a");
+    expect(replyProse(exchange!.prompt!)).toBe("the q");
   });
 });
 

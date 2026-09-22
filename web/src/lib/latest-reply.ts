@@ -1,5 +1,6 @@
-// Deciding whether the newest reply in the agent's journal is the one on the mirror, and whether the
-// mirror is showing all of it.
+// Deciding whether the newest reply in the agent's journal is the one on the mirror, whether the
+// mirror is showing all of it, and — since the card shows the exchange rather than the reply alone —
+// which turn just before that reply was the prompt it answered.
 //
 // WHY THIS EXISTS. A Claude pane runs on the terminal's alternate screen, which keeps no scrollback
 // ring, so `pane.read` can only ever hand back the visible viewport — a reply longer than the pane is
@@ -74,13 +75,42 @@ function proseTruncated(entry: TranscriptEntry): boolean {
   return entry.parts.some((part) => part.kind === "text" && part.truncated === true);
 }
 
-/** The newest turn that is the agent SPEAKING — the last assistant entry carrying prose. */
-export function newestReply(entries: TranscriptEntry[]): TranscriptEntry | null {
+/** Index of the newest turn that is the agent SPEAKING, or -1. */
+function newestReplyIndex(entries: TranscriptEntry[]): number {
   for (let i = entries.length - 1; i >= 0; i--) {
     const entry = entries[i];
-    if (entry && entry.role === "assistant" && replyProse(entry) !== "") return entry;
+    if (entry && entry.role === "assistant" && replyProse(entry) !== "") return i;
   }
-  return null;
+  return -1;
+}
+
+/** The newest turn that is the agent SPEAKING — the last assistant entry carrying prose. */
+export function newestReply(entries: TranscriptEntry[]): TranscriptEntry | null {
+  const at = newestReplyIndex(entries);
+  return at === -1 ? null : entries[at]!;
+}
+
+/** The last FINISHED exchange: what the agent said, and what was asked of it. */
+export interface LatestExchange {
+  /** The newest assistant turn carrying prose — the one `locateReply` is asked about. */
+  reply: TranscriptEntry;
+  /** The turn before it that was speech, or null when the page holds none (see below). */
+  prompt: TranscriptEntry | null;
+}
+
+/** Pair the newest spoken reply only with the nearest prose user turn before it. */
+export function newestExchange(entries: TranscriptEntry[]): LatestExchange | null {
+  const at = newestReplyIndex(entries);
+  if (at === -1) return null;
+  let prompt: TranscriptEntry | null = null;
+  for (let i = at - 1; i >= 0; i--) {
+    const entry = entries[i];
+    if (entry && entry.role === "user" && replyProse(entry) !== "") {
+      prompt = entry;
+      break;
+    }
+  }
+  return { reply: entries[at]!, prompt };
 }
 
 /** Where a turn sits on the mirror, and — when it is clipped — which row it ends on. */
