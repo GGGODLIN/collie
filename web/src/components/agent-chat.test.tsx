@@ -2651,7 +2651,7 @@ describe("AgentChat — full latest reply", () => {
   it("wraps a short whole reply instead of leaving it in the terminal", async () => {
     const short = "Short reply.";
     withJournalReply(short);
-    renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: short });
+    renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: paneTextWithDraft(short) });
     await waitFor(() => expect(card()).toBeInTheDocument());
     expect(screen.getByText(short)).toBeInTheDocument();
     expect(mirror()).not.toContain(short);
