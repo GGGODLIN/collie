@@ -797,13 +797,10 @@ export function AgentChat({
     enabled: historyAvailable && imageClusterCount > 0,
     clusterCount: imageClusterCount,
   });
-  // Find searches the mirror, so while it is open the mirror is WHOLE and the card stands down —
-  // otherwise a hit inside the reply would be unfindable in the one surface find can highlight.
-  const clippedReply = placement?.fit === "clipped" && !findOpen ? latestReply : null;
-  // Collapsing the card is a judgement about ONE message ("show me the raw rows instead"), so it is
-  // remembered by uuid: a new reply arrives expanded without an effect to reset anything.
+  // Find owns the mirror; otherwise every verified latest exchange renders through the card.
+  const visibleExchange = placement && placement.fit !== "off-screen" && !findOpen ? latestReply : null;
   const [collapsedReply, setCollapsedReply] = useState<string | null>(null);
-  const replyOpen = clippedReply !== null && collapsedReply !== clippedReply.reply.uuid;
+  const replyOpen = visibleExchange !== null && collapsedReply !== visibleExchange.reply.uuid;
   const hiddenMirrorLines = replyOpen && placement ? placement.endLine + 1 : 0;
 
   // A full-reply card always opens at its prompt, regardless of the previous scroll state.
@@ -811,7 +808,7 @@ export function AgentChat({
   useLayoutEffect(() => {
     if (!replyOpen) return;
     listRef.current?.scrollToChild(replyAnchor.current, true);
-  }, [replyOpen, clippedReply?.reply.uuid]);
+  }, [replyOpen, visibleExchange?.reply.uuid]);
 
   // Load older scrollback: raise the per-pane requested line count and refetch. The enlarged buffer
   // prepends older lines at the top, so we adopt it into the frozen display and re-anchor the scroll
@@ -1915,18 +1912,15 @@ export function AgentChat({
                       {t("chat.scrollback.noSessionReported", { agent: agent?.agent ?? "" })}
                     </p>
                   )}
-                  {/* The newest reply in full, standing IN PLACE OF the rows it covers (the mirror
-                      below starts after it — see hideLeadingLines). It appears above a bottom-pinned
-                      scroller, which ChatMessageList's child-list observer re-pins, so the live tail
-                      never moves. */}
-                  {clippedReply && (
+                  {/* The latest verified exchange replaces the terminal rows through its reply. */}
+                  {visibleExchange && (
                     <div ref={replyAnchor}>
                       <LatestReply
-                        exchange={latestReply!}
+                        exchange={visibleExchange}
                         agent={agent?.agent}
                         open={replyOpen}
                         onToggle={() =>
-                          setCollapsedReply(replyOpen ? clippedReply.reply.uuid : null)
+                          setCollapsedReply(replyOpen ? visibleExchange.reply.uuid : null)
                         }
                         scope={scope}
                       />
