@@ -806,14 +806,11 @@ export function AgentChat({
   const replyOpen = clippedReply !== null && collapsedReply !== clippedReply.reply.uuid;
   const hiddenMirrorLines = replyOpen && placement ? placement.endLine + 1 : 0;
 
-  // Start a newly-opened card at its prompt without pulling a reader out of existing backscroll.
+  // A full-reply card always opens at its prompt, regardless of the previous scroll state.
   const replyAnchor = useRef<HTMLDivElement>(null);
-  const replyReopened = useRef(false);
   useLayoutEffect(() => {
     if (!replyOpen) return;
-    const forced = replyReopened.current;
-    replyReopened.current = false;
-    listRef.current?.scrollToChild(replyAnchor.current, forced);
+    listRef.current?.scrollToChild(replyAnchor.current, true);
   }, [replyOpen, clippedReply?.reply.uuid]);
 
   // Load older scrollback: raise the per-pane requested line count and refetch. The enlarged buffer
@@ -1928,10 +1925,9 @@ export function AgentChat({
                         exchange={latestReply!}
                         agent={agent?.agent}
                         open={replyOpen}
-                        onToggle={() => {
-                          replyReopened.current = !replyOpen;
-                          setCollapsedReply(replyOpen ? clippedReply.reply.uuid : null);
-                        }}
+                        onToggle={() =>
+                          setCollapsedReply(replyOpen ? clippedReply.reply.uuid : null)
+                        }
                         scope={scope}
                       />
                     </div>

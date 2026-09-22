@@ -83,7 +83,9 @@ function AnchoringHarness({ onAtBottomChange }: { onAtBottomChange?: (b: boolean
       <button
         type="button"
         data-testid="anchor"
-        onClick={() => scrollToChild(document.querySelector<HTMLElement>('[data-testid="card"]'))}
+        onClick={() =>
+          scrollToChild(document.querySelector<HTMLElement>('[data-testid="card"]'), true)
+        }
       >
         anchor
       </button>
@@ -255,6 +257,7 @@ describe("useAutoScroll — scrollToChild", () => {
     setRects(el, card);
     const scrollTo = vi.fn();
     el.scrollTo = scrollTo;
+    fireEvent.scroll(el);
 
     act(() => fireEvent.click(getByTestId("anchor")));
 
