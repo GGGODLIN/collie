@@ -42,7 +42,7 @@ export const PROBE_CHARS = 48;
 export type ReplyFit =
   /** Its tail is on screen but its opening has scrolled off — the case worth surfacing. */
   | "clipped"
-  /** All of it is on screen (or it is too short to be worth the machinery). */
+  /** All of it is on screen. */
   | "whole"
   /** Not the message the mirror is showing at all — see the note on {@link locateReply}. */
   | "off-screen";
@@ -113,14 +113,13 @@ export function newestExchange(entries: TranscriptEntry[]): LatestExchange | nul
   return { reply: entries[at]!, prompt };
 }
 
-/** Where a turn sits on the mirror, and — when it is clipped — which row it ends on. */
+/** Where a turn sits on the mirror, and which row it ends on when present. */
 export interface ReplyPlacement {
   fit: ReplyFit;
-  /** Index of the last mirror row the reply occupies. Only meaningful when `fit` is `clipped`. */
+  /** Index of the last mirror row the reply occupies; -1 when it is off-screen. */
   endLine: number;
 }
 
-/** A verdict with no rows to replace — every fit but `clipped` ends here. */
 const elsewhere = (fit: ReplyFit): ReplyPlacement => ({ fit, endLine: -1 });
 
 /**
@@ -133,10 +132,8 @@ const elsewhere = (fit: ReplyFit): ReplyPlacement => ({ fit, endLine: -1 });
  *   mirror by scrolling, and a >20 000-character part reaches us clamped so its real ending never
  *   arrives. When the tail is missing we answer `off-screen` and the caller shows NOTHING. Presenting
  *   an older message as "the reply you are looking at" is the one failure this must not have.
- * - The **head** probe then answers the actual question: is its opening still on the screen.
- *
- * A reply shorter than two probes is `whole` by construction — it cannot be meaningfully clipped, and
- * overlapping probes would compare a string against itself.
+ * - The **head** probe then answers whether its opening is still on the screen. Short replies use
+ *   their entire text as the probe, so they can be wrapped consistently too.
  *
  * `endLine` exists so the caller can REPLACE those rows with the full message rather than print it
  * twice. Folding erases the row boundaries, so the row that the reply ends on is recovered by keeping
@@ -144,8 +141,7 @@ const elsewhere = (fit: ReplyFit): ReplyPlacement => ({ fit, endLine: -1 });
  */
 export function locateReply(mirrorText: string, entry: TranscriptEntry): ReplyPlacement {
   const reply = fold(replyProse(entry));
-  if (reply.length < PROBE_CHARS * 2) return elsewhere("whole");
-  if (proseTruncated(entry)) return elsewhere("off-screen");
+  if (reply === "" || proseTruncated(entry)) return elsewhere("off-screen");
 
   const rows = plain(mirrorText).split("\n");
   // Folding each row and concatenating is the same string as folding the whole screen — the fold
@@ -157,12 +153,15 @@ export function locateReply(mirrorText: string, entry: TranscriptEntry): ReplyPl
     rowEnds.push(mirror.length);
   }
 
-  const tail = reply.slice(-PROBE_CHARS);
+  const probeLength = Math.min(PROBE_CHARS, reply.length);
+  const tail = reply.slice(-probeLength);
   const at = mirror.indexOf(tail);
   if (at === -1) return elsewhere("off-screen");
-  if (mirror.includes(reply.slice(0, PROBE_CHARS))) return elsewhere("whole");
 
   const end = at + tail.length;
   const endLine = rowEnds.findIndex((rowEnd) => rowEnd >= end);
-  return { fit: "clipped", endLine: endLine === -1 ? rows.length - 1 : endLine };
+  return {
+    fit: mirror.includes(reply.slice(0, probeLength)) ? "whole" : "clipped",
+    endLine: endLine === -1 ? rows.length - 1 : endLine,
+  };
 }

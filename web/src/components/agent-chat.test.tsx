@@ -2579,12 +2579,13 @@ describe("AgentChat — full latest reply", () => {
     await waitFor(() => expect(card()).not.toBeInTheDocument());
   });
 
-  it("shows nothing when the mirror already holds the whole reply", async () => {
-    const hits = withJournalReply(REPLY);
-    renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: REPLY });
-    await waitFor(() => expect(hits()).toBe(1));
-    await waitFor(() => expect(card()).not.toBeInTheDocument());
-    expect(screen.getAllByText(/Short answer/).length).toBe(1); // the mirror's copy, and only it
+  it("wraps a short whole reply instead of leaving it in the terminal", async () => {
+    const short = "Short reply.";
+    withJournalReply(short);
+    renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: short });
+    await waitFor(() => expect(card()).toBeInTheDocument());
+    expect(screen.getByText(short)).toBeInTheDocument();
+    expect(mirror()).not.toContain(short);
   });
 
   // The pref is the whole opt-out: off, the pane is exactly what it was before this existed — and it

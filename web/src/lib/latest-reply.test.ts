@@ -1,4 +1,4 @@
-import { fold, locateReply, newestExchange, newestReply, PROBE_CHARS, replyProse } from "./latest-reply";
+import { fold, locateReply, newestExchange, newestReply, replyProse } from "./latest-reply";
 import type { TranscriptEntry, TranscriptPart } from "./types";
 
 // The predicates behind "the mirror is only showing the end of this reply". The cases that matter are
@@ -153,9 +153,10 @@ describe("locateReply", () => {
     );
   });
 
-  it("calls a reply shorter than two probes whole without probing at all", () => {
-    const short = turn("assistant", "a".repeat(PROBE_CHARS * 2 - 10));
-    expect(fitOf("nothing of the sort is on this screen", short)).toBe("whole");
+  it("locates a short reply instead of assuming it is on screen", () => {
+    const short = turn("assistant", "short answer");
+    expect(fitOf(rendered("short answer"), short)).toBe("whole");
+    expect(fitOf("nothing of the sort is on this screen", short)).toBe("off-screen");
   });
 
   // SGR parameters are digits, and digits survive the fold — an unstripped escape would corrupt the
@@ -188,10 +189,9 @@ describe("locateReply — where the reply ends", () => {
     expect(endLine).toBe(painted.length - 1);
   });
 
-  // Nothing may be hidden on a verdict that isn't `clipped` — -1 makes a caller that forgets to check
-  // hide nothing rather than hide a row.
-  it("reports no row at all when the reply is not the clipped message on screen", () => {
+  it("reports an end row for a whole reply and none when it is off-screen", () => {
+    const painted = rendered(REPLY).split("\n");
+    expect(locateReply(painted.join("\n"), reply).endLine).toBe(painted.length - 1);
     expect(locateReply("some other screen entirely", reply).endLine).toBe(-1);
-    expect(locateReply(rendered(REPLY), reply).endLine).toBe(-1);
   });
 });
