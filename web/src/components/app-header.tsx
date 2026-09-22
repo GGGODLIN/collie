@@ -358,7 +358,7 @@ export function AppHeaderHost({ bridge, error, children }: AppHeaderHostProps) {
                   className="relative min-w-0"
                 >
                   <SectionLabel className="absolute bottom-full left-0 max-w-full truncate leading-none">
-                    Collie
+                    COLLIE-GGGODLIN
                   </SectionLabel>
                   {/* The line the freed width is FOR — "on <mux>", the sentence the brand line
                       above starts. `min-h-6` RESERVES it whether or not a name has arrived:
