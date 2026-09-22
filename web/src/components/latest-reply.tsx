@@ -4,15 +4,18 @@ import { TranscriptView } from "@/components/transcript-view";
 import { useLocale } from "@/hooks/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import type { LatestExchange } from "@/lib/latest-reply";
 import type { Scope } from "@/lib/scope";
-import type { TranscriptEntry } from "@/lib/types";
 
-// The agent's newest reply, standing IN PLACE OF the mirror rows that could only hold its end.
+// The agent's newest finished exchange, standing IN PLACE OF the mirror rows that could only hold the
+// end of its reply.
 //
 // Rendered by AgentChat only when lib/latest-reply.ts says the message on screen is this one and its
 // opening has scrolled off. AgentChat hides the rows it covers (AnsiOutput's `hideLeadingLines`), so
 // the two never print the same words twice: this card, then the mirror picking up exactly where the
 // message finished — tool calls, a dialog, the cursor, all untouched.
+//
+// The prompt is the nearest user turn before this reply; when absent, keep the reply-only fallback.
 //
 // Open state is the PARENT's, because it decides what the mirror shows: collapsing here is "give me
 // the raw rows back", so the hiding and the folding have to be one decision, not two that can drift.
@@ -22,15 +25,15 @@ import type { TranscriptEntry } from "@/lib/types";
 // it). The XSS boundary is the one TranscriptView and MarkdownText already own — React elements from
 // an AST, never a constructed HTML string.
 export function LatestReply({
-  entry,
+  exchange,
   agent,
   open,
   onToggle,
   scope,
 }: {
-  entry: TranscriptEntry;
+  exchange: LatestExchange;
   agent?: string;
-  /** Expanded shows the message and the mirror rows below it stay hidden; collapsed does the reverse. */
+  /** Expanded shows the exchange and the mirror rows below it stay hidden; collapsed does the reverse. */
   open: boolean;
   onToggle: () => void;
   /** The pane's address — an image in this turn is bytes on the host whose journal named them. */
@@ -62,7 +65,11 @@ export function LatestReply({
       </button>
       {open && (
         <div className="border-t px-2.5 py-2">
-          <TranscriptView entries={[entry]} agent={agent} scope={scope} />
+          <TranscriptView
+            entries={exchange.prompt ? [exchange.prompt, exchange.reply] : [exchange.reply]}
+            agent={agent}
+            scope={scope}
+          />
         </div>
       )}
     </div>

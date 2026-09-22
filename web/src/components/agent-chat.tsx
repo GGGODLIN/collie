@@ -737,7 +737,8 @@ export function AgentChat({
   // still reads as the live screen, just starting where the message finished.
   //
   // Memoised on the DISPLAYED text: it folds a whole screenful, and it runs beside the grammar
-  // passes above on every poll.
+  // passes above on every poll. The gate asks about the REPLY — the turn whose rows this replaces —
+  // and the card shows the EXCHANGE: the prompt it answered is context the mirror could never hold.
   const latestReply = useLatestReply({
     paneId,
     scope,
@@ -745,7 +746,7 @@ export function AgentChat({
     mirrorText: display,
   });
   const placement = useMemo(
-    () => (latestReply ? locateReply(display, latestReply) : null),
+    () => (latestReply ? locateReply(display, latestReply.reply) : null),
     [latestReply, display],
   );
 
@@ -765,8 +766,18 @@ export function AgentChat({
   // Collapsing the card is a judgement about ONE message ("show me the raw rows instead"), so it is
   // remembered by uuid: a new reply arrives expanded without an effect to reset anything.
   const [collapsedReply, setCollapsedReply] = useState<string | null>(null);
-  const replyOpen = clippedReply !== null && collapsedReply !== clippedReply.uuid;
+  const replyOpen = clippedReply !== null && collapsedReply !== clippedReply.reply.uuid;
   const hiddenMirrorLines = replyOpen && placement ? placement.endLine + 1 : 0;
+
+  // Start a newly-opened card at its prompt without pulling a reader out of existing backscroll.
+  const replyAnchor = useRef<HTMLDivElement>(null);
+  const replyReopened = useRef(false);
+  useLayoutEffect(() => {
+    if (!replyOpen) return;
+    const forced = replyReopened.current;
+    replyReopened.current = false;
+    listRef.current?.scrollToChild(replyAnchor.current, forced);
+  }, [replyOpen, clippedReply?.reply.uuid]);
 
   // Load older scrollback: raise the per-pane requested line count and refetch. The enlarged buffer
   // prepends older lines at the top, so we adopt it into the frozen display and re-anchor the scroll
@@ -1837,13 +1848,18 @@ export function AgentChat({
                       scroller, which ChatMessageList's child-list observer re-pins, so the live tail
                       never moves. */}
                   {clippedReply && (
-                    <LatestReply
-                      entry={clippedReply}
-                      agent={agent?.agent}
-                      open={replyOpen}
-                      onToggle={() => setCollapsedReply(replyOpen ? clippedReply.uuid : null)}
-                      scope={scope}
-                    />
+                    <div ref={replyAnchor}>
+                      <LatestReply
+                        exchange={latestReply!}
+                        agent={agent?.agent}
+                        open={replyOpen}
+                        onToggle={() => {
+                          replyReopened.current = !replyOpen;
+                          setCollapsedReply(replyOpen ? clippedReply.reply.uuid : null);
+                        }}
+                        scope={scope}
+                      />
+                    </div>
                   )}
                   <AnsiOutput
                     text={display}

@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 
 import { fetchHistory } from "@/lib/api";
-import { newestReply } from "@/lib/latest-reply";
+import { newestExchange, type LatestExchange } from "@/lib/latest-reply";
 import { paneScopeKey, type Scope } from "@/lib/scope";
-import type { TranscriptEntry } from "@/lib/types";
 
-// Keeps the pane view holding the agent's newest spoken turn, read from its own session log.
+// Keeps the pane view holding the agent's newest finished exchange, read from its own session log.
 //
 // The pane route CANNOT get this from the mirror: an agent's TUI runs on the alternate screen, so
 // `pane.read` returns the viewport and nothing above it (see lib/latest-reply.ts for the full why).
@@ -20,15 +19,15 @@ import type { TranscriptEntry } from "@/lib/types";
 // The first fetch is immediate rather than settle-delayed: opening a pane whose reply is already
 // clipped should show it, not make you wait out a timer for output that may never change again.
 
-/** Turns requested. The newest SPOKEN turn may sit behind a run of tool calls, so ask for a few. */
-const TURNS = 8;
+/** Turns requested: the page the history route opens on. Long enough that a reply's prompt is in it. */
+const TURNS = 200;
 
 /** How long the mirror must hold still before its content counts as a finished message. */
 const SETTLE_MS = 1500;
 
 /**
- * The agent's newest prose turn, or null when there isn't one (yet), the pane has no journal, or the
- * caller switched this off.
+ * The agent's newest exchange — its last spoken reply paired with the prompt it answered — or null
+ * when there isn't one (yet), the pane has no journal, or the caller switched this off.
  *
  * Errors are swallowed on purpose: this is an enhancement over the mirror, and the mirror is still
  * right there. A failed read must cost nothing more than the card not appearing.
@@ -46,15 +45,15 @@ export function useLatestReply({
   enabled: boolean;
   /** The mirror as displayed — its stillness is the trigger, its content is not read here. */
   mirrorText: string;
-}): TranscriptEntry | null {
-  const [reply, setReply] = useState<TranscriptEntry | null>(null);
+}): LatestExchange | null {
+  const [exchange, setExchange] = useState<LatestExchange | null>(null);
   const [settled, setSettled] = useState(mirrorText);
 
-  // A reply belongs to the pane it was read from — never let one outlive a switch to another pane,
-  // where locateReply would be comparing it against a screen it has nothing to do with. Keyed on the
-  // ADDRESS, not the pane id: the same pane id on another host or session is a different pane.
+  // An exchange belongs to the pane it was read from — never let one outlive a switch to another
+  // pane, where locateReply would be comparing it against a screen it has nothing to do with. Keyed
+  // on the ADDRESS, not the pane id: the same pane id on another host or session is a different pane.
   const address = paneScopeKey(scope, paneId);
-  useEffect(() => setReply(null), [address]);
+  useEffect(() => setExchange(null), [address]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -69,9 +68,9 @@ export function useLatestReply({
     void (async () => {
       try {
         const page = await fetchHistory(paneId, { limit: TURNS }, scope, abort.signal);
-        if (live && page.available) setReply(newestReply(page.entries));
+        if (live && page.available) setExchange(newestExchange(page.entries));
       } catch {
-        // A cancelled or failed read leaves the previous reply in place.
+        // A cancelled or failed read leaves the previous exchange in place.
       }
     })();
     return () => {
@@ -82,5 +81,5 @@ export function useLatestReply({
     // instance per (host, session), so its identity is as stable as the string it replaced.
   }, [paneId, scope, enabled, settled]);
 
-  return enabled ? reply : null;
+  return enabled ? exchange : null;
 }

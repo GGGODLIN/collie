@@ -2470,32 +2470,43 @@ describe("AgentChat — full latest reply", () => {
     "bigger claim than saying this looks fine to me.",
   ].join(" ");
 
-  /** Serve one assistant turn as the pane's journal, and count the reads so a negative assertion can
-   *  wait for the fetch to have landed rather than racing it. */
-  function withJournalReply(text: string): () => number {
+  function withJournalReply(text: string, prompt?: string): () => number {
     let hits = 0;
     server.use(
       http.get(/\/api\/pane\/[^/]+\/history/, () => {
         hits += 1;
+        const entries = [
+          ...(prompt
+            ? [
+                {
+                  uuid: "prompt-1",
+                  ts: "2026-08-28T09:13:00.000Z",
+                  role: "user" as const,
+                  parts: [{ kind: "text" as const, text: prompt }],
+                },
+              ]
+            : []),
+          {
+            uuid: "reply-1",
+            ts: "2026-08-28T09:14:00.000Z",
+            role: "assistant" as const,
+            parts: [{ kind: "text" as const, text }],
+          },
+        ];
         return HttpResponse.json({
           paneId: "w1:p1",
           available: true,
-          entries: [
-            {
-              uuid: "reply-1",
-              ts: "2026-08-28T09:14:00.000Z",
-              role: "assistant",
-              parts: [{ kind: "text", text }],
-            },
-          ],
+          entries,
           hasMore: false,
-          total: 1,
+          total: entries.length,
           fileTruncated: false,
         });
       }),
     );
     return () => hits;
   }
+
+  const PROMPT = "Why is the release held?";
 
   const card = () => screen.queryByRole("button", { name: /full reply/i });
   const sessionAgent = () => ({ ...fixtureAgents[0]!, hasSession: true, readableLines: 51 });
@@ -2530,6 +2541,18 @@ describe("AgentChat — full latest reply", () => {
     expect(screen.queryByText(/Short answer: approve-only/)).not.toBeInTheDocument();
     expect(mirror()).toContain("bigger claim"); // the raw rows are back
     expect(card()).toBeInTheDocument(); // and the header stays, so it can be reopened
+  });
+
+  it("shows the prompt above its full reply and stops following the terminal tail", async () => {
+    withJournalReply(REPLY, PROMPT);
+    renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: SCREEN });
+    await waitFor(() => expect(card()).toBeInTheDocument());
+
+    expect(screen.getByText(PROMPT)).toBeInTheDocument();
+    expect(screen.getByText(/Short answer: approve-only/)).toBeInTheDocument();
+    expect(mirror()).not.toContain("bigger claim");
+    expect(mirror()).toContain(AFTER);
+    expect(screen.getByRole("button", { name: "Scroll to latest" })).toBeInTheDocument();
   });
 
   // Find searches the mirror and highlights only there, so a hidden row would be a match you can see

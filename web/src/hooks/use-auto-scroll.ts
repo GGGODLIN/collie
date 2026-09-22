@@ -43,6 +43,24 @@ export function useAutoScroll<T extends HTMLElement = HTMLDivElement>(
     onAtBottomChange?.(true);
   }, [onAtBottomChange]);
 
+  /** Move to a child for reading and stop following; arrived content never overrides backscroll. */
+  const scrollToChild = useCallback(
+    (child: HTMLElement | null, force = false): boolean => {
+      const el = scrollRef.current;
+      if (!el || !child) return false;
+      if (!autoScroll.current && !force) return false;
+      el.scrollTo({
+        top: el.scrollTop + child.getBoundingClientRect().top - el.getBoundingClientRect().top,
+        behavior: "auto",
+      });
+      autoScroll.current = false;
+      setIsAtBottom(false);
+      onAtBottomChange?.(false);
+      return true;
+    },
+    [onAtBottomChange],
+  );
+
   const onScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -121,5 +139,5 @@ export function useAutoScroll<T extends HTMLElement = HTMLDivElement>(
     };
   }, [pinToBottom]);
 
-  return { scrollRef, isAtBottom, scrollToBottom, onScroll };
+  return { scrollRef, isAtBottom, scrollToBottom, scrollToChild, onScroll };
 }

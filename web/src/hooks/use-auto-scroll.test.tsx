@@ -71,6 +71,32 @@ function ReportingHarness({ onAtBottomChange }: { onAtBottomChange: (b: boolean)
   );
 }
 
+function AnchoringHarness({ onAtBottomChange }: { onAtBottomChange?: (b: boolean) => void }) {
+  const { scrollRef, onScroll, scrollToChild } = useAutoScroll<HTMLDivElement>({
+    onAtBottomChange,
+  });
+  return (
+    <div>
+      <div ref={scrollRef} onScroll={onScroll} data-testid="scroll">
+        <div data-testid="card">card</div>
+      </div>
+      <button
+        type="button"
+        data-testid="anchor"
+        onClick={() => scrollToChild(document.querySelector<HTMLElement>('[data-testid="card"]'))}
+      >
+        anchor
+      </button>
+    </div>
+  );
+}
+
+/** jsdom reports every rect as 0, so the geometry the hook reads is stubbed per element. */
+function setRects(scroller: HTMLElement, child: HTMLElement) {
+  scroller.getBoundingClientRect = () => stubPart<DOMRect>({ top: 100 });
+  child.getBoundingClientRect = () => stubPart<DOMRect>({ top: 460 });
+}
+
 function fireResize(el: Element) {
   for (const o of observers.filter((x) => x.el === el)) {
     o.cb([], stubPart<ResizeObserver>({}));
@@ -204,6 +230,37 @@ describe("useAutoScroll — resize-induced scroll is not a user scroll (#155)", 
     setMetrics(el, { scrollHeight: 500, clientHeight: 200, scrollTop: 0 });
     fireEvent.scroll(el);
 
+    expect(onAtBottomChange).toHaveBeenLastCalledWith(false);
+  });
+});
+
+describe("useAutoScroll — scrollToChild", () => {
+  beforeAll(() => {
+    if (!Element.prototype.scrollTo) Element.prototype.scrollTo = () => {};
+  });
+  beforeEach(() => {
+    observers = [];
+    vi.stubGlobal("ResizeObserver", MockResizeObserver);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("puts the child's top at the scrollport's top and stops following", () => {
+    const onAtBottomChange = vi.fn();
+    const { getByTestId } = render(<AnchoringHarness onAtBottomChange={onAtBottomChange} />);
+    const el = getByTestId("scroll");
+    const card = getByTestId("card");
+    setMetrics(el, { scrollHeight: 2000, clientHeight: 400, scrollTop: 1200 });
+    setRects(el, card);
+    const scrollTo = vi.fn();
+    el.scrollTo = scrollTo;
+
+    act(() => fireEvent.click(getByTestId("anchor")));
+
+    // The child sits 360px below the scrollport's top edge, so the new position is 1200 + 360 — the
+    // delta between the two rects, applied to where the container already is.
+    expect(scrollTo).toHaveBeenCalledWith({ top: 1560, behavior: "auto" });
     expect(onAtBottomChange).toHaveBeenLastCalledWith(false);
   });
 });
