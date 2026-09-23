@@ -74,3 +74,23 @@
 - 請 moshi-test 建 `reject-me.txt` → 從收件匣卡片「開啟終端機」進 Chat View：工具列「Write …/sandbox/reject-me.txt +1」下方、輸入框上方出現浮動條「等待核准　Write · /Use…eject-me.txt　[拒絕][允許]」。截圖 `screenshots/s1-reject-02.png`。
 - 按「拒絕」→ Mac 端 `reject-me.txt` 不存在、moshi-test 回 idle。連拍 `clips/s1-reject.mp4`。
 - 同一畫面：先前送的圖片在 Chat View 以大圖泡泡顯示（連線中時先顯示圖片佔位框）。
+
+## 首頁其他入口（00:37–00:40）
+
+- 首頁右上地球圖示：6 個點位（y 109 到 121）都沒反應，瀏覽器預覽仍未測到。
+- 首頁「發掘 MOSHI」進度由 16/20 變 2/20：逐張點開功能卡片會被 Moshi 記成「已試過」（副作用，不影響使用）。
+- 右下綠色「+」＝新增連線：「掃碼快速配對」（在 Mac／Linux 執行一道命令、掃 QR，Moshi 自動裝 SSH 金鑰；推薦，約 1 分鐘）與「使用自己的 SSH」（填主機、使用者、金鑰）。對應主機端 `moshi-hook host setup`（Easy Pair）。截圖 `screenshots/fab-01.png`。
+
+## 主機端 hook 接線（00:42，讀 `~/.claude/settings.json`，只讀不改）
+
+| Claude Code 事件 | matcher | 同步？ | 推測用途 |
+|---|---|---|---|
+| PermissionRequest | 全部 | **同步**（async=False） | 批准：hook 停住等手機回允許／拒絕 |
+| PreToolUse | AskUserQuestion、ExitPlanMode | 非同步 | 把問題／計畫推到手機 |
+| PostToolUse | AskUserQuestion、ExitPlanMode | 非同步 | 回報已回答 |
+| Stop | 全部 | 非同步 | 「完成」卡片與推播 |
+| Notification | permission_prompt | 非同步 | 權限提示通知 |
+
+- hook 指令都是 `if [ -x …/moshi-hook ]; then moshi-hook claude-hook; fi`（binary 不在就靜默略過）。
+- daemon 由 `brew services` 以 LaunchAgent（`sh.brew.moshi-hook.plist`）常駐。
+- `~/.config/moshi/config.toml` 欄位名（未讀值）：`[gateway]`、`always_on_discovery`、`usage_collection`、`suppress_nested_agent_push`；`config.json` 有 `secretStore`。

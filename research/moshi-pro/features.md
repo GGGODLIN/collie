@@ -121,3 +121,30 @@
 | 原生圖片附件（剪貼簿法） | 不建議照抄 | 會覆蓋主機剪貼簿；Collie 的路徑法已夠用 | 低 |
 | Live Activity、Apple Watch | 不適合 Collie | PWA 做不到 | — |
 | 終端手勢、搖桿 | 先親手試再說 | 鏡像測不到手感 | 中 |
+
+---
+
+## 實作線索（官方文件＋本機實測）
+
+官方文件由 subagent 於 2026-09-24 以 curl 抓取 getmoshi.app/docs 全部 41 個子頁整理；本機證據見 [run-log.md](run-log.md)「主機端」兩節。
+
+| 主題 | 做法 | 出處 |
+|---|---|---|
+| 資料路徑 | agent hook → 本機 Unix socket → daemon；daemon 在 `127.0.0.1:24543` 開 gateway，App 經 SSH 轉送連進來；另有一條 WebSocket 到 Moshi 伺服器傳批准與狀態 | [docs/hooks](https://getmoshi.app/docs/hooks) |
+| 哪些資料經過 Moshi 伺服器 | 事件摘要、批准決定、推播：prompt 前 200 字、回覆前 80 字、批准指令最多 256 字，加專案名、session ID、model、工具名、context 百分比。transcript 與 diff 不經過 | [docs/hooks](https://getmoshi.app/docs/hooks)、[docs/chat-view](https://getmoshi.app/docs/chat-view) |
+| Hook 事件 | 官方 guide 列 PreToolUse、Notification、Stop；**本機 0.3.26 實際另有同步的 PermissionRequest**，以及 AskUserQuestion／ExitPlanMode 的 Pre／Post | [guides/claude-code](https://getmoshi.app/guides/claude-code)；本機 `~/.claude/settings.json` |
+| Chat View | hook 記下「pane → session ID → transcript 路徑」，gateway 照這份對應串流 JSONL（先 backlog 再 append），不猜最新檔；輸入經 tmux 或 Herdr 送回同一 pane；停止＝送 Escape；支援 10 種 agent | [docs/debug-gateway](https://getmoshi.app/docs/debug-gateway)、[docs/debug-chat-view](https://getmoshi.app/docs/debug-chat-view) |
+| 批准 | 手機按下後，daemon 先重新擷取畫面，確認提示沒變才送按鍵；你在終端先回答了，手機待辦自動關閉；逾時退回終端原提示。**Herdr 下沒有讀畫面的備援，一定要 hook** | [docs/multiplexer](https://getmoshi.app/docs/multiplexer)、[docs/skill](https://getmoshi.app/docs/skill) |
+| Diff | daemon 讀 working tree，HTTP 只綁 127.0.0.1，經既有 SSH 的 gateway 讀取 | [docs/diff-viewer](https://getmoshi.app/docs/diff-viewer) |
+| 瀏覽器預覽 | daemon 探測本機 listener 是否回 HTTP；App 每個 session 開一條 SSH local forward，優先同埠號 | [docs/browser-preview](https://getmoshi.app/docs/browser-preview) |
+| 用量 | daemon 在主機輪詢各 agent 的 rate-limit 資料、上傳快照到 Moshi，約每分鐘一次 | [docs/agents-usages](https://getmoshi.app/docs/agents-usages) |
+| 推播與 Live Activity | daemon `POST /api/v1/hosts/:hostId/events` → 伺服器用 Expo Push 發通知、APNs 更新 Live Activity；主機先限流（免費 10 次／60 秒、Pro 60 次） | [docs/notifications](https://getmoshi.app/docs/notifications)、[docs/live-activity](https://getmoshi.app/docs/live-activity) |
+| Herdr 偵測與切換 | 連線時 SSH 跑 `command -v herdr` 與 `herdr session list --json`；「跳至」讀 daemon 的 `/v1/workspaces` 在主機端直接切，不送前綴鍵 | [docs/debug-multiplexer-chooser](https://getmoshi.app/docs/debug-multiplexer-chooser)、[docs/jump-to](https://getmoshi.app/docs/jump-to) |
+
+**文件自相矛盾、未定論的**：附圖到底是 SCP 到 `~/.moshi/uploads/` 還是走短網址（本機 log 看到的是主機暫存 jpg＋剪貼簿貼上）；批准是「送按鍵」還是「經 daemon 解除 hook 阻塞」（本機設定的同步 PermissionRequest 支持後者）。
+
+**對 Collie 最有用的三個線索**：
+
+1. 「pane → session → transcript」由 hook 在主機端登記，而不是猜最新檔；Collie 的 journal 目前怎麼對應 pane 值得對照。
+2. 批准前重新擷取畫面比對、提示消失就收掉手機待辦，和 Collie 的 send guard 是同一種防呆。
+3. 大資料走本機 gateway，伺服器只收有字數上限的摘要；Collie 沒有中央伺服器，這條隱私邊界本來就比 Moshi 嚴。
