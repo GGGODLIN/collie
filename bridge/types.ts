@@ -735,11 +735,10 @@ export type WorktreeOpenResponse =
 export type CrewMode = "solo" | "lead" | "peer";
 
 /**
- * One operator-declared slash command (a `[[commands]]` row in their `commands.toml`). A pane any of
- * these rows address shows them INSTEAD of the shipped Agent-commands catalog; a pane none of them
- * address keeps it (ADR 0018). This is the escape hatch for commands the shipped catalog cannot know
- * about — plugin- or user-registered ones like omp's `/fork-in-herdr` — which exist only on THIS
- * operator's machine and so must never be hard-coded into `web/src/lib/agent-commands.ts`.
+ * One operator-declared slash command (a `[[commands]]` row in their `commands.toml`). Claude panes
+ * show these rows before the maintained reference catalog; every other addressed harness replaces
+ * its catalog, and an unaddressed pane keeps what ships (ADRs 0018 and 0054). This is the escape hatch
+ * for plugin- or user-registered commands that must not be hard-coded into the reference catalog.
  */
 export interface OperatorCommand {
   /** Herdr agent name this applies to, lowercased. Omitted = every agent. */
@@ -762,7 +761,7 @@ export interface OperatorCommand {
    * The operator putting this row on the HARNESS BAR, the row of the running agent's own commands
    * above the key rail. It is the only way onto that bar, and a bar row is still an ordinary palette
    * row. Replacement is per surface: bar rows replace the shipped BAR for the panes they address and
-   * leave the Agent palette alone (ADR 0043, which applies ADR 0018's rule to one surface).
+   * leave the Agent palette alone (ADR 0043).
    */
   bar: boolean;
   /**
@@ -776,7 +775,7 @@ export interface OperatorCommand {
 /**
  * One operator-declared Keys-tray preset (a `[[keys]]` row in their `keys.toml`). A pane any of
  * these rows address shows them INSTEAD of the shipped Ctrl presets; a pane none of them address
- * keeps the shipped ones (ADR 0018, the same rule `commands.toml` follows). Only the PRESETS are
+ * keeps the shipped ones (ADR 0018). Only the PRESETS are
  * configurable — the tray's keyboard (Esc/arrows/Enter/Tab/Space, modifiers, digits, F1–F12) is
  * fixed.
  */
@@ -881,7 +880,7 @@ export const OPERATOR_FONTS_PATH = "/api/fonts/";
 /**
  * One operator-declared Quick-dock group (a `[[replies]]` row in their `quick-replies.toml`). A
  * pane any of these rows address shows them INSTEAD of the shipped groups; a pane none of them
- * address keeps the shipped ones (ADR 0018, the same rule `commands.toml` and `keys.toml` follow).
+ * address keeps the shipped ones (ADR 0018, the same rule `keys.toml` follows).
  *
  * The shipped phrases are English, which is a content choice rather than a technical one — an
  * operator working in another language, or one whose harness wants "approve" over "yes", has no
@@ -899,8 +898,8 @@ export interface OperatorQuickReplyRow {
 /**
  * One operator-declared UI typeface (a `[[font]]` row in their `theme.toml`, the fourth operator
  * file beside `commands.toml`). The Typeface setting offers these UNDER the shipped faces — fonts
- * ADD to the shipped list, they never replace it, which is where this file parts company with the
- * ADR 0018 trio (ADR 0033: a font cannot fire an action, so there is nothing to shadow).
+ * ADD to the shipped list, they never replace it (ADR 0033: a font cannot fire an action, so there
+ * is nothing to shadow).
  *
  * Every field here enters CSS on the phone, so every field is validated on BOTH sides — the bridge
  * skips a bad row and the web re-validates and drops one. See {@link OPERATOR_FONT_FAMILY_PATTERN}.

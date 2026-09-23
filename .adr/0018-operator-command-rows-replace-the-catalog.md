@@ -1,6 +1,6 @@
 # 0018 — The operator's command rows replace the catalog, never merge into it
 
-Status: **Accepted** (2026-08-17)
+Status: **Accepted outside Claude's Agent palette** (2026-08-17); superseded there by [ADR 0054](./0054-claude-operator-commands-join-the-reference-catalog.md)
 
 ## Context
 

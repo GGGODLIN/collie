@@ -151,11 +151,9 @@ export const BAR_AGENTS: readonly string[] = [...BARS.keys()];
  * this pane, otherwise the shipped table. Returns `[]` for every other agent (grok, opencode, agy,
  * antigravity, a bare shell, a pane with no agent at all) and the row does not render.
  *
- * **THE REPLACEMENT RULE IS PER SURFACE.** ADR 0018 says that if any operator row addresses a pane,
- * the operator's rows ARE the catalog for that pane. This applies that rule to the BAR alone: the
- * subset it replaces-or-falls-back over is the rows carrying `bar = true`, so one bar row never
- * blanks the Agent palette, which is the opposite of what the operator typed. `commandsFor` is
- * untouched and ADR 0018 keeps holding exactly as written. ADR 0043 records the split.
+ * **THE REPLACEMENT RULE IS PER SURFACE.** The bar still applies ADR 0043's replacement rule after
+ * ADR 0054 made Claude's Agent palette additive. The subset it replaces-or-falls-back over is the
+ * rows carrying `bar = true`, so one bar row changes only the bar.
  *
  * The scope ladder runs FIRST, over every row, and the `bar` filter runs on its answer. That way a
  * narrower `bar = false` row correcting a wider `bar = true` one takes the command off the bar,

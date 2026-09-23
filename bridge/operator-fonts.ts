@@ -12,10 +12,9 @@ import type { OperatorFontRow } from "./types.ts";
 //
 // TWO THINGS ARE DIFFERENT HERE, and both are stated in ADR 0033 rather than left to be inferred.
 //
-// POSTURE. The trio REPLACE the shipped catalog on the panes they address (ADR 0018). Fonts ADD to
-// the shipped list instead. The reason is not taste: a command row shadows a shipped command, so a
-// merge would leave the operator unable to say "not that one" — whereas a font cannot fire an
-// action, so an extra entry in a picker costs a line in a menu and nothing else. 0018 is untouched.
+// POSTURE. Keys and quick replies replace their shipped lists (ADR 0018); Claude commands merge
+// with their maintained reference catalog (ADR 0054), while other command palettes replace. Fonts
+// always ADD to the shipped list. A font cannot fire an action, so an extra picker row shadows nothing.
 //
 // THE FILE IS NAMED `theme.toml`, NOT `fonts.toml`, so a colour block can join it later without
 // becoming a fifth operator file. Nothing but `[[font]]` is read today, and an unknown top-level

@@ -150,11 +150,12 @@ describe("the operator's bar rows", () => {
     expect(barFor("claude", mine).map((i) => i.id)).toEqual(barFor("claude").map((i) => i.id));
   });
 
-  it("do not blank the Agent palette for that pane — ADR 0018 is unchanged", () => {
+  it("replace only the bar while Claude's palette keeps its reference rows", () => {
     const mine = [op({ agent: "claude", command: "/statusline", bar: true })];
-    // A bar row IS an ordinary palette row, so the palette replaces exactly as it always did.
-    expect(commandsFor("claude", mine).map((c) => c.command)).toEqual(["/statusline"]);
-    // And a pane no row addresses keeps the shipped palette AND the shipped bar.
+    const palette = commandsFor("claude", mine).map((c) => c.command);
+    expect(palette[0]).toBe("/statusline");
+    expect(palette).toContain("/compact");
+    expect(barFor("claude", mine).map((i) => i.command)).toEqual(["/statusline"]);
     expect(commandsFor("pi", mine).length).toBeGreaterThan(1);
     expect(barFor("pi", mine).map((i) => i.id)).toEqual(["model", "compact", "tree", "resume"]);
   });

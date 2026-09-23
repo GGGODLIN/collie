@@ -334,11 +334,11 @@ graph TD
   "new build — tap to update."
 - **The operator's slash-command rows ride `/api/config`** too, read from their `commands.toml`
   behind an mtime check (`bridge/operator-commands.ts`), so editing the file is live like a web
-  rebuild. On a pane they address they **replace** the shipped catalog rather than merging into it —
-  [ADR 0018](./.adr/0018-operator-command-rows-replace-the-catalog.md). Their **Keys-tray presets**
-  ride the same request on the same terms, from `keys.toml` (`bridge/operator-keys.ts`), and their
-  **Quick-dock groups** from `quick-replies.toml` (`bridge/operator-quick-replies.ts`); the three
-  share one reader (`bridge/operator-file.ts`) and one scope ladder
+  rebuild. Claude panes put matching rows before the maintained reference catalog and remove exact
+  name duplicates; other harnesses still replace their catalog ([ADR 0054](./.adr/0054-claude-operator-commands-join-the-reference-catalog.md)). Their **Keys-tray presets**
+  ride the same request but keep the replacement rule, from `keys.toml` (`bridge/operator-keys.ts`),
+  and their **Quick-dock groups** do the same from `quick-replies.toml`
+  (`bridge/operator-quick-replies.ts`); the three share one reader (`bridge/operator-file.ts`) and one scope ladder
   (`web/src/lib/operator-scope.ts`). Their **launcher rows**, from `launchers.toml`
   (`bridge/operator-launchers.ts`), share the reader but NOT `/api/config`: a launcher row creates
   its own pane rather than addressing an existing one, so it carries no scope, and its rows ride

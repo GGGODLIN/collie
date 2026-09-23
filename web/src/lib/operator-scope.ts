@@ -3,7 +3,7 @@
 // (operator-quick-replies.ts), so the three files can never grow two different answers to "does
 // this row apply here?".
 //
-// The rule and its reasoning are ADR 0018's; this module is only where it is computed.
+// This module computes scope precedence only; each surface decides whether its rows replace or merge.
 
 /** The catalog's own names for the agent families a scope may address. Pinned against CATALOG. */
 export const AGENT_FAMILIES = [
@@ -72,17 +72,10 @@ function specificity(row: ScopedRow, paneKey: string, paneFamily: string): numbe
 /**
  * The operator's rows that address this pane, narrowest first-wins, one row per `keyOf` name.
  *
- * Empty means "nothing of yours points here", which every caller reads as "keep what ships" —
- * rule 2 below.
- *
- * 1. YOUR LIST IS THE LIST. A pane addressed by even one of your rows shows your rows for that
- *    pane and nothing else (ADR 0018).
- * 2. A PANE YOU DID NOT ADDRESS KEEPS WHAT SHIPS. Scoping rows to `omp` says nothing about your
- *    claude panes. Declaring nothing at all leaves every pane as shipped.
- * 3. THE MORE SPECIFIC SCOPE WINS, and one name is one row. Exact (`claude-code` on a claude-code
- *    pane) beats family (`claude` on the same pane) beats unscoped, so "this everywhere, except
- *    here" is spellable and must not render as two identically named buttons. Declaration order
- *    decides only between rows of equal specificity, where the later one wins.
+ * Empty means no operator row addresses this pane, so callers keep what ships. Exact
+ * (`claude-code` on a claude-code pane) beats family (`claude` on the same pane) beats unscoped, so
+ * "this everywhere, except here" is spellable and one name resolves to one row. Declaration order
+ * decides only between rows of equal specificity, where the later one wins.
  */
 export function rowsFor<T extends ScopedRow>(
   rows: readonly T[],

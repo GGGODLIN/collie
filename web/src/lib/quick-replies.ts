@@ -55,9 +55,8 @@ export function quickRepliesFor(
   mine: readonly OperatorQuickReplyRow[] = [],
 ): readonly QuickReplyGroup[] {
   // The operator's own groups REPLACE the shipped ones on a pane they address, never merge into
-  // them (ADR 0018) — the same rule `commands.toml` and `keys.toml` follow. A pane none of their
-  // rows reach is untouched, and an operator who declared nothing gets every pane exactly as
-  // shipped.
+  // them (ADR 0018), the same rule `keys.toml` follows. A pane none of their rows reaches is
+  // untouched, and an operator who declared nothing gets every pane exactly as shipped.
   //
   // A shell is scoped like any other pane: `scope = "shell"` addresses it, an unscoped row reaches
   // it too. That is deliberate — an operator who replaces the dock in another language means the

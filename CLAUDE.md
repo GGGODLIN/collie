@@ -475,30 +475,29 @@ lint guard, the crew-wire guard or the `flake.lock` guard.
   (`web/src/lib/latest-reply.ts`). It **replaces** the rows it covers rather than sitting above them
   (`hideLeadingLines`), and that hiding is render-only, applied after every grammar has run over the
   whole screen — never trim the text a detector, guard or draft probe sees.
-- **The operator's rows in `commands.toml` replace the shipped command catalog on the panes they
-  address, never merge into it** ([ADR 0018](./.adr/0018-operator-command-rows-replace-the-catalog.md));
-  the bridge re-reads the file behind an mtime check, so edits are live and need no restart.
-- **That replace-law runs PER SURFACE, and the harness bar is the second surface** — a row with
+- **The operator's rows in `commands.toml` join Claude's maintained reference catalog** — matching
+  rows appear first, an exact-name operator row replaces the reference row without lowering its
+  confirmation, and every other harness still uses ADR 0018's replacement rule
+  ([ADR 0054](./.adr/0054-claude-operator-commands-join-the-reference-catalog.md)). The bridge re-reads
+  the file behind an mtime check, so edits are live and need no restart.
+- **The composition rule runs PER SURFACE, and the harness bar still replaces** — a row with
   `bar = true` goes on the bar above the keys as well as into the palette, and the bar's
-  replace-or-fall-back runs over the `bar = true` rows ALONE, so one bar row never blanks the Agent
-  palette ([ADR 0043](./.adr/0043-operator-bar-rows-replace-the-bar-not-the-palette.md)).
+  replace-or-fall-back runs over the `bar = true` rows ALONE
+  ([ADR 0043](./.adr/0043-operator-bar-rows-replace-the-bar-not-the-palette.md)).
   `web/src/lib/harness-bar.ts` is a VIEW of `agent-commands.ts`, never a second catalog: a command it
   spells that the catalog lacks is a failing test, and a row for a capture-sourced harness needs an
-  `evidence` path that exists. `commandsFor` is unchanged.
-- **`keys.toml` is `commands.toml`'s sibling** — the operator's rows replace the Keys tray's shipped
-  Ctrl presets on the panes they address (ADR 0018 again), and only those presets: the tray's
-  keyboard is fixed. Both files share one reader (`bridge/operator-file.ts`) and one scope ladder
-  (`web/src/lib/operator-scope.ts`); teach both, never one.
-- **`quick-replies.toml` is the third on that contract** — the operator's groups replace the Quick
-  dock's shipped phrases on the panes they address (ADR 0018 once more), shell panes included when
-  a row is scoped to them. Same reader, same scope ladder: the three files differ in grammar and
-  never in posture, so teach all three or none.
-- **`theme.toml` is the operator's fourth file, and it is the one that ADDS rather than replaces** —
-  its `[[font]]` rows put extra UI typefaces UNDER the shipped three in the Settings picker, and the
-  bridge serves the files read-only from `<config-dir>/fonts` at `GET /api/fonts/<basename>`. Same
-  reader, same mtime liveness; the opposite posture, because a font cannot fire an action and so
-  shadows nothing ([ADR 0033](./.adr/0033-the-app-face-is-a-device-preference.md)). Don't dilute
-  ADR 0018's replace-law to cover it.
+  `evidence` path that exists.
+- **`keys.toml` is `commands.toml`'s sibling, not its composition policy** — the operator's rows
+  replace the Keys tray's shipped Ctrl presets on the panes they address, and only those presets:
+  the tray's keyboard is fixed. Both files share one reader (`bridge/operator-file.ts`) and one
+  scope ladder (`web/src/lib/operator-scope.ts`).
+- **`quick-replies.toml` keeps the replacement rule too** — the operator's groups replace the Quick
+  dock's shipped phrases on the panes they address, shell panes included when a row is scoped to
+  them. It shares the reader and scope ladder without inheriting Claude's palette exception.
+- **`theme.toml` adds rather than shadows** — its `[[font]]` rows put extra UI typefaces UNDER the
+  shipped three in the Settings picker, and the bridge serves the files read-only from
+  `<config-dir>/fonts` at `GET /api/fonts/<basename>`. Same reader, same mtime liveness; a font cannot
+  fire an action and so shadows nothing ([ADR 0033](./.adr/0033-the-app-face-is-a-device-preference.md)).
 - **`launchers.toml` is the operator's fifth file, and the only one whose rows CREATE a pane** — its
   rows are the allowlist `POST /api/launch` matches exactly, so the client names a row and never
   supplies a command line. Same reader, same mtime liveness; no scope ladder, because a row that

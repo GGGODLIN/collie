@@ -156,8 +156,10 @@ bar = true
 bar_label = "Status"
 ```
 
-A pane that matches your configured rows displays only those rows. The narrowest row wins, as
-documented in [ADR 0018](../.adr/0018-operator-command-rows-replace-the-catalog.md).
+On a Claude pane, matching rows appear first and the maintained reference commands remain searchable.
+An exact-name row replaces that reference row without removing its confirmation. Other harnesses
+still display only matching rows. The narrowest scope wins, as documented in
+[ADR 0054](../.adr/0054-claude-operator-commands-join-the-reference-catalog.md).
 
 To verify, open a pane and tap **/**; your rows appear on the first screen.
 
