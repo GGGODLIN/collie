@@ -1,4 +1,4 @@
-import { Check, Inbox, WifiOff } from "lucide-react";
+import { Check, ChevronRight, Inbox, WifiOff } from "lucide-react";
 
 import { clockTime } from "@/lib/format";
 import { useMuxCapability } from "@/lib/mux-capability";
@@ -52,6 +52,7 @@ interface AgentListProps {
   hidden?: readonly string[];
   /** Tap a chip: isolate that workspace, or clear the filter (null). */
   onIsolate?: (key: string | null) => void;
+  onOpenSwitcher?: () => void;
   /** Long-press a chip: hide the workspace, or show it again. */
   onToggleHidden?: (key: string) => void;
 }
@@ -124,6 +125,7 @@ export function AgentList({
   isolated = null,
   hidden = NO_KEYS,
   onIsolate,
+  onOpenSwitcher,
   onToggleHidden,
 }: AgentListProps) {
   useLocale();
@@ -245,13 +247,24 @@ export function AgentList({
 
       {/* The twenty-times-a-day glance, in ONE slot of one height: every state counted, with its
           word, once for the whole dashboard (the headings below repeat the numbers, not the words).
-          The all-clear check leads when nothing needs you. A tap goes to the first workspace
-          holding something urgent. */}
+          The all-clear check leads when nothing needs you. The dashboard wires a pane switcher;
+          other callers retain the first-urgent-workspace jump. */}
       <button
         type="button"
-        onClick={() => firstUrgent && jumpTo(firstUrgent)}
-        disabled={!firstUrgent}
-        className="flex min-h-8 items-center gap-3 text-left text-xs font-medium text-foreground disabled:opacity-100"
+        aria-haspopup={onOpenSwitcher ? "dialog" : undefined}
+        onClick={() => {
+          if (onOpenSwitcher) {
+            onOpenSwitcher();
+            return;
+          }
+          if (firstUrgent) jumpTo(firstUrgent);
+        }}
+        disabled={!onOpenSwitcher && !firstUrgent}
+        className={cn(
+          "flex min-h-8 w-full items-center gap-3 text-left text-xs font-medium text-foreground disabled:opacity-100",
+          onOpenSwitcher &&
+            "rounded-md border border-border px-3 py-2 transition-colors hover:bg-muted/50 active:bg-muted",
+        )}
       >
         {allClear && (
           <span className="flex items-center gap-1.5 leading-none">
@@ -260,6 +273,12 @@ export function AgentList({
           </span>
         )}
         <StatusCounts panes={agents} labelled={!allClear} className={allClear ? "text-muted-foreground" : undefined} />
+        {onOpenSwitcher && (
+          <span className="ml-auto flex shrink-0 items-center text-muted-foreground">
+            <span className="sr-only">{t("chat.switcher.title")}</span>
+            <ChevronRight className="size-4" aria-hidden />
+          </span>
+        )}
       </button>
 
       {/* By workspace. The heading IS the landmark: full ink, its own case, and it lights up with a

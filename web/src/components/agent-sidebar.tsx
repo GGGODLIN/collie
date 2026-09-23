@@ -2,10 +2,11 @@ import { Loader2, Play, TerminalSquare } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { AgentIcon } from "@/components/agent-icon";
-import { CacheChip } from "@/components/cache-chip";
+import { PaneMeta } from "@/components/pane-meta";
 import { SectionHeader } from "@/components/section-header";
 import { paneName, panePlaceParts } from "@/lib/pane-name";
 import { shortenHome } from "@/lib/shorten-home";
+import { paneRowKey } from "@/lib/hosts";
 import { isAttention, sectionHeaderProps, triage } from "@/lib/triage";
 import type { AgentView, Launcher } from "@/lib/types";
 import { t } from "@/lib/i18n";
@@ -15,8 +16,8 @@ interface ThreadSidebarProps {
   agents: AgentView[];
   /** Bare shell panes (no agent) — listed in a trailing "Shells" group so fresh spaces are reachable. */
   shellPanes?: AgentView[];
-  currentPaneId: string;
-  onSelect: (paneId: string) => void;
+  currentPaneId?: string;
+  onSelect: (pane: AgentView) => void;
   /** Whether the Recent section is expanded, and how to fold it. Omit to leave it always open. */
   recentOpen?: boolean;
   onRecentOpenChange?: (open: boolean) => void;
@@ -44,9 +45,9 @@ interface ThreadSidebarProps {
   className?: string;
 }
 
-// The pane switcher behind the swipe-up "Switch pane" sheet: every agent pane grouped and sorted
-// exactly like the dashboard (lib/triage.ts — the two must not disagree about what needs you), then
-// any bare shell panes under a trailing "Shells" group, with the open one highlighted. Switching is
+// The pane switcher behind the dashboard summary and swipe-up "Switch pane" sheet: every agent pane
+// grouped and sorted by lib/triage.ts, then any bare shell panes under a trailing "Shells" group,
+// with the open one highlighted. Switching is
 // the ONLY action here — closing a pane lives in the pane pill's long-press sheet (with its own
 // confirm), so a fat-thumbed switch can never destroy a pane.
 //
@@ -111,7 +112,7 @@ export function ThreadSidebar({
           >
             {members.map((a) => (
               <PaneRow
-                key={a.paneId}
+                key={paneRowKey(a)}
                 pane={a}
                 active={a.paneId === currentPaneId}
                 onSelect={onSelect}
@@ -131,7 +132,7 @@ export function ThreadSidebar({
         >
           {shellPanes.map((p) => (
             <PaneRow
-              key={p.paneId}
+              key={paneRowKey(p)}
               pane={p}
               active={p.paneId === currentPaneId}
               onSelect={onSelect}
@@ -212,7 +213,7 @@ function PaneRow({
 }: {
   pane: AgentView;
   active: boolean;
-  onSelect: (paneId: string) => void;
+  onSelect: (pane: AgentView) => void;
 }) {
   const isShell = pane.kind === "shell";
   // ONE NAME, ONE PLACE (lib/pane-name.ts), the same way round as every other row in the app: the
@@ -226,7 +227,7 @@ function PaneRow({
   return (
     <button
       type="button"
-      onClick={() => onSelect(pane.paneId)}
+      onClick={() => onSelect(pane)}
       aria-current={active ? "page" : undefined}
       className={cn(
         // The border is in the base string and transparent at rest, so an alarm edge only ever
@@ -256,11 +257,12 @@ function PaneRow({
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-baseline gap-1">
           <span className="min-w-0 truncate text-sm font-medium">{name}</span>
-          {/* The cache reading trails the name, same corner as the dashboard row (agent-card.tsx,
-              via PaneMeta), but without PaneMeta's host and session chips: this sheet asked for the
-              cache reading alone, and a crew-wide switcher row is a separate call. `row`, not
-              `button` — the whole row is already a `<button>`, and a button cannot nest inside one. */}
-          <CacheChip cache={pane.cache} variant="row" className="ml-auto shrink-0" />
+          <PaneMeta
+            host={pane.host}
+            cache={pane.cache}
+            session={pane.session}
+            className="ml-auto"
+          />
         </div>
         <div className="flex min-w-0 items-baseline gap-1 text-[11px] text-muted-foreground">
           <span className="max-w-[45%] shrink truncate">{space}</span>

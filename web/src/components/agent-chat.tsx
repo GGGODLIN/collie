@@ -2225,7 +2225,7 @@ export function AgentChat({
             agents={agents}
             shellPanes={shellPanes}
             currentPaneId={paneId}
-            onSelect={switchTo}
+            onSelect={(pane) => switchTo(pane.paneId)}
             recentOpen={dash.prefs.recentOpen}
             onRecentOpenChange={dash.setRecentOpen}
             // Shells fold on the same count rule Spaces uses: on a herd with dozens of bare shells

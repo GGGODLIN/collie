@@ -6,17 +6,21 @@ import { SessionSwitcher } from "@/components/session-switcher";
 import { ServerSwitcher } from "@/components/server-switcher";
 import { ReadOnlyBanner } from "@/components/read-only-banner";
 import { AgentList } from "@/components/agent-list";
+import { ThreadSidebar } from "@/components/agent-sidebar";
 import { LaunchStrip } from "@/components/launch-strip";
 import { SpaceOverview } from "@/components/space-overview";
 import { NewSpaceSheet, type WorktreeRepo } from "@/components/new-space-sheet";
 import { StatusArea } from "@/components/status-area";
+import { BottomSheet } from "@/components/ui/sheet";
 import { ToastViewport } from "@/components/ui/toast-viewport";
 import { BuildStamp } from "@/components/build-stamp";
 import { CrewFooterLink } from "@/components/crew-footer-link";
 import { UpdateBanner } from "@/components/update-banner";
 import { useDashPrefs, openForCount } from "@/hooks/use-dash-prefs";
 import { useSpaceActions } from "@/hooks/use-spaces";
+import { useLocale } from "@/hooks/use-locale";
 import { useScrollMemory } from "@/hooks/use-scroll-memory";
+import { t } from "@/lib/i18n";
 import { useMuxCapability } from "@/lib/mux-capability";
 import { ambientHost, ambientPanes, paneScope, sessionsOnHost } from "@/lib/hosts";
 import { panePath, spacePath } from "@/lib/nav";
@@ -32,6 +36,7 @@ import { useRootData } from "@/lib/route-data";
 // navigator their new Space will appear in. Tapping an agent opens its pane; tapping a space
 // drills into /space/:id; tapping a launcher creates a throwaway Space and types its command.
 export function HomeRoute() {
+  useLocale();
   const data = useRootData();
   const navigate = useNavigate();
   const { newSpace, newWorktree, showWorktree, creatingSpace } = useSpaceActions();
@@ -48,7 +53,9 @@ export function HomeRoute() {
         .map((w) => ({ workspaceId: w.workspaceId, repoRoot: w.repoRoot!, label: w.label }))
     : [];
   const [newSpaceOpen, setNewSpaceOpen] = useState(false);
-  const { prefs, setSpacesOpen, setLaunchOpen, setIsolatedSpace, toggleHiddenSpace } = useDashPrefs();
+  const [switcherAgents, setSwitcherAgents] = useState<AgentView[] | null>(null);
+  const { prefs, setSpacesOpen, setLaunchOpen, setRecentOpen, setIsolatedSpace, toggleHiddenSpace } =
+    useDashPrefs();
   // No stored choice yet? The space count decides — a two-space install shouldn't be handed a
   // mystery collapsed header, and a forty-space one shouldn't be handed a wall.
   const spacesOpen = openForCount(prefs.spacesOpen, data.workspaces.length);
@@ -62,6 +69,12 @@ export function HomeRoute() {
   // right pane name on the wrong terminal. Solo: every pane is untagged, so this is `data.scope`.
   const open = (pane: AgentView) =>
     navigate(panePath(pane.paneId, paneScope(data.scope, pane, data.servers, data.sessions)));
+  const showSwitcher = () => setSwitcherAgents([...data.agents]);
+  const closeSwitcher = () => setSwitcherAgents(null);
+  const selectFromSwitcher = (pane: AgentView) => {
+    closeSwitcher();
+    open(pane);
+  };
   const drillInto = (id: string) => navigate(spacePath(id, data.scope));
   // The space navigator shows the ADDRESSED machine's spaces — the loader's `ambientSpaces` has
   // already narrowed `data.workspaces`/`data.tabs` to the host `?h=` names (or the lead, absent one;
@@ -135,6 +148,7 @@ export function HomeRoute() {
             isolated={prefs.isolatedSpace}
             hidden={prefs.hiddenSpaces}
             onIsolate={setIsolatedSpace}
+            {...(data.agents.length > 0 ? { onOpenSwitcher: showSwitcher } : {})}
             onToggleHidden={toggleHiddenSpace}
           />
           <LaunchStrip open={launchOpen} onOpenChange={setLaunchOpen} scope={data.scope} />
@@ -169,6 +183,20 @@ export function HomeRoute() {
       <ToastViewport>
         <StatusArea />
       </ToastViewport>
+
+      <BottomSheet
+        open={switcherAgents !== null}
+        onClose={closeSwitcher}
+        title={t("chat.switcher.title")}
+      >
+        <ThreadSidebar
+          agents={switcherAgents ?? []}
+          onSelect={selectFromSwitcher}
+          recentOpen={prefs.recentOpen}
+          onRecentOpenChange={setRecentOpen}
+          className="px-0 py-1"
+        />
+      </BottomSheet>
 
       <NewSpaceSheet
         open={newSpaceOpen}

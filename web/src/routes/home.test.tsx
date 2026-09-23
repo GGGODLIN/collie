@@ -117,6 +117,20 @@ describe("the dashboard on ONE machine is untouched", () => {
     await userEvent.click(row!);
     await waitFor(() => expect(url(router)).toBe("/pane/w1%3Ap1"));
   });
+
+  it("opens the attention-sorted pane switcher from the dashboard summary", async () => {
+    const router = renderHome(solo());
+    await settled();
+
+    await userEvent.click(screen.getByRole("button", { name: /1 needs you/i }));
+
+    const switcher = screen.getByRole("dialog", { name: "Switch pane" });
+    expect(within(switcher).getByRole("heading", { name: /Needs you/i })).toBeInTheDocument();
+    expect(within(switcher).getByRole("heading", { name: /Working/i })).toBeInTheDocument();
+
+    await userEvent.click(within(switcher).getByRole("button", { name: /collie/i }));
+    await waitFor(() => expect(url(router)).toBe("/pane/w2%3Ap1"));
+  });
 });
 
 describe("the dashboard across machines", () => {
@@ -152,6 +166,20 @@ describe("the dashboard across machines", () => {
     await settled();
     const [peerRow] = within(groupSection("moonward")).getAllByRole("button");
     await userEvent.click(peerRow!);
+    await waitFor(() => expect(url(router)).toBe("/pane/w1%3Ap1?h=workshop"));
+  });
+
+  it("opens a peer from the pane switcher using its full address", async () => {
+    const router = renderHome(packed());
+    await settled();
+
+    await userEvent.click(screen.getByRole("button", { name: /switch pane/i }));
+    const switcher = screen.getByRole("dialog", { name: "Switch pane" });
+    const peerAddress = within(switcher).getByLabelText("Host: workshop");
+    const peerRow = peerAddress.closest("button");
+    if (!peerRow) throw new Error("peer address was not inside a pane row");
+
+    await userEvent.click(peerRow);
     await waitFor(() => expect(url(router)).toBe("/pane/w1%3Ap1?h=workshop"));
   });
 

@@ -72,12 +72,12 @@ describe("ThreadSidebar", () => {
     expect(screen.queryByRole("button", { current: "page" })).toBeNull();
   });
 
-  it("fires onSelect with the pane id when a thread is tapped", async () => {
+  it("fires onSelect with the full pane when a thread is tapped", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     render(<ThreadSidebar agents={fixtureAgents} currentPaneId="w2:p1" onSelect={onSelect} />);
     await user.click(screen.getByRole("button", { name: /webapp/ }));
-    expect(onSelect).toHaveBeenCalledExactlyOnceWith("w1:p1");
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith(fixtureAgents[0]);
   });
 
   const shellPane: AgentView = {
@@ -108,7 +108,7 @@ describe("ThreadSidebar", () => {
     // The shell row is titled by its space like every other row; the terminal glyph is what marks
     // it as a shell. It's the only pane in "sandbox" here, so the name is unambiguous.
     await user.click(screen.getByRole("button", { name: /sandbox/ }));
-    expect(onSelect).toHaveBeenCalledExactlyOnceWith("w3:p2");
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith(shellPane);
   });
 
   it("still renders shells when there are no agents (fresh space reachable)", () => {
