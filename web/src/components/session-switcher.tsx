@@ -5,9 +5,11 @@ import { Check, Layers } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/sheet";
+import { ListGroup } from "@/components/ui/list-group";
+import { StatusDot } from "@/components/status-badge";
 import { homePath } from "@/lib/nav";
 import type { Scope } from "@/lib/scope";
-import type { SessionSummary } from "@/lib/types";
+import { statusLabel, type SessionSummary } from "@/lib/types";
 import { t, tn } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
 
@@ -21,6 +23,36 @@ interface SessionSwitcherProps {
   viewAll: boolean;
 }
 
+type SessionState = "blocked" | "working" | "idle" | "unknown";
+
+const SESSION_RANK = {
+  blocked: 0,
+  working: 1,
+  idle: 2,
+  unknown: 3,
+} satisfies Record<SessionState, number>;
+
+function sessionState(session: SessionSummary): SessionState {
+  if (!session.reachable) return "unknown";
+  if (session.blocked > 0) return "blocked";
+  if (session.working > 0) return "working";
+  return "idle";
+}
+
+function sessionStateLabel(session: SessionSummary): string {
+  const state = sessionState(session);
+  return state === "unknown" ? t("connection.session.unreachable") : statusLabel(state);
+}
+
+function orderedSessions(sessions: readonly SessionSummary[]): SessionSummary[] {
+  return sessions.toSorted(
+    (a, b) =>
+      SESSION_RANK[sessionState(a)] - SESSION_RANK[sessionState(b)] ||
+      Number(b.isPrimary) - Number(a.isPrimary) ||
+      a.name.localeCompare(b.name),
+  );
+}
+
 // Compact session switcher for the header's right cluster. Backward compatible by construction: the
 // trigger renders ONLY when there's a real choice — more than one reachable session, or you're
 // already on a non-primary one (so you can always get back). A single-session install shows nothing.
@@ -30,6 +62,7 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
   useLocale();
   const current = scope.session;
   const [open, setOpen] = useState(false);
+  const [sessionOrder, setSessionOrder] = useState<string[]>([]);
   const navigate = useNavigate();
 
   const reachableCount = sessions.filter((s) => s.reachable).length;
@@ -41,8 +74,28 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
   const currentName = viewAll
     ? t("connection.session.all")
     : (current ?? sessions.find((s) => s.isPrimary)?.name ?? "default");
+  const currentSession = viewAll
+    ? orderedSessions(sessions)[0]
+    : sessions.find((session) =>
+        current === undefined ? session.isPrimary : session.name === current,
+      );
+  const currentState = currentSession ? sessionState(currentSession) : "unknown";
+  const currentStateText = currentSession
+    ? sessionStateLabel(currentSession)
+    : t("connection.session.unreachable");
+  const listedSessions =
+    sessionOrder.length === 0
+      ? orderedSessions(sessions)
+      : sessionOrder
+          .map((name) => sessions.find((session) => session.name === name))
+          .filter((session): session is SessionSummary => session !== undefined);
   const isActive = (s: SessionSummary): boolean =>
     viewAll ? false : current === undefined ? s.isPrimary : s.name === current;
+
+  function showSessions(): void {
+    setSessionOrder(orderedSessions(sessions).map((session) => session.name));
+    setOpen(true);
+  }
 
   function select(s: SessionSummary): void {
     setOpen(false);
@@ -71,7 +124,7 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={showSessions}
         aria-label={
           viewAll
             ? t("connection.session.allAria")
@@ -85,7 +138,9 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
         // treatment the sibling trigger already used.
         className="flex shrink-0 items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent active:scale-95"
       >
-        <Layers className="size-3.5" />
+        <span className="flex size-3.5 shrink-0 items-center justify-center">
+          <StatusDot status={currentState} label={currentStateText} />
+        </span>
         <span className="max-w-[7rem] truncate">{currentName}</span>
       </button>
 
@@ -94,7 +149,7 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
           backdrop-blur before) would make it the containing block and clip the sheet to the header band. */}
       {createPortal(
         <BottomSheet open={open} onClose={() => setOpen(false)} title={t("connection.session.title")}>
-          <ul className="flex flex-col gap-1">
+          <ListGroup as="ul" className="overflow-hidden">
             {/* FIRST, above the sessions rather than among them. A session name answers "which one";
                 this answers "do I have to choose at all", and putting it in the list would make
                 "All sessions" look like a session called that. The Check and the inset rail are the
@@ -105,7 +160,7 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
                 onClick={widen}
                 aria-current={viewAll ? "true" : undefined}
                 className={cn(
-                  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors",
+                  "flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors",
                   viewAll
                     ? "shadow-[inset_2px_0_0_0_var(--primary)]"
                     : "hover:bg-accent active:bg-accent",
@@ -123,8 +178,10 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
                 {viewAll && <Check className="size-4 shrink-0 text-primary" />}
               </button>
             </li>
-            {sessions.map((s) => {
+            {listedSessions.map((s) => {
               const active = isActive(s);
+              const state = sessionState(s);
+              const stateText = sessionStateLabel(s);
               return (
                 <li key={s.name}>
                   <button
@@ -133,21 +190,16 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
                     onClick={() => select(s)}
                     aria-current={active ? "true" : undefined}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors",
-                      // "Current" is a 2px inset cut in --primary, not a fill. The fill it replaces
-                      // was bg-accent inside a bg-background sheet: 1.17:1 light, 1.31:1 dark, i.e.
-                      // barely a surface — while putting the status count pills on rgb(228)/rgb(38),
-                      // where blocked measures 4.55 light and 4.13 dark. The rail is 16.44:1 light /
-                      // 15.72:1 dark against the same ground and costs no layout, so the row does not
-                      // move between states. Same treatment as the alert rows in space-overview and
-                      // agent-card.
+                      "flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors",
                       active
                         ? "shadow-[inset_2px_0_0_0_var(--primary)]"
                         : "hover:bg-accent active:bg-accent",
                       !s.reachable && "cursor-not-allowed opacity-50 hover:bg-transparent",
                     )}
                   >
-                    <Layers className="size-4 shrink-0 text-muted-foreground" />
+                    <span className="flex size-4 shrink-0 items-center justify-center">
+                      <StatusDot status={state} label={stateText} />
+                    </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="truncate text-sm font-medium">{s.name}</span>
@@ -156,33 +208,27 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
                             {t("connection.session.primary")}
                           </span>
                         )}
-                        {!s.reachable && (
-                          <span className="text-[11px] text-muted-foreground">
-                            {t("connection.session.unreachable")}
+                      </div>
+                      <div className="mt-1 flex min-h-5 items-center gap-1.5 text-[11px] leading-none text-muted-foreground">
+                        {s.blocked > 0 && (
+                          <span className="rounded-md border border-status-blocked/30 bg-status-blocked/15 px-1.5 py-0.5 text-[10px] font-medium text-status-blocked">
+                            {tn("status.count.needsYou", s.blocked)}
                           </span>
                         )}
+                        {s.working > 0 && (
+                          <span className="rounded-md border border-status-working/30 bg-status-working/15 px-1.5 py-0.5 text-[10px] font-medium text-status-working">
+                            {tn("status.count.working", s.working)}
+                          </span>
+                        )}
+                        {s.blocked === 0 && s.working === 0 && <span>{stateText}</span>}
                       </div>
-                      {s.reachable && (s.blocked > 0 || s.working > 0) && (
-                        <div className="mt-1 flex items-center gap-1.5">
-                          {s.blocked > 0 && (
-                            <span className="rounded-md border border-status-blocked/30 bg-status-blocked/15 px-1.5 py-0.5 text-[10px] font-medium text-status-blocked">
-                              {tn("status.count.needsYou", s.blocked)}
-                            </span>
-                          )}
-                          {s.working > 0 && (
-                            <span className="rounded-md border border-status-working/30 bg-status-working/15 px-1.5 py-0.5 text-[10px] font-medium text-status-working">
-                              {tn("status.count.working", s.working)}
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </div>
                     {active && <Check className="size-4 shrink-0 text-primary" />}
                   </button>
                 </li>
               );
             })}
-          </ul>
+          </ListGroup>
         </BottomSheet>,
         document.body,
       )}
