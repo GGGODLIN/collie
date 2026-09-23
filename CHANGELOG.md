@@ -55,6 +55,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 - **`collie crew add` no longer leaves a member that runs two multiplexers unable to restart.** Leg 3 asks which one Collie should drive there, or takes `--mux <name>`, and writes `COLLIE_MUX` beside the bind; a member that runs exactly one is left to pick it itself as before.
 - **A harness chip no longer shrinks to a lone ✓ after it fires.** The check takes the icon's place and the word stays, so the other chips on the belt no longer slide left for 700ms and back.
 - **The `/effort` slider shows its Confirm and Cancel buttons again.** Claude Code's `/effort` picker prints "Enter to confirm" in its footer, and Collie read that one phrase as the folder-trust prompt, so the generic menu stood down and the screen arrived with no buttons at all. The trust prompt is now recognised by its own words, and every other screen that prints the phrase keeps the keys its footer names.
+- **Full reply ignores internal skill instructions when pairing an exchange.** Claude journal rows marked as internal metadata no longer become the apparent user prompt, so a skill such as self-closeout cannot be shown above the assistant's actual reply.
 
 
 ## [1.11.1] - 2026-09-20
