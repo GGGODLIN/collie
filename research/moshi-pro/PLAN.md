@@ -51,8 +51,15 @@ T2 不通過的備案：請使用者在手機「設定 → 一般 → 鍵盤 →
 | T1 點擊 | ✓ | 點 inbox 列表開出 session 卡片；點「開啟終端機」進 Chat View；點設定齒輪進設定頁 |
 | — 頂部死區 | 發現 | y≈103 以上的點擊被 iPhone 鏡像輸出自己的懸浮工具列吃掉；同一顆齒輪改點 y=117 就成功 |
 | T1 滑動 | ✓ | inbox 下拉有反應 |
-| T2 切英文 | 未測 | 還沒找到安全的輸入目標 |
-| T3 連回 Mac | 部分 ✓ | Moshi 已配對這台 Mac，inbox 列出本機 Claude Code session（moshi-hook 早已裝在 `~/.claude/settings.json`）；主機清單入口還沒找到 |
-| T4 閒置不斷線 | 進行中 | 背景每 5 分鐘查 status |
+| T2 打英文 | ✗ 直接打／✓ 剪貼簿 | 直接 type_text「echo ok」只出現注音「ㄜ」；mirroir 不支援 Caps Lock，System Events 送 key code 57 也無效。改走 `pbcopy` → 通用剪貼簿 → 點 Moshi 工具列的貼上鍵 → iOS 問「允許貼上」→ 允許，sandbox 收到 `echo ok-from-clipboard`，`press_key return` 執行成功 |
+| T3 連回 Mac | ✓ | 使用者重開 app 後左上角可切到工作階段清單 → 連線 `linhancheng@100.101.86.18` → Herdr 選擇器（抽屜要用 drag 拉上來才看得到全部工作區）→ collie-gggodlin → switch → `2 · moshi-sandbox` |
+| T4 閒置不斷線 | 進行中 | 21:53–22:23 每 5 分鐘 status 全為 Connected |
 
 **安全規則（新增）**：Moshi 的 Chat View 會列出執行這次探索的 Claude session 本身，其「對 Moshi 說…」輸入框會把字送進這個 session。打字測試只准在 Herdr 分頁 `moshi-sandbox`（cwd `~/Desktop/projects/moshi-pro-study/sandbox`）裡做，絕不在 collie-gggodlin 那張卡片或它的終端機裡打字。
+
+**操作訣竅（過夜要用）**
+
+- 打英文一律走剪貼簿：`pbcopy` → 點 Moshi 工具列貼上鍵 → 若跳「允許貼上」就點允許。副作用：會蓋掉 Mac 的剪貼簿。
+- 系統對話框（例如允許貼上）的 OCR 座標比例會偏，以截圖格線座標為準。
+- Moshi 疑似卡住時，照使用者指示重開 app（`reset_app` 後再從主畫面開）。
+- 驗證輸入結果用 `herdr pane read wE:pA`，不靠 OCR。
