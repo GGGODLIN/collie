@@ -46,7 +46,7 @@ interface ThreadSidebarProps {
 }
 
 // The pane switcher behind the dashboard summary and swipe-up "Switch pane" sheet: every agent pane
-// grouped and sorted by lib/triage.ts, then any bare shell panes under a trailing "Shells" group,
+// grouped by lib/triage.ts with Working placed last, then bare shells under a trailing "Shells" group,
 // with the open one highlighted. Switching is
 // the ONLY action here — closing a pane lives in the pane pill's long-press sheet (with its own
 // confirm), so a fat-thumbed switch can never destroy a pane.
@@ -97,30 +97,32 @@ export function ThreadSidebar({
         <p className="px-2 py-2 text-sm text-muted-foreground">{t("home.empty.noAgents")}</p>
       )}
 
-      {triage(agents).map((g) => {
-        const members = g.agents;
-        if (members.length === 0) return null;
-        // Recent is the only foldable triage section, and only where the parent wired the state.
-        const foldable = !!g.collapsible && onRecentOpenChange !== undefined;
-        const open = foldable ? recentOpen : true;
-        return (
-          <Section
-            key={g.key}
-            id={`switch-${g.key}`}
-            {...sectionHeaderProps(g)}
-            {...(foldable ? { open, onToggle: onRecentOpenChange } : {})}
-          >
-            {members.map((a) => (
-              <PaneRow
-                key={paneRowKey(a)}
-                pane={a}
-                active={a.paneId === currentPaneId}
-                onSelect={onSelect}
-              />
-            ))}
-          </Section>
-        );
-      })}
+      {triage(agents)
+        .toSorted((a, b) => Number(a.key === "working") - Number(b.key === "working"))
+        .map((g) => {
+          const members = g.agents;
+          if (members.length === 0) return null;
+          // Recent is the only foldable triage section, and only where the parent wired the state.
+          const foldable = !!g.collapsible && onRecentOpenChange !== undefined;
+          const open = foldable ? recentOpen : true;
+          return (
+            <Section
+              key={g.key}
+              id={`switch-${g.key}`}
+              {...sectionHeaderProps(g)}
+              {...(foldable ? { open, onToggle: onRecentOpenChange } : {})}
+            >
+              {members.map((a) => (
+                <PaneRow
+                  key={paneRowKey(a)}
+                  pane={a}
+                  active={a.paneId === currentPaneId}
+                  onSelect={onSelect}
+                />
+              ))}
+            </Section>
+          );
+        })}
 
       {shellPanes.length > 0 && (
         <Section

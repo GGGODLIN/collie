@@ -23,14 +23,21 @@ describe("ThreadSidebar", () => {
     expect(screen.getByText("No agents running.")).toBeInTheDocument();
   });
 
-  it("groups agents into the same triage sections the dashboard uses", () => {
+  it("puts Working below the settled sections", () => {
+    const unseen = { ...idleAgent, paneId: "w3:p2", lastActiveAt: 200, lastSeenAt: 100 };
     render(
-      <ThreadSidebar agents={[...fixtureAgents, idleAgent]} currentPaneId="" onSelect={vi.fn()} />,
+      <ThreadSidebar
+        agents={[...fixtureAgents, unseen, idleAgent]}
+        currentPaneId=""
+        onSelect={vi.fn()}
+      />,
     );
-    // blocked → Needs you, working → Working, idle → Recent (lib/triage.ts)
-    expect(screen.getByText("Needs you")).toBeInTheDocument();
-    expect(screen.getByText("Working")).toBeInTheDocument();
-    expect(screen.getByText("Recent")).toBeInTheDocument();
+    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual([
+      expect.stringContaining("Needs you"),
+      expect.stringContaining("Ready · unseen"),
+      expect.stringContaining("Recent"),
+      expect.stringContaining("Working"),
+    ]);
   });
 
   it("keeps an unread idle completion above Working even when Recent is folded", () => {
