@@ -54,8 +54,7 @@ export function HomeRoute() {
     : [];
   const [newSpaceOpen, setNewSpaceOpen] = useState(false);
   const [switcherAgents, setSwitcherAgents] = useState<AgentView[] | null>(null);
-  const { prefs, setSpacesOpen, setLaunchOpen, setRecentOpen, setIsolatedSpace, toggleHiddenSpace } =
-    useDashPrefs();
+  const { prefs, setSpacesOpen, setLaunchOpen, setIsolatedSpace, toggleHiddenSpace } = useDashPrefs();
   // No stored choice yet? The space count decides — a two-space install shouldn't be handed a
   // mystery collapsed header, and a forty-space one shouldn't be handed a wall.
   const spacesOpen = openForCount(prefs.spacesOpen, data.workspaces.length);
@@ -145,6 +144,7 @@ export function HomeRoute() {
             error={data.error}
             lastSeenAt={data.lastSeenAt}
             tabs={data.tabs}
+            servers={data.servers}
             isolated={prefs.isolatedSpace}
             hidden={prefs.hiddenSpaces}
             onIsolate={setIsolatedSpace}
@@ -191,9 +191,9 @@ export function HomeRoute() {
       >
         <ThreadSidebar
           agents={switcherAgents ?? []}
+          currentPaneKey=""
           onSelect={selectFromSwitcher}
-          recentOpen={prefs.recentOpen}
-          onRecentOpenChange={setRecentOpen}
+          order="attention"
           className="px-0 py-1"
         />
       </BottomSheet>

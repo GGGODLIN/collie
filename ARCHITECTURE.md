@@ -173,9 +173,11 @@ Product details that shaped the loop:
 - **Quick replies are heuristics, not guarantees.** Different agents expect different input (a Y/n
   prompt vs a numbered menu vs an approval phrase), so there is always a **"send exactly what I
   type"** fallback.
-- **Opinionated triage.** The home screen leads with **"NEEDS YOU"** — blocked agents at top,
-  working/idle collapsed below. Simultaneous blocks batch into one summary notification, not three
-  races. The split rests on the `agentDetection` capability: a driver that cannot tell an agent from a
+- **Opinionated triage, without moving anything.** The home screen leads with one summary line that
+  counts what **needs you** and jumps to it; every pane stays where it sits, in the multiplexer's own
+  order, and urgency is a mark on the row, never a position
+  ([ADR 0063](./.adr/0063-a-pane-keeps-its-place-when-its-state-changes.md)). Simultaneous blocks
+  batch into one summary notification, not three races. The split rests on the `agentDetection` capability: a driver that cannot tell an agent from a
   shell says so, and the screen is panes rather than a triage it would have to invent.
 - **Close the trust loop.** A "Sent" state on the `POST`'s HTTP response, then the visible
   blocked→working transition. Without it, latency makes users double-tap.
@@ -335,7 +337,7 @@ graph TD
 - **The operator's slash-command rows ride `/api/config`** too, read from their `commands.toml`
   behind an mtime check (`bridge/operator-commands.ts`), so editing the file is live like a web
   rebuild. Claude panes put matching rows before the maintained reference catalog and remove exact
-  name duplicates; other harnesses still replace their catalog ([ADR 0062](./.adr/0062-claude-operator-commands-join-the-reference-catalog.md)). Their **Keys-tray presets**
+  name duplicates; other harnesses still replace their catalog ([ADR 0064](./.adr/0064-claude-operator-commands-join-the-reference-catalog.md)). Their **Keys-tray presets**
   ride the same request but keep the replacement rule, from `keys.toml` (`bridge/operator-keys.ts`),
   and their **Quick-dock groups** do the same from `quick-replies.toml`
   (`bridge/operator-quick-replies.ts`); the three share one reader (`bridge/operator-file.ts`) and one scope ladder

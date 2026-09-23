@@ -4,11 +4,13 @@ import { cn } from "@/lib/utils";
 import { AgentIcon } from "@/components/agent-icon";
 import { PaneMeta } from "@/components/pane-meta";
 import { SectionHeader } from "@/components/section-header";
+import { StatusCounts, StatusSummaryLine } from "@/components/status-counts";
+import { paneRowKey } from "@/lib/hosts";
+import { groupPanesByWorkspace } from "@/lib/pane-groups";
 import { paneName, panePlaceParts } from "@/lib/pane-name";
 import { shortenHome } from "@/lib/shorten-home";
-import { paneRowKey } from "@/lib/hosts";
-import { isAttention, sectionHeaderProps, triage } from "@/lib/triage";
-import type { AgentView, Launcher } from "@/lib/types";
+import { bucketOf, isAttention, triage, worstTriage, type TriageKey } from "@/lib/triage";
+import type { AgentView, Launcher, ServerSummary, TabView } from "@/lib/types";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
 
@@ -16,11 +18,24 @@ interface ThreadSidebarProps {
   agents: AgentView[];
   /** Bare shell panes (no agent) — listed in a trailing "Shells" group so fresh spaces are reachable. */
   shellPanes?: AgentView[];
-  currentPaneId?: string;
+  /**
+   * The open pane's full row identity ({@link paneRowKey}), never its bare id. `w1:p1` names a
+   * different terminal on every machine in a crew, so on a widened switcher list two rows can
+   * answer to the same id — comparing ids alone would mark BOTH as current. Pass `paneRowKey` of
+   * the pane you're actually in (agent-chat.tsx already computes this for its own "elsewhere needs
+   * you" check).
+   */
+  currentPaneKey: string;
+  /**
+   * Open a row. Takes the PANE, not its id — the same reason `agent-list.tsx`'s `onOpen` does: a
+   * pane id is unique only within one machine, so an id alone cannot say which row was tapped.
+   */
   onSelect: (pane: AgentView) => void;
-  /** Whether the Recent section is expanded, and how to fold it. Omit to leave it always open. */
-  recentOpen?: boolean;
-  onRecentOpenChange?: (open: boolean) => void;
+  /** The raw tab list, for the multiplexer's own tab order inside a workspace (lib/pane-groups.ts). */
+  tabs?: readonly TabView[];
+  /** The snapshot's machine list, for the order machines run in: the lead first. */
+  servers?: readonly ServerSummary[] | undefined;
+  order?: "place" | "attention";
   /** Whether the Shells section is expanded, and how to fold it. Omit to leave it always open. */
   shellsOpen?: boolean;
   onShellsOpenChange?: (open: boolean) => void;
@@ -45,27 +60,38 @@ interface ThreadSidebarProps {
   className?: string;
 }
 
-// The pane switcher behind the dashboard summary and swipe-up "Switch pane" sheet: every agent pane
-// grouped by lib/triage.ts with Working placed last, then bare shells under a trailing "Shells" group,
-// with the open one highlighted. Switching is
-// the ONLY action here — closing a pane lives in the pane pill's long-press sheet (with its own
-// confirm), so a fat-thumbed switch can never destroy a pane.
+// The pane switcher has two operator-chosen arrangements. The in-pane swipe sheet keeps every pane
+// under its workspace in fixed place order. The dashboard summary opens a frozen attention snapshot,
+// grouped as Needs you, Ready, Recent, then Working. Switching is the ONLY action here — closing a
+// pane lives in the pane pill's long-press sheet, so a fat-thumbed switch can never destroy a pane.
 //
-// This sheet sees the WHOLE herd, so it has the same problem the dashboard had: the two long tails
-// (Recent, and 30-odd bare shells) bury the handful of agents you actually came to switch to. Both
-// fold, and both remember it, using the dashboard's own header primitive.
+// Place mode never moves when a pane changes state (ADR 0063). Attention mode is the ADR's explicit
+// operator-requested exception: HomeRoute snapshots the rows when the operator opens the sheet, so
+// its urgency order cannot move under a thumb while that sheet stays open.
+//
+// The two long tails still fold: 30-odd bare shells, and the Launch rows, using the dashboard's own
+// header primitive and remembering it.
 // A module-level empty list, not a `= []` default in the parameter list: a fresh array literal on
 // every render is a new reference, which defeats memoisation downstream for no benefit here.
 const NO_PANES: AgentView[] = [];
 const NO_LAUNCHERS: readonly Launcher[] = [];
 
+/** The buckets that mean "a human is required here" — the same two the dashboard's line counts. */
+const URGENT: ReadonlySet<TriageKey> = new Set<TriageKey>(["needs", "ready"]);
+
+/** A DOM id for a pane row, so the summary line can scroll to it and focus it. */
+function rowDomId(pane: AgentView): string {
+  return `switch-row-${paneRowKey(pane).replace(/[^A-Za-z0-9_-]/gu, "_")}`;
+}
+
 export function ThreadSidebar({
   agents,
   shellPanes = NO_PANES,
-  currentPaneId,
+  currentPaneKey,
   onSelect,
-  recentOpen = true,
-  onRecentOpenChange,
+  tabs,
+  servers,
+  order = "place",
   shellsOpen = true,
   onShellsOpenChange,
   launchers = NO_LAUNCHERS,
@@ -91,38 +117,85 @@ export function ThreadSidebar({
     );
   }
 
+  // The dashboard's grouping, so the switcher and the dashboard list the same panes in the same place.
+  const groups = groupPanesByWorkspace(agents, [], { order: "fixed", tabs, servers });
+  const urgent = agents.filter((a) => URGENT.has(bucketOf(a)));
+  // The first urgent row in DISPLAY order, not in the order the list arrived in.
+  const firstUrgent = groups.flatMap((g) => g.panes).find((a) => URGENT.has(bucketOf(a)));
+  const jumpTo = (pane: AgentView) => {
+    const row = document.getElementById(rowDomId(pane));
+    row?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    row?.focus({ preventScroll: true });
+  };
+
   return (
     <div className={cn("flex flex-col gap-4 px-2 py-3", className)}>
       {noPanes && (
         <p className="px-2 py-2 text-sm text-muted-foreground">{t("home.empty.noAgents")}</p>
       )}
 
-      {triage(agents)
-        .toSorted((a, b) => Number(a.key === "working") - Number(b.key === "working"))
-        .map((g) => {
-          const members = g.agents;
-          if (members.length === 0) return null;
-          // Recent is the only foldable triage section, and only where the parent wired the state.
-          const foldable = !!g.collapsible && onRecentOpenChange !== undefined;
-          const open = foldable ? recentOpen : true;
-          return (
+      {order === "attention" ? (
+        triage(agents)
+          .toSorted((a, b) => Number(a.key === "working") - Number(b.key === "working"))
+          .map((g) => {
+            const members = g.agents;
+            if (members.length === 0) return null;
+            return (
+              <Section
+                key={g.key}
+                id={`switch-${g.key}`}
+                label={g.label}
+                count={members.length}
+                dot={g.dot}
+                {...(g.accent !== undefined ? { accent: g.accent } : {})}
+              >
+                {members.map((a) => (
+                  <PaneRow
+                    key={paneRowKey(a)}
+                    id={rowDomId(a)}
+                    pane={a}
+                    active={paneRowKey(a) === currentPaneKey}
+                    onSelect={onSelect}
+                  />
+                ))}
+              </Section>
+            );
+          })
+      ) : (
+        <>
+          {agents.length > 0 && (
+            <StatusSummaryLine
+              panes={urgent}
+              allClear={firstUrgent === undefined}
+              onJump={firstUrgent === undefined ? undefined : () => jumpTo(firstUrgent)}
+              className="px-2"
+            />
+          )}
+
+          {groups.map((g) => (
             <Section
               key={g.key}
-              id={`switch-${g.key}`}
-              {...sectionHeaderProps(g)}
-              {...(foldable ? { open, onToggle: onRecentOpenChange } : {})}
+              id={`switch-ws-${g.key.replace(/[^A-Za-z0-9_-]/gu, "_")}`}
+              label={g.label}
+              tone="strong"
+              dot={worstTriage(g.panes) === "needs" ? "bg-status-blocked" : undefined}
+              trailing={
+                <StatusCounts panes={g.panes} className="shrink-0 text-[11px] text-muted-foreground" />
+              }
             >
-              {members.map((a) => (
+              {g.panes.map((a) => (
                 <PaneRow
                   key={paneRowKey(a)}
+                  id={rowDomId(a)}
                   pane={a}
-                  active={a.paneId === currentPaneId}
+                  active={paneRowKey(a) === currentPaneKey}
                   onSelect={onSelect}
                 />
               ))}
             </Section>
-          );
-        })}
+          ))}
+        </>
+      )}
 
       {shellPanes.length > 0 && (
         <Section
@@ -136,7 +209,7 @@ export function ThreadSidebar({
             <PaneRow
               key={paneRowKey(p)}
               pane={p}
-              active={p.paneId === currentPaneId}
+              active={paneRowKey(p) === currentPaneKey}
               onSelect={onSelect}
             />
           ))}
@@ -176,17 +249,21 @@ function Section({
   count,
   accent,
   dot,
+  tone,
+  trailing,
   open,
   onToggle,
   children,
 }: {
   id: string;
   label: string;
-  count: number;
+  count?: number;
   accent?: boolean;
-  /** Status-palette bullet beside the header — the same colors the status badges use, so each
-   *  section carries its at-a-glance color key. */
-  dot: string;
+  /** Status-palette bullet beside the header — the same colors the status badges use. A workspace
+   *  heading carries one only while a pane inside needs you, as on the dashboard. */
+  dot?: string | undefined;
+  tone?: "muted" | "strong";
+  trailing?: React.ReactNode;
   open?: boolean;
   onToggle?: (open: boolean) => void;
   children: React.ReactNode;
@@ -197,10 +274,12 @@ function Section({
       <SectionHeader
         level={3}
         label={label}
-        count={count}
-        dot={dot}
         className="px-2"
-        {...(accent ? { accent } : {})}
+        {...(accent !== undefined ? { accent } : {})}
+        {...(count !== undefined ? { count } : {})}
+        {...(dot !== undefined ? { dot } : {})}
+        {...(tone !== undefined ? { tone } : {})}
+        {...(trailing !== undefined ? { trailing } : {})}
         {...(foldable ? { open, onToggle, controls: id } : {})}
       />
       {(!foldable || open) && <div id={id}>{children}</div>}
@@ -209,10 +288,13 @@ function Section({
 }
 
 function PaneRow({
+  id,
   pane,
   active,
   onSelect,
 }: {
+  /** The row's DOM id, for the summary line's jump. Shell rows need none. */
+  id?: string;
   pane: AgentView;
   active: boolean;
   onSelect: (pane: AgentView) => void;
@@ -228,6 +310,7 @@ function PaneRow({
   const { space, tab } = panePlaceParts(pane);
   return (
     <button
+      id={id}
       type="button"
       onClick={() => onSelect(pane)}
       aria-current={active ? "page" : undefined}
@@ -253,7 +336,7 @@ function PaneRow({
       {isShell ? (
         <TerminalSquare className="size-3.5 shrink-0 text-muted-foreground" />
       ) : (
-        // Status is conveyed by the section grouping; the row leads with the agent's logo.
+        // Status is conveyed by the row's alarm edge and the heading's dot; the row leads with the logo.
         <AgentIcon agent={pane.agent} className="size-5" />
       )}
       <div className="min-w-0 flex-1">
