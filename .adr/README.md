@@ -92,7 +92,7 @@ the pointer, it was a supersede.
 | [0015](./0015-pack-add-pushes-over-the-operators-ssh.md) | `pack add` pushes the lead's own commit over the operator's SSH (addendum 2026-09-21: a commitless lead installs from the release) | Accepted |
 | [0016](./0016-updates-ride-the-operators-ssh.md) | Updates ride the operator's SSH, never the pack wire (addendum 2026-09-04: peers follow) | Accepted |
 | [0017](./0017-recognising-a-password-prompt-changes-what-collie-says.md) | Recognising a password prompt changes what Collie says, never what it sends | Accepted |
-| [0018](./0018-operator-command-rows-replace-the-catalog.md) | The operator's command rows replace the catalog, never merge into it | Superseded for Claude's Agent palette by 0054 |
+| [0018](./0018-operator-command-rows-replace-the-catalog.md) | The operator's command rows replace the catalog, never merge into it | Superseded for Claude's Agent palette by 0062 |
 | [0019](./0019-oxlint-and-vendored-anti-slop-are-the-lint-gate.md) | oxlint + vendored anti-slop is the lint gate; one linter; TypeScript 7 | Accepted |
 | [0020](./0020-a-major-upgrade-is-consented-by-flag.md) | A major upgrade is consented by flag; routine update follows tags within the major | Accepted |
 | [0021](./0021-the-path-name-is-a-pointer-never-a-copy.md) | The name on PATH is a pointer, never a copy | Accepted |
@@ -128,8 +128,8 @@ the pointer, it was a supersede.
 | [0051](./0051-the-phone-app-runs-react-router-in-library-mode.md) | The phone app runs React Router in library mode; four build seams framework mode would take | Accepted |
 | [0052](./0052-one-build-serves-any-mount.md) | One build serves any mount: `COLLIE_BASE_PATH` is a runtime setting the bridge applies when it serves the shell | Accepted |
 | [0053](./0053-an-unread-dialog-still-has-a-way-out.md) | An unread dialog still has a way out: a footer phrase never silences a grammar, and a raw-only modal gets its adapter's declared cancel key | Accepted |
-| [0054](./0054-claude-operator-commands-join-the-reference-catalog.md) | Claude operator commands join the maintained reference catalog | Command execution amended by 0062 |
-| [0062](./0062-the-agent-palette-stages-never-sends.md) | The Agent palette stages commands, never sends them | Accepted |
+| [0062](./0062-claude-operator-commands-join-the-reference-catalog.md) | Claude operator commands join the maintained reference catalog | Command execution amended by 0063 |
+| [0063](./0063-the-agent-palette-stages-never-sends.md) | The Agent palette stages commands, never sends them | Accepted |
 
 Numbers are claimed across **both** branches: 0011–0016 were accepted here on `v1` while `main` was
 still at 0010, so a new ADR continues from the highest number in use anywhere, not the highest one on

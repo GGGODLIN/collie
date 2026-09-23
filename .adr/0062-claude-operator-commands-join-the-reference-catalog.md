@@ -1,6 +1,6 @@
-# 0054 — Claude operator commands join the reference catalog
+# 0062 — Claude operator commands join the reference catalog
 
-- **Status:** Accepted; command execution amended by [ADR 0062](./0062-the-agent-palette-stages-never-sends.md)
+- **Status:** Accepted; command execution amended by [ADR 0063](./0063-the-agent-palette-stages-never-sends.md)
 - **Date:** 2026-09-23
 - **Shipped in:** pending
 - **Trail:** operator request in the 2026-09-23 Claude Code design thread ("自製 slash 一定出現，原生的也要有") · `web/src/lib/agent-commands.ts` (`commandsFor`) · [ADR 0018](./0018-operator-command-rows-replace-the-catalog.md) · [ADR 0043](./0043-operator-bar-rows-replace-the-bar-not-the-palette.md)
