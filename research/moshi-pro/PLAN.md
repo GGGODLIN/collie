@@ -43,3 +43,16 @@ T2 不通過的備案：請使用者在手機「設定 → 一般 → 鍵盤 →
 ### 第 3 階段：整理
 
 早上交 `features.md` 與 `run-log.md`（跑了哪些、卡在哪、哪些要使用者手動試）。
+
+## 可行性測試結果（2026-09-23 21:59–22:03）
+
+| # | 結果 | 證據 |
+|---|---|---|
+| T1 點擊 | ✓ | 點 inbox 列表開出 session 卡片；點「開啟終端機」進 Chat View；點設定齒輪進設定頁 |
+| — 頂部死區 | 發現 | y≈103 以上的點擊被 iPhone 鏡像輸出自己的懸浮工具列吃掉；同一顆齒輪改點 y=117 就成功 |
+| T1 滑動 | ✓ | inbox 下拉有反應 |
+| T2 切英文 | 未測 | 還沒找到安全的輸入目標 |
+| T3 連回 Mac | 部分 ✓ | Moshi 已配對這台 Mac，inbox 列出本機 Claude Code session（moshi-hook 早已裝在 `~/.claude/settings.json`）；主機清單入口還沒找到 |
+| T4 閒置不斷線 | 進行中 | 背景每 5 分鐘查 status |
+
+**安全規則（新增）**：Moshi 的 Chat View 會列出執行這次探索的 Claude session 本身，其「對 Moshi 說…」輸入框會把字送進這個 session。打字測試只准在 Herdr 分頁 `moshi-sandbox`（cwd `~/Desktop/projects/moshi-pro-study/sandbox`）裡做，絕不在 collie-gggodlin 那張卡片或它的終端機裡打字。
