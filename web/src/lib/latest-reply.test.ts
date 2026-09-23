@@ -113,6 +113,10 @@ describe("newestExchange", () => {
     expect(replyProse(exchange!.reply)).toBe("the a");
     expect(replyProse(exchange!.prompt!)).toBe("the q");
   });
+
+  it("returns null instead of a reply-only exchange when the prompt is absent", () => {
+    expect(newestExchange([say("orphan answer")])).toBeNull();
+  });
 });
 
 describe("locateReply", () => {

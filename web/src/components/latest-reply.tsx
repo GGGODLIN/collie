@@ -15,8 +15,6 @@ import type { Scope } from "@/lib/scope";
 // the two never print the same words twice: this card, then the mirror picking up exactly where the
 // message finished — tool calls, a dialog, the cursor, all untouched.
 //
-// The prompt is the nearest user turn before this reply; when absent, keep the reply-only fallback.
-//
 // Open state is the PARENT's, because it decides what the mirror shows: collapsing here is "give me
 // the raw rows back", so the hiding and the folding have to be one decision, not two that can drift.
 //
@@ -66,7 +64,7 @@ export function LatestReply({
       {open && (
         <div className="border-t px-2.5 py-2">
           <TranscriptView
-            entries={exchange.prompt ? [exchange.prompt, exchange.reply] : [exchange.reply]}
+            entries={[exchange.prompt, exchange.reply]}
             agent={agent}
             scope={scope}
           />

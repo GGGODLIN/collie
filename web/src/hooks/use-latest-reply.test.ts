@@ -3,6 +3,7 @@ import { http, HttpResponse } from "msw";
 
 import { server } from "@/test/setup";
 import { fixtureTranscript } from "@/test/handlers";
+import type { TranscriptEntry } from "@/lib/types";
 import { useLatestReply } from "./use-latest-reply";
 
 // What the pane view needs from the journal, and what it must not carry across pane switches.
@@ -90,4 +91,45 @@ describe("useLatestReply", () => {
     await waitFor(() => expect(counter.hits()).toBe(0));
   });
 
+  it("pages backward until the newest reply's prompt is part of the exchange", async () => {
+    const toolEntries: TranscriptEntry[] = Array.from({ length: 199 }, (_, index) => ({
+      uuid: `tool-${index}`,
+      ts: "",
+      role: "assistant",
+      parts: [{ kind: "tool", name: "Bash", summary: `step ${index}` }],
+    }));
+    const cursors: (string | null)[] = [];
+    server.use(
+      http.get(/\/api\/pane\/[^/]+\/history/, ({ request }) => {
+        const before = new URL(request.url).searchParams.get("before");
+        cursors.push(before);
+        if (before === null) {
+          return HttpResponse.json({
+            paneId: "w1:p1",
+            available: true,
+            entries: [...toolEntries, fixtureTranscript[1]],
+            hasMore: true,
+            total: 201,
+            fileTruncated: false,
+          });
+        }
+        return HttpResponse.json({
+          paneId: "w1:p1",
+          available: true,
+          entries: [fixtureTranscript[0]],
+          hasMore: false,
+          total: 201,
+          fileTruncated: false,
+        });
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useLatestReply({ paneId: "w1:p1", enabled: true, mirrorText: "some output" }),
+    );
+
+    await waitFor(() => expect(result.current?.prompt.uuid).toBe("t1"));
+    expect(result.current?.reply.uuid).toBe("t2");
+    expect(cursors).toEqual([null, "tool-0"]);
+  });
 });

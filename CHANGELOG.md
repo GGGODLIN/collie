@@ -38,6 +38,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 ### Fixed
 
 - **Full reply ignores internal skill instructions when pairing an exchange.** Claude journal rows marked as internal metadata no longer become the apparent user prompt, so a skill such as self-closeout cannot be shown above the assistant's actual reply.
+- **Full reply keeps every prompt with its answer.** When a tool-heavy turn pushes the prompt outside the newest history page, Collie reads older pages until it finds the prompt that reply answered; if the log cannot supply both sides, the terminal mirror stays in place instead of showing a reply-only card.
 
 ## [1.12.0] - 2026-09-23
 

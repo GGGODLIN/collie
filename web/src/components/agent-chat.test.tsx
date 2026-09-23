@@ -2588,7 +2588,7 @@ describe("AgentChat — full latest reply", () => {
   const SCREEN = paneTextWithDraft(`${REPLY.slice(120)}\n\nBash(git log --oneline)\n  ${AFTER}`);
 
   it("shows the whole message, and takes the rows it covers out of the mirror", async () => {
-    withJournalReply(REPLY);
+    withJournalReply(REPLY, PROMPT);
     renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: SCREEN });
     await waitFor(() => expect(card()).toBeInTheDocument());
 
@@ -2602,7 +2602,7 @@ describe("AgentChat — full latest reply", () => {
 
   it("gives the terminal rows back when you collapse it", async () => {
     const user = userEvent.setup();
-    withJournalReply(REPLY);
+    withJournalReply(REPLY, PROMPT);
     renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: SCREEN });
     await waitFor(() => expect(card()).toBeInTheDocument());
 
@@ -2624,11 +2624,19 @@ describe("AgentChat — full latest reply", () => {
     expect(screen.getByRole("button", { name: "Scroll to latest" })).toBeInTheDocument();
   });
 
+  it("keeps the terminal mirror when history cannot supply the reply's prompt", async () => {
+    const hits = withJournalReply(REPLY);
+    renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: SCREEN });
+    await waitFor(() => expect(hits()).toBe(1));
+    await waitFor(() => expect(card()).not.toBeInTheDocument());
+    expect(mirror()).toContain("bigger claim");
+  });
+
   // Find searches the mirror and highlights only there, so a hidden row would be a match you can see
   // but cannot find. Opening find restores the whole mirror and stands the card down.
   it("hands the whole mirror back while the find bar is open", async () => {
     const user = userEvent.setup();
-    withJournalReply(REPLY);
+    withJournalReply(REPLY, PROMPT);
     renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: SCREEN });
     await waitFor(() => expect(card()).toBeInTheDocument());
 
@@ -2638,7 +2646,7 @@ describe("AgentChat — full latest reply", () => {
   });
 
   it("shows nothing when the journal's newest reply is not what the mirror is showing", async () => {
-    const hits = withJournalReply(REPLY);
+    const hits = withJournalReply(REPLY, PROMPT);
     renderChat({
       agent: sessionAgent(),
       agents: [sessionAgent()],
@@ -2650,7 +2658,7 @@ describe("AgentChat — full latest reply", () => {
 
   it("wraps a short whole reply instead of leaving it in the terminal", async () => {
     const short = "Short reply.";
-    withJournalReply(short);
+    withJournalReply(short, PROMPT);
     renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: paneTextWithDraft(short) });
     await waitFor(() => expect(card()).toBeInTheDocument());
     expect(screen.getByText(short)).toBeInTheDocument();
@@ -2664,7 +2672,7 @@ describe("AgentChat — full latest reply", () => {
       "collie:display-prefs:v4",
       JSON.stringify({ wrap: true, fontSize: 12, expandClippedReply: false }),
     );
-    const hits = withJournalReply(REPLY);
+    const hits = withJournalReply(REPLY, PROMPT);
     renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: REPLY.slice(120) });
     await waitFor(() => expect(screen.getByText(/bigger claim/)).toBeInTheDocument());
     expect(hits()).toBe(0);
@@ -2673,7 +2681,7 @@ describe("AgentChat — full latest reply", () => {
   });
 
   it("reads no journal at all on a pane that has none", async () => {
-    const hits = withJournalReply(REPLY);
+    const hits = withJournalReply(REPLY, PROMPT);
     const shell = { ...fixtureAgents[0]!, kind: "shell" as const, readableLines: 51 };
     renderChat({ agent: shell, agents: [shell], text: REPLY.slice(120) });
     await waitFor(() => expect(screen.getByText(/bigger claim/)).toBeInTheDocument());

@@ -94,23 +94,21 @@ export function newestReply(entries: TranscriptEntry[]): TranscriptEntry | null 
 export interface LatestExchange {
   /** The newest assistant turn carrying prose — the one `locateReply` is asked about. */
   reply: TranscriptEntry;
-  /** The turn before it that was speech, or null when the page holds none (see below). */
-  prompt: TranscriptEntry | null;
+  /** The nearest prose user turn before that reply. */
+  prompt: TranscriptEntry;
 }
 
 /** Pair the newest spoken reply only with the nearest prose user turn before it. */
 export function newestExchange(entries: TranscriptEntry[]): LatestExchange | null {
   const at = newestReplyIndex(entries);
   if (at === -1) return null;
-  let prompt: TranscriptEntry | null = null;
   for (let i = at - 1; i >= 0; i--) {
     const entry = entries[i];
     if (entry && entry.role === "user" && replyProse(entry) !== "") {
-      prompt = entry;
-      break;
+      return { reply: entries[at]!, prompt: entry };
     }
   }
-  return { reply: entries[at]!, prompt };
+  return null;
 }
 
 /** Where a turn sits on the mirror, and which row it ends on when present. */

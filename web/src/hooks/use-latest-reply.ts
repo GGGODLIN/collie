@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { fetchHistory } from "@/lib/api";
-import { newestExchange, type LatestExchange } from "@/lib/latest-reply";
+import { newestExchange, newestReply, type LatestExchange } from "@/lib/latest-reply";
 import { paneScopeKey, type Scope } from "@/lib/scope";
 
 // Keeps the pane view holding the agent's newest finished exchange, read from its own session log.
@@ -19,7 +19,6 @@ import { paneScopeKey, type Scope } from "@/lib/scope";
 // The first fetch is immediate rather than settle-delayed: opening a pane whose reply is already
 // clipped should show it, not make you wait out a timer for output that may never change again.
 
-/** Turns requested: the page the history route opens on. Long enough that a reply's prompt is in it. */
 const TURNS = 200;
 
 /** How long the mirror must hold still before its content counts as a finished message. */
@@ -67,8 +66,29 @@ export function useLatestReply({
     let live = true;
     void (async () => {
       try {
-        const page = await fetchHistory(paneId, { limit: TURNS }, scope, abort.signal);
-        if (live && page.available) setExchange(newestExchange(page.entries));
+        let page = await fetchHistory(paneId, { limit: TURNS }, scope, abort.signal);
+        if (!page.available) return;
+        if (newestReply(page.entries) === null) {
+          if (live) setExchange(null);
+          return;
+        }
+        const entries = [...page.entries];
+        let nextExchange = newestExchange(entries);
+        const cursors = new Set<string>();
+        while (nextExchange === null && page.hasMore) {
+          const before = entries[0]?.uuid;
+          if (!before || cursors.has(before)) break;
+          cursors.add(before);
+          const older = await fetchHistory(paneId, { limit: TURNS, before }, scope, abort.signal);
+          if (!older.available || older.entries.length === 0) break;
+          const first = older.entries[0]?.uuid;
+          if (first && cursors.has(first)) break;
+          entries.unshift(...older.entries);
+          page = older;
+          nextExchange = newestExchange(entries);
+          if (!first) break;
+        }
+        if (live) setExchange(nextExchange);
       } catch {
         // A cancelled or failed read leaves the previous exchange in place.
       }
