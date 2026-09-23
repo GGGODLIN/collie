@@ -235,6 +235,8 @@ export const de: Dictionary = {
   "composer.attach.title": "Anhängen",
   "composer.attach.photos": "Fotos",
   "composer.attach.files": "Dateien",
+  "composer.attach.listAria": "Anhänge",
+  "composer.attach.removeAria": "{name} entfernen",
   "composer.send.typeAnyway": "Trotzdem tippen",
   "composer.send.reallySend": "Senden bestätigen",
   "composer.send.stopTypingAria": "Eingabe ins Terminal abbrechen",
@@ -255,7 +257,7 @@ export const de: Dictionary = {
   "composer.destructive.confirm": "Destruktiv: {reason}. Erneut tippen zum Bestätigen.",
   "composer.destructive.confirmOnHost":
     "Destruktiv: {reason} auf {host}. Erneut tippen zum Bestätigen.",
-  "composer.upload.success": "Datei hinzugefügt, Pfad in Nachricht",
+  "composer.upload.success": "Datei angehängt",
   "composer.upload.tooLarge": "Die Datei ist größer als {max} MB, das Limit für diesen Collie.",
   "composer.upload.badType": "Collie kann {name} nicht anhängen.",
   "composer.noEcho.title": "Passwortabfrage ohne Echo",
@@ -271,6 +273,7 @@ export const de: Dictionary = {
   "composer.noEcho.dismissAria": "Passworthinweis verwerfen",
   "composer.draftPreview.title": "Entwurf im Terminal",
   "composer.draftPreview.takeOver": "Übernehmen",
+  "composer.draftPreview.dismissAria": "Hinweis zum Terminal-Entwurf schließen",
 
   // --- sendMode (the armed "typing straight through" indicator) ---
   "sendMode.armed.title": "Eingabe ins Terminal",
@@ -669,6 +672,18 @@ export const de: Dictionary = {
 
   // --- dialog (menu / multi-select / wizard / preview-select block renderers) ---
   "dialog.sendingAria": "Wird gesendet",
+  // TODO wordsmith
+  "dialog.terminalControl": "Terminal",
+  // TODO wordsmith
+  "dialog.terminalControlAria": "Show the terminal instead of this card",
+  // TODO wordsmith
+  "dialog.backToCard": "Back to the card",
+  // TODO wordsmith
+  "dialog.putAwayControl": "Put away",
+  // TODO wordsmith
+  "dialog.putAwayControlAria": "Hide this card's buttons, keep the terminal",
+  // TODO wordsmith
+  "dialog.showButtons": "Show the buttons",
   "dialog.previousStepAria": "Vorheriger Schritt",
   "dialog.nextStepAria": "Nächster Schritt",
   "dialog.answeredAria": "Beantwortet",
@@ -688,6 +703,10 @@ export const de: Dictionary = {
   "dialog.menu.moveDown": "Nach unten",
   "dialog.menu.leftAria": "Links: {verb} ({label})",
   "dialog.menu.rightAria": "Rechts: {verb} ({label})",
+  // TODO wordsmith
+  "dialog.menu.levelAria": "{verb} to {label}",
+  // TODO wordsmith
+  "dialog.menu.levelCurrentAria": "{label}, current",
   "unreadDialog.caption": "Collie kann diesen Dialog nicht lesen", // wordsmith
   "dialog.preview.currentAnswerAria": "Aktuelle Antwort",
   "dialog.preview.previewedBelowAria": "Vorschau unten",

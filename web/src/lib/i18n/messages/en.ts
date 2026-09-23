@@ -249,6 +249,8 @@ export const en = {
   "composer.attach.title": "Attach",
   "composer.attach.photos": "Photos",
   "composer.attach.files": "Files",
+  "composer.attach.listAria": "Attachments",
+  "composer.attach.removeAria": "Remove {name}",
   "composer.send.typeAnyway": "Type anyway?",
   "composer.send.reallySend": "Really send?",
   "composer.send.stopTypingAria": "Stop typing into terminal",
@@ -268,7 +270,7 @@ export const en = {
   "composer.discard.confirmKeys.other": "Tap again to discard {count} queued keys",
   "composer.destructive.confirm": "Destructive: {reason} — tap Send again to confirm",
   "composer.destructive.confirmOnHost": "Destructive: {reason} on {host} — tap Send again to confirm",
-  "composer.upload.success": "File added, path in message",
+  "composer.upload.success": "File attached",
   "composer.upload.tooLarge": "That file is bigger than {max} MB, the limit on this collie.",
   "composer.upload.badType": "Collie can't attach {name}.",
   "composer.noEcho.title": "Password prompt — nothing echoes",
@@ -284,6 +286,7 @@ export const en = {
   "composer.noEcho.dismissAria": "Dismiss password-prompt notice",
   "composer.draftPreview.title": "Draft in terminal",
   "composer.draftPreview.takeOver": "Take over",
+  "composer.draftPreview.dismissAria": "Dismiss the terminal draft notice",
 
   // --- sendMode (the armed "typing straight through" indicator) ---
   "sendMode.armed.title": "Typing into terminal",
@@ -695,6 +698,15 @@ export const en = {
 
   // --- dialog (menu / multi-select / wizard / preview-select block renderers) ---
   "dialog.sendingAria": "Sending",
+  // ADR 0056: every lifted card's own way back to the terminal rows it replaced.
+  "dialog.terminalControl": "Terminal",
+  "dialog.terminalControlAria": "Show the terminal instead of this card",
+  "dialog.backToCard": "Back to the card",
+  // ADR 0056 counsel fix: the generic-menu and unread-dialog cards already show the mirror by
+  // default, so their own Terminal control only hides their buttons — it needs its own words.
+  "dialog.putAwayControl": "Put away",
+  "dialog.putAwayControlAria": "Hide this card's buttons, keep the terminal",
+  "dialog.showButtons": "Show the buttons",
   "dialog.previousStepAria": "Previous step",
   "dialog.nextStepAria": "Next step",
   "dialog.answeredAria": "Answered",
@@ -714,6 +726,10 @@ export const en = {
   "dialog.menu.moveDown": "Move down",
   "dialog.menu.leftAria": "Left — {verb} ({label})",
   "dialog.menu.rightAria": "Right — {verb} ({label})",
+  // The printed scale's chips (.adr/0054): one per value the screen listed. The chip's own text is
+  // the level, so the aria name adds what a tap DOES to it.
+  "dialog.menu.levelAria": "{verb} to {label}",
+  "dialog.menu.levelCurrentAria": "{label}, current",
   "unreadDialog.caption": "Collie cannot read this dialog",
   "dialog.preview.currentAnswerAria": "Current answer",
   "dialog.preview.previewedBelowAria": "Previewed below",

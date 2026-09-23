@@ -231,6 +231,8 @@ export const ja: Dictionary = {
   "composer.attach.title": "添付",
   "composer.attach.photos": "写真",
   "composer.attach.files": "ファイル",
+  "composer.attach.listAria": "添付ファイル",
+  "composer.attach.removeAria": "{name}を削除",
   "composer.send.typeAnyway": "強制的に入力しますか？",
   "composer.send.reallySend": "送信しますか？",
   "composer.send.stopTypingAria": "ターミナルへの入力を停止",
@@ -250,7 +252,7 @@ export const ja: Dictionary = {
   "composer.discard.confirmKeys.other": "もう一度タップすると待機中の{count}キーを破棄します",
   "composer.destructive.confirm": "破壊的操作: {reason}。確認のため送信を再タップしてください",
   "composer.destructive.confirmOnHost": "破壊的操作: {host}上の{reason}。確認のため送信を再タップしてください",
-  "composer.upload.success": "ファイルを追加しました（パスを挿入）",
+  "composer.upload.success": "ファイルを添付しました",
   "composer.upload.tooLarge": "上限の {max} MB を超えています。",
   "composer.upload.badType": "{name} は添付できません。",
   "composer.noEcho.title": "パスワード入力プロンプト: エコーバック無効",
@@ -266,6 +268,7 @@ export const ja: Dictionary = {
   "composer.noEcho.dismissAria": "パスワードプロンプト通知を閉じる",
   "composer.draftPreview.title": "ターミナル内の下書き",
   "composer.draftPreview.takeOver": "引き継ぐ",
+  "composer.draftPreview.dismissAria": "ターミナルの下書きの通知を閉じる",
 
   // --- sendMode (the armed "typing straight through" indicator) ---
   "sendMode.armed.title": "ターミナル直接入力中",
@@ -661,6 +664,18 @@ export const ja: Dictionary = {
 
   // --- dialog (menu / multi-select / wizard / preview-select block renderers) ---
   "dialog.sendingAria": "送信中",
+  // TODO wordsmith
+  "dialog.terminalControl": "Terminal",
+  // TODO wordsmith
+  "dialog.terminalControlAria": "Show the terminal instead of this card",
+  // TODO wordsmith
+  "dialog.backToCard": "Back to the card",
+  // TODO wordsmith
+  "dialog.putAwayControl": "Put away",
+  // TODO wordsmith
+  "dialog.putAwayControlAria": "Hide this card's buttons, keep the terminal",
+  // TODO wordsmith
+  "dialog.showButtons": "Show the buttons",
   "dialog.previousStepAria": "前のステップ",
   "dialog.nextStepAria": "次のステップ",
   "dialog.answeredAria": "回答済み",
@@ -680,6 +695,10 @@ export const ja: Dictionary = {
   "dialog.menu.moveDown": "下へ移動",
   "dialog.menu.leftAria": "左: {verb}（{label}）",
   "dialog.menu.rightAria": "右: {verb}（{label}）",
+  // TODO wordsmith
+  "dialog.menu.levelAria": "{verb} to {label}",
+  // TODO wordsmith
+  "dialog.menu.levelCurrentAria": "{label}, current",
   "unreadDialog.caption": "Collie はこの対話を読み取れません", // wordsmith
   "dialog.preview.currentAnswerAria": "現在の回答",
   "dialog.preview.previewedBelowAria": "プレビューを下に表示中",

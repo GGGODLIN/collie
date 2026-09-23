@@ -230,6 +230,8 @@ export const ko: Dictionary = {
   "composer.attach.title": "첨부",
   "composer.attach.photos": "사진",
   "composer.attach.files": "파일",
+  "composer.attach.listAria": "첨부 파일",
+  "composer.attach.removeAria": "{name} 제거",
   "composer.send.typeAnyway": "그대로 입력할까요?",
   "composer.send.reallySend": "전송할까요?",
   "composer.send.stopTypingAria": "터미널 입력 중단",
@@ -248,7 +250,7 @@ export const ko: Dictionary = {
   "composer.discard.confirmKeys.other": "대기 중인 키 {count}개를 삭제하려면 다시 누르세요.",
   "composer.destructive.confirm": "주의가 필요한 명령: {reason}. 확인하려면 전송을 다시 누르세요.",
   "composer.destructive.confirmOnHost": "주의가 필요한 명령: {host}의 {reason}. 확인하려면 전송을 다시 누르세요.",
-  "composer.upload.success": "파일 추가됨, 메시지에 경로 표시",
+  "composer.upload.success": "파일 첨부됨",
   "composer.upload.tooLarge": "파일이 이 Collie의 제한인 {max}MB를 초과합니다.",
   "composer.upload.badType": "Collie에서 {name} 파일을 첨부할 수 없습니다.",
   "composer.noEcho.title": "비밀번호 입력 프롬프트. 입력 내용이 표시되지 않습니다.",
@@ -264,6 +266,7 @@ export const ko: Dictionary = {
   "composer.noEcho.dismissAria": "비밀번호 프롬프트 알림 닫기",
   "composer.draftPreview.title": "터미널 임시 저장본",
   "composer.draftPreview.takeOver": "가져오기",
+  "composer.draftPreview.dismissAria": "터미널 임시 저장본 알림 닫기",
 
   // --- sendMode (the armed "typing straight through" indicator) ---
   "sendMode.armed.title": "터미널 직접 입력 모드",
@@ -659,6 +662,18 @@ export const ko: Dictionary = {
 
   // --- dialog (menu / multi-select / wizard / preview-select block renderers) ---
   "dialog.sendingAria": "전송 중",
+  // TODO wordsmith
+  "dialog.terminalControl": "Terminal",
+  // TODO wordsmith
+  "dialog.terminalControlAria": "Show the terminal instead of this card",
+  // TODO wordsmith
+  "dialog.backToCard": "Back to the card",
+  // TODO wordsmith
+  "dialog.putAwayControl": "Put away",
+  // TODO wordsmith
+  "dialog.putAwayControlAria": "Hide this card's buttons, keep the terminal",
+  // TODO wordsmith
+  "dialog.showButtons": "Show the buttons",
   "dialog.previousStepAria": "이전 단계",
   "dialog.nextStepAria": "다음 단계",
   "dialog.answeredAria": "응답 완료",
@@ -678,6 +693,10 @@ export const ko: Dictionary = {
   "dialog.menu.moveDown": "아래로 이동",
   "dialog.menu.leftAria": "왼쪽: {verb} ({label})",
   "dialog.menu.rightAria": "오른쪽: {verb} ({label})",
+  // TODO wordsmith
+  "dialog.menu.levelAria": "{verb} to {label}",
+  // TODO wordsmith
+  "dialog.menu.levelCurrentAria": "{label}, current",
   "unreadDialog.caption": "Collie가 이 대화상자를 읽을 수 없습니다", // wordsmith
   "dialog.preview.currentAnswerAria": "현재 답변",
   "dialog.preview.previewedBelowAria": "하단 미리보기",
