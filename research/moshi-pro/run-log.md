@@ -68,3 +68,9 @@
 - **檔案分享**：上傳至 Moshi API，連結自動複製（這條會經過 Moshi 伺服器，與其他「不經伺服器」的功能不同）。
 - **Shell**：連線時偵測最近目錄（掃主機上 Claude/Codex 歷史）、在 tmux 中開啟、匯出 `MOSHI_CLIENT=1` 環境變數。
 - **主題**：跟隨系統、深色（Moshi、Dracula、Nord、Solarized Dark、Gruvbox、Catppuccin Mocha）、淺色（Solarized Light、Catppuccin Latte、GitHub Light、Rose Pine Dawn）、可掃 QR／貼上／選檔匯入自訂主題。
+
+## 補測：Chat View 內的批准（00:31）
+
+- 請 moshi-test 建 `reject-me.txt` → 從收件匣卡片「開啟終端機」進 Chat View：工具列「Write …/sandbox/reject-me.txt +1」下方、輸入框上方出現浮動條「等待核准　Write · /Use…eject-me.txt　[拒絕][允許]」。截圖 `screenshots/s1-reject-02.png`。
+- 按「拒絕」→ Mac 端 `reject-me.txt` 不存在、moshi-test 回 idle。連拍 `clips/s1-reject.mp4`。
+- 同一畫面：先前送的圖片在 Chat View 以大圖泡泡顯示（連線中時先顯示圖片佔位框）。
