@@ -1,0 +1,8 @@
+［android］ 1:2.1.122 2:fish- 3:node* 4:node
+0000
+Dictating..
+設定 聽寫
+語音 終端
+講話比打字快。Whisper、Apple 或雲端引擎
+把話直接落到提示詞。
+聽寫>
