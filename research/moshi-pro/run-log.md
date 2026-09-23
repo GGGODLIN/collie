@@ -44,3 +44,27 @@
 
 - 收件匣卡片左側圓環的數字：sandbox 卡為 90，而 moshi-test 當時 context 用 10% → 推測圓環＝剩餘 context 百分比（未驗證）；圓環上的閃電圖示含義未知。卡片副標為最後一則使用者訊息（You: …）。
 - 點底部「Claude ▬ Codex ▬」條 → 「用量」面板：每個帳號一張卡（Claude Code Team、Codex Pro 20x，標主機與同步時間）；5h／7d／Fable 用量條＋一條刻度線（推測是「照時間平均此刻應到的位置」）＋重置倒數；一句速度判讀「5h 用量進度偏慢・7d 用量進度偏快」；按鈕「7d 額度恢復時提醒我」。截圖 `screenshots/u-01.png`。資料源對應主機 log 的 `usage poller`。
+- 00:11 遠端剪貼簿（OSC 52）：往 moshi-test 的 tty（ttys010）寫 `ESC]52;c;base64("OSC52-OK")BEL`，30 秒內 Mac `pbpaste` 仍是原值。**沒有結論**：當時手機停在功能目錄頁、Moshi 可能沒在顯示該 pane；也可能 Herdr 不轉送 OSC 52，或手機剪貼簿不會自動同步回 Mac。留給本人驗證。
+
+## 終端機工具列
+
+- 工具列（左到右）：Ctrl、Esc、Tab、搖桿（方向鍵）、彎箭頭、剪貼簿、Claude 圖示（有 agent 時；切 Chat View）／對話泡泡（開輸入列）、鍵盤。
+- 00:15 彎箭頭＝「跳至」側邊欄（原生）：搜尋框「搜尋工作區、分…」、時鐘／清單兩種排序；依 Herdr 工作區分組（名稱＋git 分支＋改動星號），底下是分頁（`>_ 1`）或 agent session（Claude 圖示＋session 標題，如「LLM 使用場景盤點與成本分派」），右側綠點疑似表示 working／未讀，目前所在列反白。截圖 `screenshots/kb-02.png`。
+- 00:16 搖桿按鈕：tap、drag、touch 按住 0.8 秒再上移都沒反應，moshi-test 輸入列沒變。**鏡像輸出測不到，留給本人驗證**（官方說明：按住往任意方向拖曳送方向鍵，長按連發）。
+
+## 設定頁（00:17–00:28）
+
+結構：訂閱（Pro 試用剩 2 天、查看授權）／終端機（主題、字型與大小、聊天模式、進階）／輸入（工具列、捷徑、鍵盤、手勢、語音）／整合（Agent Hook、通知、在首頁顯示、檔案分享、Shell）／安全與同步（金鑰生物辨識、恢復時需生物辨識、同步設定、同步密鑰）／一般（語言、應用程式圖示）／說明（文件、探索 Moshi、支援、新功能、推薦、開源授權）；版本 3.15.0。各子頁 OCR 原文在 `settings/*.txt`（Agent Hook 頁的配對權杖已遮蔽；截圖不入庫）。「進階」「工具列」兩頁經鏡像點不開，未收。
+
+重點：
+- **聊天模式**：「在文字方塊中撰寫，而非直接輸入」、「聽寫後自動傳送」；聊天檢視標「實驗」，「偵測到智能體時以聊天方式開啟工作階段」；說明寫明「聊天檢視使用主機上執行的代理終端介面（TUI）。訊息會透過加密的 SSH 通道，在主機與此 App 之間直接傳輸，絕不經過 Moshi 伺服器」。
+- **捷徑**：長按 Ctrl 開捷徑列；分頁＝收藏／Tmux／Claude（8）／Codex（34）／Copilot（18）／Cursor（24）／OpenCode（8）／Zellij（8）／Herdr（8），可隱藏、排序、點列編輯。
+- **鍵盤（實體鍵盤）**：⌘K 捷徑、⌘1-9 切工作階段、⌘W 關閉、⌘V 貼上文字或圖片、⌘J 開聊天視圖、⌘M 聽寫；Option 當 Meta。
+- **手勢**：終端機表面單擊／雙擊（貼上）／三擊／下拉（隱藏鍵盤）／滑動（切多工器視窗）／雙指滑動（切面板）／雙指上下（切工作階段）／縮放（字型大小）；浮動輸入列上滑最小化、下滑隱藏鍵盤；工具列按鈕單擊、雙擊、長按可綁動作（例：Ctrl 雙擊開捷徑面板、長按鎖定 Ctrl）；音量鍵也可綁。
+- **語音**：引擎 Apple（iOS 26+ 裝置端）／Whisper（本機，Tiny 75MB 到 Turbo 1.6GB，英文專用或 99 語）／Parakeet（實驗，本機多語）／雲端 BYOK（自帶 API key）。有「測試轉錄」。
+- **Agent Hook**：安裝指令 `brew tap rjyo/moshi`、`brew install moshi-hook`、`moshi-hook pair --token …`、`moshi-hook install`、`brew services start moshi-hook`；說明「在伺服器上安裝 moshi-hook 以解鎖內容偵測、網頁預覽、差異檢視，以及收件匣與用量轉發」；裝置權杖可更換；Hook 狀態顯示。
+- **通知**：開 Moshi 時用「提醒」、關 Moshi 時用「即時動態」（Live Activity，精簡樣式，顯示在鎖定畫面與動態島）；點通知開啟位置可選；「保持螢幕恆亮」；多裝置各自開關；開發者區有「Webhook 與權杖」（推播權杖、測試推播、給自有腳本的 curl）。
+- **在首頁顯示**：首頁標題列可放 Agent／檔案／Web 伺服器／模擬器圖示，主機沒跑時隱藏。
+- **檔案分享**：上傳至 Moshi API，連結自動複製（這條會經過 Moshi 伺服器，與其他「不經伺服器」的功能不同）。
+- **Shell**：連線時偵測最近目錄（掃主機上 Claude/Codex 歷史）、在 tmux 中開啟、匯出 `MOSHI_CLIENT=1` 環境變數。
+- **主題**：跟隨系統、深色（Moshi、Dracula、Nord、Solarized Dark、Gruvbox、Catppuccin Mocha）、淺色（Solarized Light、Catppuccin Latte、GitHub Light、Rose Pine Dawn）、可掃 QR／貼上／選檔匯入自訂主題。

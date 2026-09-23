@@ -1,0 +1,58 @@
+主題
+<
+自動
+跟隨系統
+深色主題
+Moshi
+>
+Catppuccin Latte
+淺色主題
+>
+DARK
+Moshi
+•
+Dracula
+Nord
+•
+•
+Solarized Dark
+•
+•
+Gruvbox
+••
+Catppuccin Mocha
+LIGHT
+•
+•
+Solarized Light
+•
+Catppuccin Latte
+•
+GitHub Light
+--- scrolled ---
+00:281
+100
+…！！
+主題
+<
+Dlarized Dark
+•
+Gruvbox
+•
+Catppuccin Mocha
+LIGHT
+•
+Solarized Light
+•
+Catppuccin Latte
+•0
+•
+GitHub Light
+•••
+Rose Pine Dawn
+•
+自訂
+匯入主題
+掃描 QR Code、貼上或選擇檔案
+匯入的主題會同時套用於終端機和 App。請前往
+getmoshi.app 取得主題。
