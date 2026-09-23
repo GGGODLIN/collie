@@ -134,9 +134,11 @@ Put machine-specific commands, such as a Herdr plugin `/fork-in-herdr` or a cust
 These files are unchanged by the config file. They share the instance `config.toml`'s
 directory, they keep their own formats and their own live reload, and nothing merges them into it.
 
-Any row with the flag set requires a two-tap confirmation before it fires. Edits to any of these
-files take effect without restarting the service. If Collie rejects a row, `journalctl --user -u
-collie -n 20` prints the line number and the error.
+The Agent palette never fires a command: tapping a row puts it in the composer for review. A
+`commands.toml` confirm flag marks it dangerous and requires two taps only when `bar = true` also
+puts it on the direct-action row. A `keys.toml` danger flag still protects its preset directly.
+Edits take effect without restarting the service. If Collie rejects a row,
+`journalctl --user -u collie -n 20` prints the line number and the error.
 
 ```bash
 cp commands.toml.example ~/.config/collie/commands.toml
@@ -157,11 +159,13 @@ bar_label = "Status"
 ```
 
 On a Claude pane, matching rows appear first and the maintained reference commands remain searchable.
-An exact-name row replaces that reference row without removing its confirmation. Other harnesses
+An exact-name row replaces that reference row without lowering its dangerous classification. Other harnesses
 still display only matching rows. The narrowest scope wins, as documented in
 [ADR 0054](../.adr/0054-claude-operator-commands-join-the-reference-catalog.md).
 
-To verify, open a pane and tap **/**; your rows appear on the first screen.
+To verify, open a pane and tap **/**; your rows appear on the first screen. Tap one and Collie puts
+its command in the composer without sending it
+([ADR 0062](../.adr/0062-the-agent-palette-stages-never-sends.md)).
 
 ### Putting a command on the actions row
 
@@ -202,8 +206,8 @@ everywhere else. The Agent palette is a separate surface and one bar row never b
 A `bar_label` longer than 12 characters is shortened and the button still appears. A `bar` that is
 not `true` or `false` drops that one row, the same way a bad `confirm` does.
 
-The row sends while the agent is busy, the same as the command palette. The checkmark appears only
-when the pane took the text.
+The actions row sends while the agent is busy; the Agent palette only stages text in the composer.
+The checkmark appears only when the pane took the action-row command.
 
 A Switch button sits at the belt's right end and opens the pane switcher. It draws the layers mark
 alone, behind a hairline, and carries no word. A drag up, anywhere on the belt, opens the same

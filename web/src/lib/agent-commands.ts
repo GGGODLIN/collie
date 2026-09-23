@@ -1,9 +1,8 @@
 // Maintained slash-command reference catalogs, keyed by Herdr's detected agent type (`pane.agent`).
 // Sourced from each agent's official docs (Claude Code: code.claude.com/docs; Codex:
 // developers.openai.com/codex + openai/codex; pi: pi.dev/docs; opencode: opencode.ai/docs) and
-// curated for one-tap use from a phone. They are not a runtime capability registry. A slash command is just text:
-// the UI sends `/command` (+ submit key) for no-arg commands, or inserts `/command ` into the
-// composer for the user to complete when the command takes an argument.
+// curated for phone use. They are not a runtime capability registry. The Agent palette always puts
+// a selected command in the composer for review; the harness bar is the separate direct-action surface.
 //
 // `omp` is the one catalog sourced from CAPTURES rather than docs — see its section for the two rules
 // that follow from that, both of which apply to any future palette-sourced agent: only what a capture
@@ -25,13 +24,13 @@ export interface AgentCommand {
   command: string;
   /** One-line, action-oriented description. */
   description: string;
-  /** True if the command commonly takes an argument — tap inserts it into the composer to edit. */
+  /** True if the command commonly takes an argument; selection then adds a trailing space. */
   takesArg: boolean;
-  /** Placeholder shown after insert, e.g. "[instructions]" / "<model>". Empty if no arg. */
+  /** Placeholder shown beside the command, e.g. "[instructions]" / "<model>". Empty if no arg. */
   argHint: string;
   /** True for the handful surfaced first on a phone. The rest are reachable via search. */
   common: boolean;
-  /** Destructive/disruptive enough to warrant a two-tap confirm (e.g. /clear wipes context). */
+  /** Destructive/disruptive: red in the palette and confirmed on direct-action surfaces. */
   dangerous: boolean;
 }
 

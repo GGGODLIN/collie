@@ -980,8 +980,8 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     }
   }
 
-  // Insert "/cmd " into the composer (arg-taking commands) and focus it. Appends to any draft already
-  // typed (with a separating space) rather than clobbering it; an empty draft just gets set.
+  // Insert a selected command into the composer and focus it. Appends to any draft already typed
+  // (with a separating space) rather than clobbering it; an empty draft just gets set.
   function insertCommand(value: string) {
     direct.deactivateSilently();
     updateInputFrom((prev) => (prev.trim() ? `${prev.trimEnd()} ${value}` : value));
@@ -1654,7 +1654,6 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
         agent={agent}
         mine={operatorCommands}
         onInsert={insertCommand}
-        onSubmit={(t) => send(t, false)}
       />
     </>
   );

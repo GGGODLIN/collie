@@ -2,14 +2,15 @@
 #   cp commands.toml.example "$(herdr plugin config-dir herdr.collie)/commands.toml"
 #
 # On a Claude pane, your rows appear first and exact-name rows override the maintained reference
-# catalog without lowering its confirmation (ADR 0054). Other harnesses still replace their catalog
-# with your matching rows (ADR 0018). With every row commented out, every pane stays as shipped.
+# catalog without lowering its dangerous classification (ADR 0054). Other harnesses still replace
+# their catalog with your matching rows (ADR 0018). With every row commented out, every pane stays
+# as shipped.
 #
 # Edits are picked up live — no restart, no reload of the bridge. Reload the page to see them.
 #
-# Fields: `command` (required, leading slash; a space after it is an arg hint, and tapping the row
-# then puts "/cmd " in the composer to finish instead of sending), `description`, `scope` (a herdr
-# agent name — omit it and the row addresses every pane), `confirm` (two-tap before it fires).
+# Fields: `command` (required, leading slash; a space after it is an arg hint), `description`,
+# `scope` (a herdr agent name — omit it and the row addresses every pane), `confirm` (dangerous
+# styling plus two-tap confirmation when the row is also a direct action with `bar = true`).
 # These strings are served to every browser that can read this Collie: labels, not secrets.
 
 # A row scoped to one agent — omp's /fork-in-herdr is registered by a plugin, so no shipped catalog
@@ -24,8 +25,8 @@
 # command = "/standup"
 # description = "Post today's standup, then wait for review"
 
-# Your own brake on your own row. (A row naming a SHIPPED command inherits that command's confirm
-# whether you ask for it or not — `confirm = false` cannot lift it.)
+# Your own brake on a direct-action row. The palette only fills the composer; with `bar = true`,
+# `confirm = true` requires two taps before the actions row sends it.
 # [[commands]]
 # command = "/deploy"
 # description = "Deploy staging"

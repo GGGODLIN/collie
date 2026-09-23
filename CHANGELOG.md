@@ -43,6 +43,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 ### Changed
 
 - **Your Claude shortcuts now keep the reference command catalog.** Rows from `commands.toml` appear first in the Agent palette and override exact-name reference rows without lowering confirmation; other harnesses and the actions row retain replacement behavior.
+- **Agent command taps now stage text instead of sending.** Every palette row fills the composer for review, with one trailing space for argument-taking commands; the actions row remains the direct-send surface.
 
 ### Fixed
 

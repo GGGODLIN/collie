@@ -747,14 +747,13 @@ export interface OperatorCommand {
   command: string;
   /** One-line description shown in the palette (also searched). */
   description: string;
-  /** True when tapping should insert `/cmd ` into the composer instead of submitting it. */
+  /** True when selection should append a space for an argument. */
   takesArg: boolean;
-  /** Placeholder shown after insert, e.g. `<name>`. Empty when {@link takesArg} is false. */
+  /** Placeholder shown beside the command, e.g. `<name>`. Empty when {@link takesArg} is false. */
   argHint: string;
   /**
-   * The operator marking their own row dangerous — it then gets the same two-tap confirmation a
-   * shipped dangerous command gets. Only ever ADDS: a row naming a shipped command inherits that
-   * command's confirm regardless (rule 3 in agent-commands.ts), and `false` cannot lift it.
+   * The operator marking their own row dangerous. The palette only stages commands; direct-action
+   * surfaces use this for their two-tap confirmation. A shipped classification remains the floor.
    */
   confirm: boolean;
   /**

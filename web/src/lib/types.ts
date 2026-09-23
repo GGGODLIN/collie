@@ -900,10 +900,9 @@ export type CrewMode = "solo" | "lead" | "peer";
 
 /**
  * One operator-declared palette row (a `[[commands]]` table in their `commands.toml`). Mirrors
- * OperatorCommand in
- * bridge/types.ts. Resolved against the shipped catalog by `commandsFor()`, which hands a pane
- * these rows instead of the catalog when any of them address it — see agent-commands.ts for why a
- * plugin- or user-registered command can only arrive this way.
+ * OperatorCommand in bridge/types.ts. `commandsFor()` merges these rows into Claude's reference
+ * catalog and replaces other harness catalogs — see agent-commands.ts. The palette stages every row
+ * in the composer; direct-action behavior belongs to the harness bar.
  */
 export interface OperatorCommand {
   /** Herdr agent name this applies to, lowercased. Omitted = every agent. */
@@ -912,7 +911,7 @@ export interface OperatorCommand {
   description: string;
   takesArg: boolean;
   argHint: string;
-  /** The operator marking their own row dangerous. Optional so an older bridge stays readable. */
+  /** Dangerous styling and direct-action confirmation. Optional so an older bridge stays readable. */
   confirm?: boolean;
   /**
    * The operator putting this row on the harness bar above the key rail. Resolved by `barFor()` in

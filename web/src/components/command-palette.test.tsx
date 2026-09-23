@@ -45,13 +45,13 @@ describe("CommandPalette", () => {
     expect(screen.getByText(/No commands match/)).toBeInTheDocument();
   });
 
-  it("submits a no-arg command immediately and closes", async () => {
+  it("inserts a no-arg command into the composer without sending and closes", async () => {
     const user = userEvent.setup();
     const props = setup();
     await user.click(screen.getByText("/status"));
-    expect(props.onSubmit).toHaveBeenCalledExactlyOnceWith("/status");
+    expect(props.onInsert).toHaveBeenCalledExactlyOnceWith("/status");
+    expect(props.onSubmit).not.toHaveBeenCalled();
     expect(props.onClose).toHaveBeenCalledOnce();
-    expect(props.onInsert).not.toHaveBeenCalled();
   });
 
   it("inserts an arg-taking command into the composer (with trailing space) and closes", async () => {
@@ -63,18 +63,13 @@ describe("CommandPalette", () => {
     expect(props.onSubmit).not.toHaveBeenCalled();
   });
 
-  it("requires a two-tap confirm for a dangerous no-arg command", async () => {
+  it("inserts a dangerous command for review instead of asking or sending", async () => {
     const user = userEvent.setup();
     const props = setup();
-
-    // /clear is dangerous + no-arg. First tap arms confirm, does not submit.
     await user.click(screen.getByText("/clear"));
+    expect(props.onInsert).toHaveBeenCalledExactlyOnceWith("/clear");
     expect(props.onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText("Confirm?")).toBeInTheDocument();
-
-    // Second tap submits and closes.
-    await user.click(screen.getByText("/clear"));
-    expect(props.onSubmit).toHaveBeenCalledExactlyOnceWith("/clear");
+    expect(screen.queryByText("Confirm?")).toBeNull();
     expect(props.onClose).toHaveBeenCalledOnce();
   });
 
@@ -84,7 +79,7 @@ describe("CommandPalette", () => {
     expect(screen.queryByText("/compact")).toBeNull();
   });
 
-  it("shows one of the operator's own commands on the first screen and submits it", async () => {
+  it("shows an operator command on the first screen and inserts it", async () => {
     const user = userEvent.setup();
     const props = setup({
       agent: "omp",
@@ -100,7 +95,8 @@ describe("CommandPalette", () => {
     });
     // No search needed — an operator-declared row is common by construction.
     await user.click(screen.getByText("/fork-in-herdr"));
-    expect(props.onSubmit).toHaveBeenCalledExactlyOnceWith("/fork-in-herdr");
+    expect(props.onInsert).toHaveBeenCalledExactlyOnceWith("/fork-in-herdr");
+    expect(props.onSubmit).not.toHaveBeenCalled();
     expect(props.onClose).toHaveBeenCalledOnce();
   });
 
@@ -137,7 +133,7 @@ describe("CommandPalette", () => {
     expect(screen.queryByText("/compact")).toBeNull();
   });
 
-  it("still asks twice before a renamed destructive command", async () => {
+  it("inserts a renamed destructive command without sending it", async () => {
     const user = userEvent.setup();
     const props = setup({
       agent: "omp",
@@ -146,13 +142,11 @@ describe("CommandPalette", () => {
       ],
     });
     await user.click(screen.getByText("Fresh start"));
+    expect(props.onInsert).toHaveBeenCalledExactlyOnceWith("/new");
     expect(props.onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText("Confirm?")).toBeInTheDocument();
-    await user.click(screen.getByText("Fresh start"));
-    expect(props.onSubmit).toHaveBeenCalledExactlyOnceWith("/new");
   });
 
-  it("asks twice before a row the operator marked confirm", async () => {
+  it("inserts an operator-confirmed command without sending it", async () => {
     const user = userEvent.setup();
     const props = setup({
       agent: "omp",
@@ -167,11 +161,8 @@ describe("CommandPalette", () => {
         },
       ],
     });
-    // Same two-tap a shipped dangerous command gets — the operator's own brake, on their own row.
     await user.click(screen.getByText("Deploy staging"));
+    expect(props.onInsert).toHaveBeenCalledExactlyOnceWith("/deploy");
     expect(props.onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText("Confirm?")).toBeInTheDocument();
-    await user.click(screen.getByText("Deploy staging"));
-    expect(props.onSubmit).toHaveBeenCalledExactlyOnceWith("/deploy");
   });
 });
