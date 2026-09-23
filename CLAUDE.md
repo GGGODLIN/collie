@@ -19,6 +19,10 @@ explicit need, verify it with the nearest targeted tests, lint and `bun run buil
 Do not enter a full spec / ticket / review workflow, add architecture, refactor adjacent code or run
 the full test / E2E suite unless the user asks or the requested change directly requires it.
 
+A task is not finished at commit or push. After verification, deploy the resulting build to the
+active local Collie instance and leave it ready for phone acceptance. If a change has no deployable
+runtime effect, say so explicitly instead of silently skipping deployment.
+
 ## Decision records — read before reopening a settled question
 
 [`.adr/`](./.adr/) holds the decisions whose reasoning would otherwise live only in a PR thread —
