@@ -63,3 +63,33 @@ T2 不通過的備案：請使用者在手機「設定 → 一般 → 鍵盤 →
 - 系統對話框（例如允許貼上）的 OCR 座標比例會偏，以截圖格線座標為準。
 - Moshi 疑似卡住時，照使用者指示重開 app（`reset_app` 後再從主畫面開）。
 - 驗證輸入結果用 `herdr pane read wE:pA`，不靠 OCR。
+
+## 演練結果（2026-09-23 23:06–23:15）
+
+| 項目 | 結果 | 證據 |
+|---|---|---|
+| T5 斷線自救 | ✓（需「自動認證」） | 預設設定下重開鏡像輸出要 Mac Touch ID／密碼；使用者改成自動認證後，從連線中 quit → `open -a "iPhone Mirroring"`，15 秒內 Connected |
+| 手機解鎖 | 會中斷鏡像 | 使用者解鎖手機後鏡像輸出關閉；過夜期間不碰手機 |
+| 錄影 | ✗ | `start_recording` 一開始，status 立刻變 Paused，影片全黑；停止後恢復 Connected |
+| 連拍取代錄影 | ✓ | 同一 server process 連拍 6 張約 10 秒，全程 Connected；ffmpeg 2 fps、寬 360 接成 3 秒 mp4 只有 19 KB，字看得清楚 |
+| 重開 Moshi | ✓ | `reset_app Moshi` → `spotlight` → 點建議清單第一格 Moshi → 自動接回 moshi-sandbox |
+| 測試 agent | ✓ | Herdr agent `moshi-test`（pane wE:pA，Sonnet，`--permission-mode default`）；啟動時拒絕上層 `.mcp.json` 的 mirroir，不給它碰手機；請它建 hello.txt 觸發 Write 批准，Moshi 標頭顯示「1 blocked」。`ls` 不會觸發批准 |
+| 固定測試資料 | ✓ | `sandbox/diff-fixture`（git repo，app.py 有未提交改動）、`sandbox/preview-site/index.html` |
+
+## 修訂後的過夜計畫（採納 GPT-6 Pro 審查）
+
+**紀錄方式**：情境卡，不是功能卡。每張卡寫「你會在什麼時候用 → 你現在怎麼做（Collie／回電腦）→ Moshi 少掉哪一步 → 必要資料與控制入口 → Collie 有沒有 → 最小等效做法 → 未驗證之處」，附連拍短片（2 fps mp4）與關鍵截圖。鏡像操作的摩擦另記，不算 Moshi 的缺點。早上交 `review.html`，問三題：最近遇過嗎、現有做法夠嗎、下次會改用嗎。
+
+**順序**：
+1. 情境一「agent 在等我處理」：在 inbox／Chat View 找到 moshi-test、看懂在等什麼、從手機批准或回覆，Mac 端用 `herdr agent read` 確認收到。
+2. 情境二「agent 做完，我要驗收回饋」：Diff 檢視器看 diff-fixture、瀏覽器預覽看 preview-site、貼圖並標註送給 moshi-test，Mac 端確認收到正確內容。
+3. 情境三「離開再回來」：重開 Moshi、切換 Herdr 分頁後能否回到原工作。
+4. 其餘功能有空全部掃過（使用者要求夜晚盡量探索完整）：快速鍵面板、鍵盤工具列、跳至、終端手勢、最近目錄、遠端剪貼簿、設定頁各選項。
+5. 需要本人驗證（不是不重要）：語音、Apple Watch、Live Activity／鎖定畫面、推播、Face ID。
+
+**安全規則**：
+- 所有會改變狀態的操作（打字、送出、批准、拒絕、關分頁、中斷）只對 `moshi-test`／`moshi-sandbox`；送出前核對手機標頭是 `tab moshi-sandbox`，Mac 端 `herdr agent get moshi-test` 對得上，對不上就不操作。
+- 結果不明先用 Herdr 讀，不重送。過夜只有我一個手機操作者。
+- 每項最多 20 分鐘；同一步沒進展就停止重點，最多重開 Moshi 一次。
+- 鏡像斷線 → `open -a` 重連，連兩次失敗就停止手機操作，改整理資料。要求解鎖也停止。
+- 每 30 分鐘記一次 status 到 `run-log.md`。
