@@ -11,6 +11,8 @@
 | 2 | 換 Claude 帳號重開 session | U 帳號用量 | 新功能 | 中 |
 | 3 | 從列表直接批准 | 1-1 批准 | 新功能 | 中 |
 | 4 | 手機上的「白話／跟丟了」 | 使用者 2026-09-24 觀察 | 待訪談 | 未估 |
+| ✓ | 手機語音輸入：走 GPT 訂閱轉錄，主機轉台灣繁體 | V 語音 | 設定＋新功能，2026-09-24 已上線 | — |
+| 5 | 本機常駐 STT 服務，手機與電腦共用 | V 語音 | 新工具＋設定 | 中 |
 
 第 1 項排最前面，除了它最小，也因為它順便驗證第 2 項的前提：Collie 開的新 shell 認不認得 `cc` 這個 zsh 函式。
 
@@ -111,6 +113,48 @@ label = "cc"
 
 **待決定**：要哪一種、重講結果放在哪個畫面、要不要沿用 mod 的快取與 prompt。
 
+## 5. 本機常駐 STT 服務，手機與電腦共用
+
+**要什麼**：電腦的 TUI 也能用語音輸入，而且跟手機用同一套轉錄。要優化或換引擎時只改一個地方，兩邊一起生效；以後要改回本機模型，也是改這一個地方。
+
+**已拍板**（2026-09-24 訪談）
+
+| 題目 | 決定 |
+|---|---|
+| 共用方式 | 轉錄抽成本機常駐的獨立服務，講 OpenAI 格式（`POST /v1/audio/transcriptions`）；Collie 與 VoiceInk 都呼叫它，不再由 Collie 自己轉錄 |
+| 電腦的入口 | 用已安裝的 VoiceInk 1.79：它負責快捷鍵、錄音、把文字貼到游標處 |
+| 潤稿 | 關掉 VoiceInk 的潤稿（現在接 Groq Qwen），服務也先不做；之後需要再加在服務裡 |
+
+**架構**
+
+```
+電腦：VoiceInk ──────────────┐
+                             ├→ 本機 STT 服務（127.0.0.1）→ codex token → chatgpt.com 轉錄 → 轉台灣繁體
+手機 → Collie（只改 stt.json）┘
+```
+
+**為什麼可行**
+
+- Collie 的 `openai-compatible` provider 本來就能指向本機網址，設定說明就以 `http://127.0.0.1:8080/v1` 為例（`cli/stt.ts:226`）；它送的是 multipart 的 `file`、`model`、`response_format`（`bridge/stt/openai.ts:59`、`:76`–`:79`），可帶 key（`bridge/stt/config.ts:85`）。
+- VoiceInk 只接受 OpenAI 相容的轉錄 API，格式跟 Collie 送出的一樣（執行檔內的 `OpenAICompatibleTranscriptionService`）。
+- 拿 codex token、呼叫 chatgpt.com、轉繁體，三段在 Collie 已有能跑的程式（`bridge/stt/codex-auth.ts`、`bridge/stt/codex.ts`、`bridge/stt/convert.ts`）。
+
+**我自決的細節**（使用者未否決）
+
+1. 服務是新的獨立專案，放在 `~/Desktop/projects/` 底下；程式從 Collie 那三個檔案抄過去改，不從 Collie 的 checkout import，避免服務跟著 Collie 的部署變動。
+2. 只聽 `127.0.0.1`，並要求帶一把 key：電腦上任何程式都能連本機，沒有 key 等於誰都能用你的 GPT 訂閱轉錄。
+3. 用 launchd 開機自動啟動、掛了自動重啟。
+4. 不做備援：服務停了，手機和電腦的語音一起停，照實回錯誤，不偷偷改走別的引擎。
+5. Collie 裡現有的 codex provider 與轉繁體功能保留不刪，只是 `stt.json` 不再用它；想退回時把 `stt.json` 改回去即可。
+
+**動工前要實測**
+
+1. VoiceInk 的自訂轉錄模型，實際送出的欄位與錄音格式；Collie 單次上限 8MB（`bridge/stt/http.ts:17`），16kHz 單聲道 WAV 約 4 分鐘（估計：8MB ÷ 每秒 32KB）。
+2. chatgpt.com 轉錄端點收不收 VoiceInk 的錄音格式（WAV），不收就要在服務裡轉檔（本機已有 `ffmpeg`）。
+3. Collie 改指向服務後，`collie stt test` 通過、手機實際錄一次。
+
+**代價**：多一個要常駐的服務，而且它是手機與電腦語音的共同依賴。
+
 ## 不做的卡片
 
 | 卡片 | 原因 |
@@ -118,7 +162,7 @@ label = "cc"
 | U 用量顯示 | pane 鏡像已顯示 statusline |
 | 2-3 貼圖 | 實測現在的上傳路徑方式可以接受 |
 | 2-2 手機預覽網頁、3 離開再回來、J 跳至 | 現在的做法勉強，但使用者不想改用 Moshi 的方式 |
-| 1-2 回覆問題、2-1 git 面板、G 手勢、V 語音 | 沒遇過，或現在的做法夠用 |
+| 1-2 回覆問題、2-1 git 面板、G 手勢 | 沒遇過，或現在的做法夠用 |
 | Live Activity、Apple Watch | Collie 是 PWA，做不到 |
 
 ## roadmap 以外的待辦
