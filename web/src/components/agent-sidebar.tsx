@@ -308,6 +308,10 @@ function PaneRow({
   // same nine characters, and the tab is the only one of the two that discriminates.
   const name = paneName(pane);
   const { space, tab } = panePlaceParts(pane);
+  // A described pane reads the way its dashboard row does (agent-card.tsx): what it is doing on
+  // line 1, its name on line 2. The switcher is where you pick a pane to jump to, so it must not
+  // be the one list that still shows only the name.
+  const described = pane.description?.now;
   return (
     <button
       id={id}
@@ -341,7 +345,7 @@ function PaneRow({
       )}
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-baseline gap-1">
-          <span className="min-w-0 truncate text-sm font-medium">{name}</span>
+          <span className="min-w-0 truncate text-sm font-medium">{described ?? name}</span>
           <PaneMeta
             host={pane.host}
             cache={pane.cache}
@@ -350,8 +354,12 @@ function PaneRow({
           />
         </div>
         <div className="flex min-w-0 items-baseline gap-1 text-[11px] text-muted-foreground">
-          <span className="max-w-[45%] shrink truncate">{space}</span>
-          {tab && (
+          {described !== undefined ? (
+            <span className="min-w-0 flex-1 truncate">{name}</span>
+          ) : (
+            <span className="max-w-[45%] shrink truncate">{space}</span>
+          )}
+          {described === undefined && tab && (
             <>
               {/* The place's own separator (PLACE_SEP), because a space CONTAINS a tab. */}
               <span className="shrink-0 text-muted-foreground/60" aria-hidden>

@@ -147,6 +147,17 @@ describe("ThreadSidebar", () => {
     expect(current).toHaveTextContent("codex");
   });
 
+  it("leads a described row with what it is doing and moves the name to line 2", () => {
+    const described: AgentView = {
+      ...idleAgent,
+      description: { now: "在等你批准 Bash · ls", source: "blocked", at: 1 },
+    };
+    render(<ThreadSidebar agents={[described]} currentPaneKey="" onSelect={vi.fn()} />);
+    const row = screen.getByRole("button", { name: /在等你批准 Bash · ls/ });
+    expect(row).toHaveTextContent("claude");
+    expect(row).not.toHaveTextContent("sandbox");
+  });
+
   it("does not mark any pane current when the key matches nothing", () => {
     render(<ThreadSidebar agents={fixtureAgents} currentPaneKey="nope" onSelect={vi.fn()} />);
     expect(screen.queryByRole("button", { current: "page" })).toBeNull();
