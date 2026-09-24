@@ -7,7 +7,7 @@
 | 順序 | 項目 | 來自卡片 | 類型 | 規模（估計） |
 |---|---|---|---|---|
 | ✓ | agent 描述（recap）：列表、pane 畫面、推播共用一份 | N 通知 | 已上線 | — |
-| 1 | `launchers.toml` 加一列 `cc` | R 最近目錄 | 設定，不寫程式 | 5 分鐘 |
+| ✓ | `launchers.toml` 加一列 `cc` | R 最近目錄 | 設定，2026-09-24 已設定 | — |
 | 2 | 換 Claude 帳號重開 session | U 帳號用量 | 新功能 | 中 |
 | 3 | 從列表直接批准 | 1-1 批准 | 新功能 | 中 |
 
@@ -27,7 +27,7 @@ label = "cc"
 
 不寫 `cwd`，從 pane 的切換選單點時，就會用那個 pane 的目錄（[docs/configure.md](/docs/configure.md) 〈Your own launchers〉）。
 
-**要驗證**：新 shell 裡 `cc` 能不能執行；不能的話，改寫成展開後的完整指令。
+**已驗證**（2026-09-24）：Herdr 新分頁的 shell 是 zsh，`type cc` 回報 `cc is a shell function from ~/.zshrc`；`GET /api/launchers` 回傳這一列。手機上實際點一次的效果，由使用者驗收。
 
 **不做**：動態的「最近目錄清單」。它要讓 bridge 動態產生可執行的目錄，會放寬 launcher 白名單原則，換到的只是「開一個目前沒有 pane 的舊專案」這個偶爾的情境。
 
@@ -66,7 +66,7 @@ label = "cc"
 **動工前要實測**
 
 1. 怎麼從手機結束 Claude：送 `/exit`、兩次 ctrl+c，還是其他方式；工作中打斷時哪個最穩。
-2. `cc` 在 Herdr 的新 shell 能不能執行（第 1 項會先驗）。
+2. ~~`cc` 在 Herdr 的新 shell 能不能執行~~：已確認可以（見第 1 項）。
 3. `--resume` 本身會不會保留模型；會的話就不用加 `--model`。
 4. `ccopus` 的 `opus[1m]`：transcript 只記 `claude-opus-5-5`，沒有 `[1m]`，重開後還是不是 1M context。
 5. 帳號切換後，statusline 與 session-account 對應（`/tmp/cc-widget-cache/session-account.json`）有沒有跟著更新。
