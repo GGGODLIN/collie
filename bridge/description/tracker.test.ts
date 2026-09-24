@@ -5,9 +5,9 @@ import { join } from "node:path";
 
 import type { ProbeTail } from "../journal/cache-probe.ts";
 import { parseRecap } from "../journal/recap.ts";
-import type { JournalAdapter, TranscriptEntry, TranscriptSource } from "../journal/types.ts";
+import type { AgentSessionRef, JournalAdapter, TranscriptEntry, TranscriptSource } from "../journal/types.ts";
 import type { AgentView } from "../types.ts";
-import { DescriptionTracker } from "./tracker.ts";
+import { DescriptionTracker, WIDE_TAIL_BYTES } from "./tracker.ts";
 
 // The tracker on a fake clock, a counting fake journal, and a REAL temporary recap directory — the
 // recap read goes through `containedRealpath`, which only real paths can exercise.
@@ -207,6 +207,30 @@ describe("reading cost", () => {
     expect(tracker.describe(pane("codex", "s1"))).toBeDefined();
     await tracker.refresh([], { session: "a" });
     expect(tracker.describe(pane("codex", "s1"))).toBeUndefined();
+  });
+
+  test("a prompt older than the tail is found by one wider read, then kept without another", async () => {
+    const c = clock();
+    const j = fakeJournal("claude");
+    const reads: number[] = [];
+    const turn: TranscriptEntry = { uuid: "a", ts: "2026-09-24T10:00:01.000Z", role: "assistant", parts: [{ kind: "text", text: "working" }] };
+    const adapter: JournalAdapter = {
+      ...j.adapter,
+      parse: (text) => (text === "wide" ? [prompt("hi", "2026-09-24T10:00:00.000Z"), turn] : [turn]),
+    };
+    const tail = async (_s: TranscriptSource, _r: AgentSessionRef, bytes?: number): Promise<ProbeTail | null> => {
+      reads.push(bytes ?? 0);
+      return { path: "/logs/one.jsonl", lines: [bytes === WIDE_TAIL_BYTES ? "wide" : "narrow"], mtimeMs: 100 };
+    };
+    const tracker = new DescriptionTracker({ claude: adapter }, c.now, { recapDir: dir, tail });
+    await tracker.refresh([pane("claude", "s1")]);
+    expect(tracker.describe(pane("claude", "s1"))?.now).toBe("你：hi");
+    expect(reads).toEqual([0, WIDE_TAIL_BYTES]);
+    j.state.stat = { size: 20, mtimeMs: 200 };
+    c.advance(6000);
+    await tracker.refresh([pane("claude", "s1")]);
+    expect(tracker.describe(pane("claude", "s1"))?.now).toBe("你：hi");
+    expect(reads).toEqual([0, WIDE_TAIL_BYTES, 0]);
   });
 
   test("a database-backed harness is not tailed", async () => {

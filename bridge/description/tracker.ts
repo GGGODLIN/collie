@@ -25,6 +25,14 @@ import { describePane, journalFacts, type JournalFacts, type PaneDescription, ty
 
 export const DEFAULT_DESCRIPTION_FLOOR_MS = 5000;
 
+/**
+ * The one wider read, taken only when the 128 KB tail holds no prompt AND no earlier read found one.
+ * A busy Claude turn writes far more than 128 KB of tool output after the prompt that started it
+ * (measured 2026-09-24: 540 KB on a live session), so a fresh bridge would otherwise show nothing for
+ * every working pane until the operator typed again.
+ */
+export const WIDE_TAIL_BYTES = 4 * 1024 * 1024;
+
 /** The harnesses whose journal is one log file a tail read can open. */
 export const TAILED_AGENTS: ReadonlySet<string> = new Set(["claude", "codex", "pi"]);
 
@@ -33,7 +41,7 @@ export interface DescriptionTrackerOptions {
   /** Where the recap plugin writes. A containment root, never a request input. */
   recapDir?: string;
   /** The tail read, injectable so a test counts reads instead of opening files. */
-  tail?: (source: TranscriptSource, ref: AgentSessionRef) => Promise<ProbeTail | null>;
+  tail?: (source: TranscriptSource, ref: AgentSessionRef, bytes?: number) => Promise<ProbeTail | null>;
 }
 
 interface Seen {
@@ -67,7 +75,7 @@ export class DescriptionTracker {
   ) {
     this.floorMs = options.floorMs ?? DEFAULT_DESCRIPTION_FLOOR_MS;
     this.recapDir = options.recapDir ?? DEFAULT_RECAP_DIR;
-    this.tail = options.tail ?? ((source, ref) => probeTail(source, ref));
+    this.tail = options.tail ?? ((source, ref, bytes) => probeTail(source, ref, bytes));
   }
 
   /**
@@ -127,7 +135,17 @@ export class DescriptionTracker {
     const tail = await this.tail(adapter.source, ref);
     if (tail === null) return;
     try {
-      entry.facts = journalFacts(adapter.parse(tail.lines.join("\n")));
+      let facts = journalFacts(adapter.parse(tail.lines.join("\n")));
+      // A tail with no prompt means the newest prompt is older than the window, so it is the one an
+      // earlier read already found. Only when none was ever found is the wider window worth paying.
+      const kept = entry.facts?.prompt;
+      if (facts.prompt === undefined && kept !== undefined) facts = { ...facts, prompt: kept };
+      if (facts.prompt === undefined) {
+        const wide = await this.tail(adapter.source, ref, WIDE_TAIL_BYTES);
+        const prompt = wide === null ? undefined : journalFacts(adapter.parse(wide.lines.join("\n"))).prompt;
+        if (prompt !== undefined) facts = { ...facts, prompt };
+      }
+      entry.facts = facts;
       entry.journalSeen = seen;
     } catch {
       // A grammar that threw on a foreign line: keep the last facts, retry at the next floor.
