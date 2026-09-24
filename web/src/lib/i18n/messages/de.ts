@@ -321,6 +321,10 @@ export const de: Dictionary = {
   "chat.status.selectionChanged": "Auswahl geändert, Aktualisierung läuft",
   "chat.status.screenChanged": "Bildschirm geändert, Aktualisierung läuft",
   "chat.status.readOnly": "Schreibgeschützt: Gerät nicht autorisiert",
+  "pane.description.label": "Was dieser Bereich gerade tut",
+  "pane.description.goal": "Ziel",
+  "pane.description.now": "Jetzt",
+  "pane.description.next": "Als Nächstes",
 
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "Option wählen",

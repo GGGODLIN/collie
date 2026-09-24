@@ -110,6 +110,8 @@ interface Alert {
   /** Where it sits — `space › tab`, or the space alone. The one place rule, same module. */
   place: string;
   status: NotifiableStatus;
+  /** The pane's description line (bridge/description/resolve.ts), read when the alert fires. */
+  now?: string;
 }
 
 /**
@@ -138,6 +140,10 @@ export class NotificationCoordinator<H = unknown> {
     // Whether a transition into a status should notify, read live from the prefs store so a runtime
     // change is honoured. A disabled kind behaves exactly like a non-notifiable status (idle/working).
     private readonly isNotifiable: (status: AgentStatus) => boolean,
+    // The pane's one description line, asked when the debounce FIRES rather than at the transition,
+    // so the tracker has had its poll to read the journal. Defaults to the field the pane already
+    // carries, which is what a peer's swept pane arrives with.
+    private readonly describe: (agent: AgentView) => string | undefined = (a) => a.description?.now,
   ) {}
 
   /** Wire to `StateEngine.onTransition`. */
@@ -162,7 +168,8 @@ export class NotificationCoordinator<H = unknown> {
     };
     const handle = this.clock.schedule(() => {
       this.pending.delete(id);
-      this.outstanding.set(id, alert);
+      const now = this.describe(agent);
+      this.outstanding.set(id, now === undefined ? alert : { ...alert, now });
       this.emit(true);
     }, this.delayMs);
     this.pending.set(id, { handle, status: alert.status });
@@ -233,8 +240,9 @@ export class NotificationCoordinator<H = unknown> {
         // called (the title, above) and where it sits — so the notification and the dashboard row it
         // deep-links to read alike. The cwd is deliberately gone: a full absolute path on a lock
         // screen is the least readable fact Collie has, and the space and tab are what locate the
-        // work.
-        body: a.place,
+        // work. When the bridge has a description for the pane, its one line says what the agent is
+        // doing instead, which is the question a lock screen is actually asked.
+        body: a.now ?? a.place,
         paneId,
         renotify,
       };

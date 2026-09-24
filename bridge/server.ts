@@ -84,6 +84,7 @@ import type {
   CacheWatchListResponse,
   CacheWatchResponse,
   PaneCache,
+  PaneDescription,
   PaneHistoryResponse,
   PaneReadResponse,
   PaneWire,
@@ -727,6 +728,11 @@ export function startServer(opts: {
    */
   cache?: { get(sessionKey: string): PaneCache | undefined };
   /**
+   * The pane-description tracker (bridge/description/tracker.ts), read synchronously at serialise
+   * time exactly as `cache` is. Absent means no pane carries a `description` key.
+   */
+  description?: { describe(pane: AgentView, blockedAt?: number): PaneDescription | undefined };
+  /**
    * The prompt-cache watch list — which panes the operator asked to be warned about (ADR 0042).
    *
    * Absent means the three `cache-watch` routes answer 404, which is every caller that builds this
@@ -827,7 +833,9 @@ export function startServer(opts: {
       const withTimes = a ? { ...p, lastActiveAt: a.activeAt, lastSeenAt: a.seenAt } : p;
       const key = p.agentSession?.value;
       const reading = key === undefined ? undefined : cache?.get(key);
-      return reading === undefined ? withTimes : { ...withTimes, cache: reading };
+      const withCache = reading === undefined ? withTimes : { ...withTimes, cache: reading };
+      const description = opts.description?.describe(p, a?.activeAt);
+      return description === undefined ? withCache : { ...withCache, description };
     };
     // The one place a pane leaves the bridge: the session ref is stripped to a presence flag here,
     // so an agent-reported filesystem path never reaches a browser (see toPaneWire). The flag is

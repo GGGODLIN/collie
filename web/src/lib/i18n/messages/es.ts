@@ -319,6 +319,10 @@ export const es: Dictionary = {
   "chat.status.selectionChanged": "Selección modificada: recargando",
   "chat.status.screenChanged": "Pantalla modificada: recargando",
   "chat.status.readOnly": "Solo lectura: dispositivo no autorizado",
+  "pane.description.label": "Qué está haciendo este panel",
+  "pane.description.goal": "Objetivo",
+  "pane.description.now": "Ahora",
+  "pane.description.next": "Siguiente",
 
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "Seleccionar una opción",

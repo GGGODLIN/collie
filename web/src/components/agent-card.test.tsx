@@ -226,3 +226,32 @@ describe("AgentCard — the meta rides line 1 on every scope", () => {
     });
   }
 });
+
+// A pane the bridge described (bridge/description/resolve.ts): line 1 is the description's `now`,
+// line 2 is the pane's NAME, in every scope, and the flat row keeps its stated 44px.
+describe("AgentCard with a bridge description", () => {
+  const described = agent({
+    sessionName: "rewrite the loader",
+    tabLabel: "review",
+    description: { now: "在等你批准 Bash · bun test", source: "blocked", at: 1 },
+  });
+
+  for (const scope of ["herd", "tab", "place"] as const) {
+    it(`leads with the description and puts the name beneath (scope=${scope})`, () => {
+      const { container } = render(<AgentCard agent={described} onClick={() => {}} scope={scope} density="row" />);
+      expect(line1(container)).toHaveTextContent("在等你批准 Bash · bun test");
+      expect(line1(container)).not.toHaveTextContent("rewrite the loader");
+      expect(line2(container)).toHaveTextContent(/^rewrite the loader$/);
+      const shell = container.querySelector("button > div")!;
+      expect(shell.className).toMatch(/(?:^|\s)h-11(?=\s|$)/);
+      expect(line1(container)!.querySelector("span.font-medium")).toHaveClass("truncate");
+      expect(line2(container)!.querySelector("span")).toHaveClass("truncate");
+    });
+  }
+
+  it("is exactly today's row when the description is absent", () => {
+    const { container } = render(<AgentCard agent={agent({ tabLabel: "review" })} onClick={() => {}} />);
+    expect(line1(container)).toHaveTextContent("claude");
+    expect(line2(container)).toHaveTextContent(/^webapp\s*›\s*review$/);
+  });
+});

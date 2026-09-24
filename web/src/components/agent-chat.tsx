@@ -57,6 +57,7 @@ import { PaneSettingsSheet } from "@/components/pane-settings-sheet";
 import { CompactStripLabels, TAB_ROW_SQUARE_TAP_TARGET } from "@/components/ui/labelled-strip";
 import { ReadOnlyBanner } from "@/components/read-only-banner";
 import { HostStaleBanner } from "@/components/host-stale-banner";
+import { PaneDescription } from "@/components/pane-description";
 import { useHostHealth } from "@/components/crew-provider";
 import { writeRefusal } from "@/lib/host-health";
 import { StatusArea } from "@/components/status-area";
@@ -1678,6 +1679,12 @@ export function AgentChat({
                 RootLayout; this one is scoped to the pane because the phone's link is fine. Renders
                 nothing on a solo install, or while the host is live. */}
             <HostStaleBanner health={hostHealth} className="mx-3 mt-1.5" />
+
+            {/* What the pane is doing, as the bridge described it (goal / now / next). It arrives and
+                leaves through its own `Collapse`, the sanctioned way an in-flow surface appears. */}
+            <Collapse open={agent?.description !== undefined}>
+              <PaneDescription description={agent?.description} />
+            </Collapse>
 
             {/* THE TWO STRIPS, AND THE THIN BAR THAT STANDS IN FOR THEM — one band that morphs, not
                 two rows taking turns. `CollapseSwap` is nested inside zen's `Collapse`, so zen still

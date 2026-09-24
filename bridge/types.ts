@@ -3,6 +3,7 @@
 
 import type { Confidence } from "./cache/claims.ts";
 import type { PaneCache } from "./cache/engine.ts";
+import type { PaneDescription } from "./description/resolve.ts";
 import type { ApiErrorDetail, ErrorCode } from "./error-codes.ts";
 import type { AgentSessionRef, TranscriptEntry } from "./journal/types.ts";
 import type { MuxCapability, MuxSpaceCapacity, MuxTopologyLatency } from "./mux/capabilities.ts";
@@ -13,6 +14,7 @@ import type { UpdateRun } from "./update-run.ts";
 // same reason — it is a pane field now, so a reader of this module needs no second import.
 export type { TranscriptEntry, TranscriptPart } from "./journal/types.ts";
 export type { CacheStateName, PaneCache } from "./cache/engine.ts";
+export type { PaneDescription } from "./description/resolve.ts";
 export type { Confidence } from "./cache/claims.ts";
 
 export type AgentStatus = "idle" | "working" | "blocked" | "done" | "unknown";
@@ -141,6 +143,13 @@ export interface AgentView {
    * solo body byte-identical to 1.8.2's for every non-agent pane (`solo-baseline.test.ts`).
    */
   cache?: PaneCache;
+  /**
+   * What this pane is doing, in the one description every surface reads — the herd row, the pane
+   * screen and the push body (bridge/description/resolve.ts). Attached at serialise time from the
+   * description tracker's memo, exactly as {@link cache} is, and ABSENT, NEVER A PLACEHOLDER, when
+   * there is nothing to say.
+   */
+  description?: PaneDescription;
 }
 
 /**

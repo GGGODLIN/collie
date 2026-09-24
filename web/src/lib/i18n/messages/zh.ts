@@ -303,6 +303,10 @@ export const zh: Dictionary = {
   "chat.status.selectionChanged": "选项已变动，正在刷新",
   "chat.status.screenChanged": "屏幕内容已变动，正在刷新",
   "chat.status.readOnly": "只读模式，当前设备未授权",
+  "pane.description.label": "这个窗格正在做什么",
+  "pane.description.goal": "目标",
+  "pane.description.now": "现在",
+  "pane.description.next": "下一步",
 
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "选择操作",

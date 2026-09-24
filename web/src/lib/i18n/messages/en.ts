@@ -340,6 +340,10 @@ export const en = {
   "chat.status.selectionChanged": "Selection changed — refreshing",
   "chat.status.screenChanged": "The screen changed — refreshing",
   "chat.status.readOnly": "Read-only — device not authorised",
+  "pane.description.label": "What this pane is doing",
+  "pane.description.goal": "Goal",
+  "pane.description.now": "Now",
+  "pane.description.next": "Next",
 
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "Choose an option",

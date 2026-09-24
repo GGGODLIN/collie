@@ -314,6 +314,10 @@ export const ko: Dictionary = {
   "chat.status.selectionChanged": "선택 항목 변경 감지, 새로고침 중",
   "chat.status.screenChanged": "화면 변경 감지, 새로고침 중",
   "chat.status.readOnly": "읽기 전용: 인증되지 않은 기기",
+  "pane.description.label": "이 창의 현재 작업",
+  "pane.description.goal": "목표",
+  "pane.description.now": "지금",
+  "pane.description.next": "다음",
 
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "옵션 선택",

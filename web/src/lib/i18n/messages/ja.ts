@@ -316,6 +316,10 @@ export const ja: Dictionary = {
   "chat.status.selectionChanged": "選択状態が変更されました。更新中",
   "chat.status.screenChanged": "画面が変更されました。更新中",
   "chat.status.readOnly": "読み取り専用: 端末が認証されていません",
+  "pane.description.label": "このペインの状況",
+  "pane.description.goal": "目標",
+  "pane.description.now": "現在",
+  "pane.description.next": "次",
 
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "オプションを選択",

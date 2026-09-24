@@ -302,6 +302,10 @@ export const zhTW: Dictionary = {
   "chat.status.selectionChanged": "選項已變動，正在重新整理",
   "chat.status.screenChanged": "畫面內容已變動，正在重新整理",
   "chat.status.readOnly": "唯讀模式，目前裝置未授權",
+  "pane.description.label": "這個窗格正在做什麼",
+  "pane.description.goal": "目標",
+  "pane.description.now": "現在",
+  "pane.description.next": "下一步",
 
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "選擇操作",

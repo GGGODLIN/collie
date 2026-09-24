@@ -113,6 +113,9 @@ const AGENT_VIEW_KEYS = {
   // its tab. Computed on the machine the pane lives on; an older peer omits both.
   soleTabName: true,
   tabPosition: true,
+  // Not a crew dimension: the pane's description (bridge/description/resolve.ts), computed on the
+  // machine the pane lives on and absent when there is nothing to say. An older peer omits it.
+  description: true,
 } satisfies Record<keyof AgentView, true>;
 
 const DEVICE_AUTH_KEYS = {
@@ -204,6 +207,7 @@ describe("solo zero-tax — the client's mirror types carry no crew dimension", 
       "agent",
       "cache",
       "cwd",
+      "description",
       "focused",
       "hasSession",
       "hint",

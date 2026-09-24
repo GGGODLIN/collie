@@ -310,6 +310,9 @@ const PANE_WIRE_KEYS = {
   // its tab. Computed on the machine the pane lives on; an older peer omits both.
   soleTabName: true,
   tabPosition: true,
+  // The pane's description (bridge/description/resolve.ts). Not a crew dimension, and absent here:
+  // the baseline builds no description tracker, so no golden byte moved.
+  description: true,
 } satisfies Record<keyof PaneWire, true>;
 
 const DEVICE_AUTH_KEYS = {
@@ -421,6 +424,7 @@ describe("solo zero-tax — wire shapes carry no crew dimension", () => {
       "agent",
       "cache",
       "cwd",
+      "description",
       "focused",
       "hasSession",
       "hint",

@@ -142,6 +142,13 @@ export interface AgentView {
    * all, and a 1.8.x peer simply omits it — every one of those renders as nothing.
    */
   cache?: PaneCache;
+  /**
+   * What this pane is doing, as the bridge decided it. Mirrors `PaneDescription` in
+   * bridge/description/resolve.ts. **Absent, never a placeholder**, and absent from every older
+   * bridge. The words are agent-authored or bridge-composed text: render them, never translate or
+   * parse them.
+   */
+  description?: PaneDescription;
 }
 
 /**
@@ -183,6 +190,15 @@ export interface CacheResetWire {
   ruleId: string;
   /** The rule's own label, a clause in English ("The model changed"). The sheet slots it into a sentence. */
   label: string;
+  at: number;
+}
+
+/** One pane's description. Mirrors `PaneDescription` in bridge/description/resolve.ts. */
+export interface PaneDescription {
+  now: string;
+  goal?: string;
+  next?: string;
+  source: "recap" | "blocked" | "prompt";
   at: number;
 }
 

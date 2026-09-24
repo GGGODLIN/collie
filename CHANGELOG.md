@@ -30,6 +30,10 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+### Added
+
+- **Each pane now says what its agent is doing.** The bridge computes one description per pane — the approval it waits on, a fresh Claude recap from `~/.cache/cc-recap/`, or your newest prompt — and the herd row, the pane screen and the push body all read it.
+
 ### Changed
 
 - **Your Claude shortcuts now keep the reference command catalog.** Rows from `commands.toml` appear first in the Agent palette and override exact-name reference rows without lowering confirmation; other harnesses and the actions row retain replacement behavior.
