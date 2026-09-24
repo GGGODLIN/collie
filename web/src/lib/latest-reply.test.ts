@@ -1,4 +1,9 @@
-import { fold, locateReply, newestExchange, newestReply, replyProse } from "./latest-reply";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { splitLines } from "./blocks";
+import { buildBlocks } from "./harness";
+import { parseAnsi } from "./ansi";
+import { fold, locateReply, newestExchange, newestReply, replyProse, settleText } from "./latest-reply";
 import type { TranscriptEntry, TranscriptPart } from "./types";
 
 // The predicates behind "the mirror is only showing the end of this reply". The cases that matter are
@@ -199,3 +204,20 @@ describe("locateReply — where the reply ends", () => {
     expect(locateReply("some other screen entirely", reply).endLine).toBe(-1);
   });
 });
+
+// A real Claude capture: one reply, the input box, and a statusline row under it.
+describe("settleText — what counts as the mirror holding still", () => {
+  const screen = readFileSync(join(import.meta.dirname, "..", "fixtures", "panes", "claude--done.txt"), "utf8");
+  const settle = (text: string) => settleText(buildBlocks(splitLines(parseAnsi(text)), { agent: "claude" }));
+
+  it("ignores a statusline that redrew, so a quiet pane still counts as settled", () => {
+    expect(screen).toContain("32.7k tokens");
+    expect(settle(screen.replace("32.7k tokens", "33.1k tokens").replace("ctx:3%", "ctx:4%"))).toBe(settle(screen));
+  });
+
+  it("still moves when the reply itself changes", () => {
+    expect(screen).toContain("containing the single word ");
+    expect(settle(screen.replace("containing the single word ", "holding the single word "))).not.toBe(settle(screen));
+  });
+});
+

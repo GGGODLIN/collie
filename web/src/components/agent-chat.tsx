@@ -72,7 +72,7 @@ import { sendGuardedKeys } from "@/lib/dialog-guard";
 import type { PromptBlockAction } from "@/components/prompt-select-block";
 import type { PreviewBlockAction } from "@/components/preview-select-block";
 import type { MenuBlockAction } from "@/components/menu-block";
-import { locateReply } from "@/lib/latest-reply";
+import { locateReply, settleText } from "@/lib/latest-reply";
 import { canGrowRequestedLines, growRequestedLines } from "@/lib/loaders";
 import { paneName, panePlaceParts } from "@/lib/pane-name";
 import { panesOfTab } from "@/lib/pane-ordinal";
@@ -786,11 +786,14 @@ export function AgentChat({
   // Memoised on the DISPLAYED text: it folds a whole screenful, and it runs beside the grammar
   // passes above on every poll. The gate asks about the REPLY — the turn whose rows this replaces —
   // and the card shows the EXCHANGE: the prompt it answered is context the mirror could never hold.
+  // Stillness is judged on the blocks, not the raw screen: a statusline that redraws every second
+  // would otherwise keep the read from ever firing after the pane opened (lib/latest-reply.ts).
+  const settled = useMemo(() => settleText(blocks), [blocks]);
   const latestReply = useLatestReply({
     paneId,
     scope,
     enabled: historyAvailable && prefs.expandClippedReply,
-    mirrorText: display,
+    mirrorText: settled,
   });
   const placement = useMemo(
     () => (latestReply ? locateReply(display, latestReply.reply) : null),

@@ -28,6 +28,7 @@
 // place that knows escape shapes — use it rather than a second regex that can drift from it.
 
 import { parseAnsi } from "./ansi";
+import { lineText, type Block } from "./blocks";
 import type { TranscriptEntry } from "./types";
 
 /**
@@ -163,3 +164,17 @@ export function locateReply(mirrorText: string, entry: TranscriptEntry): ReplyPl
     endLine: endLine === -1 ? rows.length - 1 : endLine,
   };
 }
+
+/**
+ * The part of the mirror whose stillness means "a message finished": every block's rows, which is
+ * the screen minus the input box and statusline each harness's buildBlocks already peeled off.
+ *
+ * The latest-reply read waits for the mirror to hold still (hooks/use-latest-reply.ts). A statusline
+ * that redraws every second (a clock, CPU, a cache countdown) never holds still, so judged on the raw
+ * screen the read fired once when the pane opened and never again: a reply that finished while you
+ * watched never became a card. The card's identity check still runs on the full screen.
+ */
+export function settleText(blocks: readonly Block[]): string {
+  return blocks.flatMap((block) => block.lines.map(lineText)).join("\n");
+}
+
