@@ -112,43 +112,51 @@ describe("triage — bucketing", () => {
   });
 });
 
-describe("triage — ordering: a bucket keeps the order it was sent", () => {
-  // The bridge sends ONE stable order (status, then space, then tab, then the pane's position in its
-  // tab — bridge/state-engine.ts), and this module no longer sorts inside a bucket. A row therefore
-  // only moves when it changes bucket, so the list you reach for holds still under your thumb.
-  it("does not re-order an attention section by activity", () => {
+describe("triage — ordering: the latest state change first, as Herdr's priority panel", () => {
+  // Herdr's `agent_panel_sort = "priority"` orders by status, then the newest state change; the
+  // switcher mirrors it (ADR 0066). The sheet freezes its rows when it opens, so this never moves a
+  // row under a thumb.
+  it("orders an attention section newest first", () => {
     const s = triage([
       agent("old", "blocked", { active: 100, seen: 0 }),
       agent("new", "blocked", { active: 900, seen: 0 }),
       agent("mid", "blocked", { active: 500, seen: 0 }),
     ]);
-    expect(ids(s, "needs")).toEqual(["old", "new", "mid"]);
+    expect(ids(s, "needs")).toEqual(["new", "mid", "old"]);
   });
 
-  it("does not re-order Ready by when each agent finished", () => {
+  it("orders Ready by when each agent finished, newest first", () => {
     const s = triage([
       agent("a", "done", { active: 100, seen: 1 }),
       agent("b", "done", { active: 900, seen: 1 }),
     ]);
-    expect(ids(s, "ready")).toEqual(["a", "b"]);
+    expect(ids(s, "ready")).toEqual(["b", "a"]);
   });
 
-  it("does not re-order Recent by when you last used it", () => {
+  it("orders Recent by the state change, not by when you last looked", () => {
     const s = triage([
-      agent("stale", "idle", { active: 1, seen: 100 }),
-      agent("fresh", "idle", { active: 1, seen: 900 }),
-      agent("mid", "idle", { active: 1, seen: 500 }),
+      agent("stale", "idle", { active: 100, seen: 990 }),
+      agent("fresh", "idle", { active: 900, seen: 910 }),
+      agent("mid", "idle", { active: 500, seen: 600 }),
     ]);
-    expect(ids(s, "recent")).toEqual(["stale", "fresh", "mid"]);
+    expect(ids(s, "recent")).toEqual(["fresh", "mid", "stale"]);
+  });
+
+  it("keeps the sent order between panes whose state changed at the same moment", () => {
+    const s = triage([
+      agent("first", "idle", { active: 1, seen: 100 }),
+      agent("second", "idle", { active: 1, seen: 900 }),
+    ]);
+    expect(ids(s, "recent")).toEqual(["first", "second"]);
   });
 
   it("still lets the operator's toggle reverse Recent — that one is asked for, not decided", () => {
     const herd = [
-      agent("stale", "idle", { active: 1, seen: 100 }),
-      agent("fresh", "idle", { active: 1, seen: 900 }),
-      agent("mid", "idle", { active: 1, seen: 500 }),
+      agent("stale", "idle", { active: 100, seen: 100 }),
+      agent("fresh", "idle", { active: 900, seen: 900 }),
+      agent("mid", "idle", { active: 500, seen: 500 }),
     ];
-    expect(ids(triage(herd, "oldest"), "recent")).toEqual(["mid", "fresh", "stale"]);
+    expect(ids(triage(herd, "oldest"), "recent")).toEqual(["stale", "mid", "fresh"]);
   });
 
   it("the direction toggle does NOT reach the pinned sections", () => {
@@ -162,9 +170,9 @@ describe("triage — ordering: a bucket keeps the order it was sent", () => {
     ];
     for (const dir of ["newest", "oldest"] as const) {
       const s = triage(herd, dir);
-      expect(ids(s, "needs")).toEqual(["old", "new"]);
-      expect(ids(s, "working")).toEqual(["w-old", "w-new"]);
-      expect(ids(s, "ready")).toEqual(["r-old", "r-new"]);
+      expect(ids(s, "needs")).toEqual(["new", "old"]);
+      expect(ids(s, "working")).toEqual(["w-new", "w-old"]);
+      expect(ids(s, "ready")).toEqual(["r-new", "r-old"]);
     }
   });
 });

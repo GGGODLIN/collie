@@ -44,6 +44,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 - **Sessions now line up by attention in the switcher.** The current session and every row show a status dot, and opening the sheet orders sessions by needs-you, working, quiet, then unreachable while keeping that order stable until it closes.
 - **The dashboard summary now opens the pane switcher.** Tapping the status counts shows every agent pane in needs-you, unseen, recent, then working order; selecting a row opens that pane instead of scrolling the dashboard to its Space.
 - **Working panes now sit last in the pane switcher.** Needs-you and unseen work stays first, settled Recent panes follow, and active work moves to the bottom of the sheet.
+- **Each pane switcher section now lists the latest change first.** Inside Needs you, Ready, Recent and Working, the pane whose state changed most recently comes first, matching Herdr's priority panel; the sheet still holds its order while open.
 
 ### Fixed
 
