@@ -33,6 +33,7 @@
   "dependencies": {
     "commander": "^15.0.0",
     "ink": "^7.1.1",
+    "opencc-js": "^1.4.2",
     "qrcode-terminal": "^0.12.0",
     "react": "^19.2.8"
   },

@@ -60,6 +60,19 @@ is too little to detect from, and the model guesses. A two-letter code, or a reg
 narrows for you (`en-GB` → `en`). It rides on the `openai-compatible` provider only; the `codex`
 endpoint takes no language, and `collie stt status` says so rather than letting you believe otherwise.
 
+**Chinese in the wrong script gets converted on the host.** A transcription endpoint answers Chinese
+in whichever script its model prefers, and no `language` code can ask for Traditional. Add one field
+to `stt.json`, or set `COLLIE_STT_CONVERT`, and the bridge converts every transcript before the
+phone sees it, with any provider:
+
+```json
+"convert": "zh-TW"
+```
+
+`zh-TW` is Simplified to Taiwan Traditional, phrases included (`软件` → `軟體`), done locally with
+OpenCC's bundled dictionaries. Absent converts nothing, and an unknown value turns voice off with a
+warning rather than passing the wrong script through.
+
 **A long recording gets a long deadline.** The browser's budget for one clip is a function of that
 clip's size, not a flat number — it assumes a sustained 256 kb/s uplink and adds the bridge's own
 provider deadline on top, so the 8 MiB maximum is allowed a little under six minutes. A clip Collie
