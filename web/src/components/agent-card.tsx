@@ -133,11 +133,12 @@ export function AgentCard({
   // line 2 would repeat it; it carries the title Claude writes instead, so that stays in sight.
   const nameIsTab = soleTabName(agent) !== null && paneName(agent) === soleTabName(agent);
   const liveTitle = agent.terminalTitle && agent.terminalTitleStale !== true ? agent.terminalTitle : null;
-  // ── A DESCRIBED PANE LEADS WITH WHAT IT IS DOING ─────────────────────────────
-  // When the bridge sent a description (bridge/description/resolve.ts), line 1 is its `now` and line
-  // 2 is the pane's name, in every scope: the bridge already chose the words and their priority, and
-  // this row only places them. The two lines keep their 20px / 16px slots and truncate, so a
-  // described row is the same height as any other (DESIGN.md §2). Absent, the row is unchanged.
+  // ── A DESCRIBED PANE SAYS WHAT IT IS DOING UNDER ITS NAME ────────────────────
+  // When the bridge sent a description (bridge/description/resolve.ts), line 1 stays the pane's name
+  // and line 2 is the description's `now`, in every scope. The name leads because it is the fixed
+  // thing you find a row by; the description changes every turn, and the smaller line 2 fits more of
+  // it. The two lines keep their 20px / 16px slots and truncate, so a described row is the same
+  // height as any other (DESIGN.md §2). Absent, the row is unchanged.
   const described = agent.description?.now;
   const placed: RowLines = inPlace
     ? {
@@ -165,7 +166,7 @@ export function AgentCard({
   const lines: RowLines =
     described === undefined
       ? placed
-      : { primary: described, detailLead: null, detailTail: paneName(agent), tailMono: false, tailPositional: false };
+      : { primary: paneName(agent), detailLead: null, detailTail: described, tailMono: false, tailPositional: false };
   const { primary, detailLead, detailTail } = lines;
   // A workspace-grouped row whose tab has no name of its own reads its position instead — `tab 2` —
   // via `tabTitle` (`lib/pane-name.ts`) — or, when the raw label carries no digit at all, nothing:

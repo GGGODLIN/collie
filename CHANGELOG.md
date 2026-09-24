@@ -34,7 +34,8 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 - **Each pane now says what its agent is doing.** The bridge computes one description per pane — the approval it waits on, a fresh Claude recap from `~/.cache/cc-recap/`, or your newest prompt — and the herd row, the pane screen and the push body all read it.
 - **Voice transcripts can be converted to Taiwan Traditional.** Set `"convert": "zh-TW"` in `stt.json` (or `COLLIE_STT_CONVERT`) and the bridge converts every transcript locally with OpenCC before the phone sees it, whatever the provider.
-- **The pane switcher shows what each agent is doing too.** A described pane's switcher row now leads with the same line as its dashboard row, with its name underneath.
+- **The pane switcher shows what each agent is doing too.** A described pane's switcher row keeps its name on top and shows the same description line as its dashboard row underneath, in place of where the pane sits.
+- **A described row keeps its name on top.** On the dashboard and in the switcher the pane's name stays on line 1, the fixed thing a row is found by, and the description moves to the smaller line 2, where more of it fits.
 
 ### Changed
 

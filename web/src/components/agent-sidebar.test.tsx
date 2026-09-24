@@ -147,14 +147,16 @@ describe("ThreadSidebar", () => {
     expect(current).toHaveTextContent("codex");
   });
 
-  it("leads a described row with what it is doing and moves the name to line 2", () => {
+  it("keeps a described row's name on line 1 and puts what it is doing where the place was", () => {
     const described: AgentView = {
       ...idleAgent,
       description: { now: "在等你批准 Bash · ls", source: "blocked", at: 1 },
     };
     render(<ThreadSidebar agents={[described]} currentPaneKey="" onSelect={vi.fn()} />);
     const row = screen.getByRole("button", { name: /在等你批准 Bash · ls/ });
-    expect(row).toHaveTextContent("claude");
+    const [line1, line2] = row.querySelectorAll(".min-w-0.flex-1 > div");
+    expect(line1).toHaveTextContent("claude");
+    expect(line2).toHaveTextContent(/^在等你批准 Bash · ls$/);
     expect(row).not.toHaveTextContent("sandbox");
   });
 

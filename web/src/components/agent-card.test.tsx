@@ -227,8 +227,8 @@ describe("AgentCard — the meta rides line 1 on every scope", () => {
   }
 });
 
-// A pane the bridge described (bridge/description/resolve.ts): line 1 is the description's `now`,
-// line 2 is the pane's NAME, in every scope, and the flat row keeps its stated 44px.
+// A pane the bridge described (bridge/description/resolve.ts): line 1 stays the pane's NAME, line 2
+// is the description's `now`, in every scope, and the flat row keeps its stated 44px.
 describe("AgentCard with a bridge description", () => {
   const described = agent({
     sessionName: "rewrite the loader",
@@ -237,11 +237,11 @@ describe("AgentCard with a bridge description", () => {
   });
 
   for (const scope of ["herd", "tab", "place"] as const) {
-    it(`leads with the description and puts the name beneath (scope=${scope})`, () => {
+    it(`keeps the name on line 1 and puts the description beneath (scope=${scope})`, () => {
       const { container } = render(<AgentCard agent={described} onClick={() => {}} scope={scope} density="row" />);
-      expect(line1(container)).toHaveTextContent("在等你批准 Bash · bun test");
-      expect(line1(container)).not.toHaveTextContent("rewrite the loader");
-      expect(line2(container)).toHaveTextContent(/^rewrite the loader$/);
+      expect(line1(container)).toHaveTextContent("rewrite the loader");
+      expect(line1(container)).not.toHaveTextContent("在等你批准");
+      expect(line2(container)).toHaveTextContent(/^在等你批准 Bash · bun test$/);
       const shell = container.querySelector("button > div")!;
       expect(shell.className).toMatch(/(?:^|\s)h-11(?=\s|$)/);
       expect(line1(container)!.querySelector("span.font-medium")).toHaveClass("truncate");
