@@ -705,12 +705,11 @@ store.
 
 ## Fork-only live e2e
 
-This fork keeps a personal live suite in `docs/philip/e2e/` (local, excluded from git): it drives
-the ACTIVE Collie through the tailnet front door against a throwaway Herdr session, so it stays out
-of `web/e2e/live/`, whose Tier 2 may only point at the dev lane. Three steps, run from the repo
-root: `bash docs/philip/e2e/session.sh up`, then
-`cd web && bunx playwright test -c ../docs/philip/e2e/playwright.config.ts`, then
-`bash docs/philip/e2e/session.sh down`. Traps and trajectories sit in `docs/philip/e2e/trajectories/`.
+`e2e-live/` is this fork's own browser suite: it drives the ACTIVE Collie through the tailnet front
+door against a throwaway Herdr session, so it stays out of `web/e2e/live/`, whose Tier 2 may only
+point at the dev lane. Run it with `bash e2e-live/run.sh` (builds the world, runs every spec, tears
+the world down). The world's agents are `ccp-free` Claudes, so a run spends only the free pool.
+Environment traps and trajectories live in `e2e-live/trajectories/`.
 
 ## 帳本生命週期
 
