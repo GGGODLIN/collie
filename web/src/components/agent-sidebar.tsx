@@ -60,14 +60,13 @@ interface ThreadSidebarProps {
   className?: string;
 }
 
-// The pane switcher has two operator-chosen arrangements. The in-pane swipe sheet keeps every pane
-// under its workspace in fixed place order. The dashboard summary opens a frozen attention snapshot,
+// The pane switcher supports place order for callers that need fixed workspace groups (ADR 0063).
+// Both the dashboard summary and the in-pane sheet open a frozen attention snapshot instead (ADR 0073),
 // grouped as Needs you, Ready, Recent, then Working. Switching is the ONLY action here — closing a
 // pane lives in the pane pill's long-press sheet, so a fat-thumbed switch can never destroy a pane.
 //
-// Place mode never moves when a pane changes state (ADR 0063). Attention mode is the ADR's explicit
-// operator-requested exception: HomeRoute snapshots the rows when the operator opens the sheet, so
-// its urgency order cannot move under a thumb while that sheet stays open.
+// Attention order is an operator-requested exception: each caller snapshots its rows on opening,
+// so a poll cannot move a row under a thumb while the sheet stays open.
 //
 // The two long tails still fold: 30-odd bare shells, and the Launch rows, using the dashboard's own
 // header primitive and remembering it.
@@ -117,7 +116,7 @@ export function ThreadSidebar({
     );
   }
 
-  // The dashboard's grouping, so the switcher and the dashboard list the same panes in the same place.
+  // Place mode uses the dashboard's workspace grouping; attention mode uses the frozen buckets below.
   const groups = groupPanesByWorkspace(agents, [], { order: "fixed", tabs, servers });
   const urgent = agents.filter((a) => URGENT.has(bucketOf(a)));
   // The first urgent row in DISPLAY order, not in the order the list arrived in.

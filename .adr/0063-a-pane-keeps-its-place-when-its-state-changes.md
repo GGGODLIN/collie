@@ -2,6 +2,8 @@
 
 > Amended in scope by [0072](./0072-the-switcher-orders-a-section-by-its-latest-state-change.md): the
 > switcher's attention sections order newest state change first.
+> Amended in scope by [0073](./0073-both-pane-switcher-entries-use-attention.md): the in-pane
+> switcher now opens a frozen attention list too.
 
 - **Status:** Accepted
 - **Date:** 2026-09-23

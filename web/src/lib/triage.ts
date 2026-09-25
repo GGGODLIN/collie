@@ -2,10 +2,10 @@
 // what's running, then everything else. Every mark reads it (the row wash, the chip dots, the
 // summary line), kept in one place so no two surfaces can disagree about what needs you.
 //
-// It CLASSIFIES; it no longer places. No list is laid out by bucket any more: the dashboard and the
-// pane switcher both keep every pane where it sits (ADR 0063), and a bucket only decides a mark.
+// It classifies every pane; the dashboard keeps place order (ADR 0063), while the two operator-opened
+// switchers arrange a frozen snapshot by bucket (ADR 0073).
 //
-// It puts each pane in a BUCKET and keeps the order the bridge sent inside it (see {@link triage}).
+// It puts each pane in a BUCKET and orders by its latest state change (see {@link triage}).
 // The two timestamps the bridge keeps per pane (bridge/activity.ts) still decide one bucket:
 //   lastActiveAt — when the agent last changed status
 //   lastSeenAt   — when you last opened or drove it through Collie

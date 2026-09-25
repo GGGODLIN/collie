@@ -45,6 +45,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 - **The dashboard summary now opens the pane switcher.** Tapping the status counts shows every agent pane in needs-you, unseen, recent, then working order; selecting a row opens that pane instead of scrolling the dashboard to its Space.
 - **Working panes now sit last in the pane switcher.** Needs-you and unseen work stays first, settled Recent panes follow, and active work moves to the bottom of the sheet.
 - **Each pane switcher section now lists the latest change first.** Inside Needs you, Ready, Recent and Working, the pane whose state changed most recently comes first, matching Herdr's priority panel; the sheet still holds its order while open.
+- **The in-pane switcher now matches the dashboard's attention groups.** Opening it by tap or pull fixes the pane and shell list until it closes, so polling cannot move a row under your thumb; Shells and Launch remain available (ADR 0073).
 
 ### Fixed
 

@@ -309,12 +309,19 @@ export function AgentChat({
   // Drawers/sheets are mutually exclusive — at most one open. A single value makes that invariant
   // unrepresentable to violate.
   const [drawer, setDrawer] = useState<Drawer>(null);
+  const [switcherPanes, setSwitcherPanes] = useState<{ agents: AgentView[]; shellPanes: AgentView[] } | null>(null);
+  // A poll may repaint the pane behind the sheet, but must not move a row under the operator's thumb.
+  function openSwitcher() {
+    setSwitcherPanes({ agents: [...agents], shellPanes: [...shellPanes] });
+    setDrawer("switcher");
+  }
   // The prompt-cache sheet is NOT one of the mutually-exclusive drawers above: it is a reading with no
   // control in it, opened from the header rather than from the composer, and it closes nothing the
   // operator was in the middle of. Its own boolean says so.
   const [cacheSheetOpen, setCacheSheetOpen] = useState(false);
   const closeDrawer = () => {
     setDrawer(null);
+    setSwitcherPanes(null);
     setPull(0);
   };
 
@@ -460,7 +467,7 @@ export function AgentChat({
     onAnchor: setPullFrom,
     onOpen: () => {
       buzz();
-      setDrawer("switcher");
+      openSwitcher();
       setPull(0);
       setPullFrom(0);
     },
@@ -491,7 +498,7 @@ export function AgentChat({
     agents.length + shellPanes.length > 0 || launchers.length > 0
       ? {
           ref: sheetPull.ref,
-          onClick: () => setDrawer("switcher"),
+          onClick: openSwitcher,
           label: t(elsewhereNeedsYou ? "chat.switcher.ariaNeedsYou" : "chat.switcher.aria"),
           alert: elsewhereNeedsYou,
         }
@@ -2285,8 +2292,9 @@ export function AgentChat({
           pullFrom={pullFrom}
         >
           <ThreadSidebar
-            agents={agents}
-            shellPanes={shellPanes}
+            agents={switcherPanes?.agents ?? agents}
+            shellPanes={switcherPanes?.shellPanes ?? shellPanes}
+            order="attention"
             // The full row identity, not the bare id (`hereKey`, computed above for the same reason
             // the "elsewhere needs you" dot is): on a crew this sheet lists every machine's panes,
             // and a peer's row can share this pane's own id.
@@ -2296,7 +2304,7 @@ export function AgentChat({
             servers={servers}
             // Shells fold on the same count rule Spaces uses: on a herd with dozens of bare shells
             // they'd otherwise bury the agents you opened this sheet to reach.
-            shellsOpen={openForCount(dash.prefs.shellsOpen, shellPanes.length)}
+            shellsOpen={openForCount(dash.prefs.shellsOpen, (switcherPanes?.shellPanes ?? shellPanes).length)}
             onShellsOpenChange={dash.setShellsOpen}
             launchers={launchers}
             launchersHome={launchersHome}

@@ -1,5 +1,8 @@
 # 0072 — The switcher orders a section by its latest state change
 
+> Amended in scope by [0073](./0073-both-pane-switcher-entries-use-attention.md): the in-pane
+> switcher now uses the same frozen attention order.
+
 - **Status:** Accepted
 - **Date:** 2026-09-25
 - **Shipped in:** pending
