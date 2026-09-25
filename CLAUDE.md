@@ -690,3 +690,7 @@ level ITSELF to the release its lead is running, fetching that public tag from G
 HTTPS on its own decision, which adds no code, route or verb to the link). How the operator
 reached a member is remembered locally in `crew-ops.json`, which is never a wire field and never merged into the trust
 store.
+
+## 帳本生命週期
+
+> 帳本生命週期：規則見 `~/.claude/references/ledger-lifecycle.md`；門檻以 `~/.claude/scripts/ledger-lifecycle/registry.json` 為準。
