@@ -52,6 +52,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 - **Full reply keeps every prompt with its answer.** When a tool-heavy turn pushes the prompt outside the newest history page, Collie reads older pages until it finds the prompt that reply answered; if the log cannot supply both sides, the terminal mirror stays in place instead of showing a reply-only card.
 - **A busy pane keeps its description.** When a tool-heavy turn pushes your newest prompt out of the journal tail, the bridge keeps the prompt it already read, or reads a wider window once, instead of dropping the pane's description.
 - **A reply that finishes while you watch now becomes its card.** The full-reply read waited for the whole screen to hold still, so a statusline that redraws every second kept it from ever firing after the pane opened; stillness is now judged without the input box and statusline.
+- **`collie config` lists the transcript conversion setting.** `COLLIE_STT_CONVERT` now has its row beside the other speech-to-text settings, so the schema check stays green and the setting shows up with its one allowed value, `zh-TW`.
 
 ## [1.13.1] - 2026-09-24
 

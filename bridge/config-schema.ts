@@ -699,6 +699,15 @@ export const CONFIG_SETTINGS: readonly ConfigSetting[] = [
     doc: "The language you speak, as ISO-639-1. Empty lets the model detect it.",
   },
   {
+    key: "stt_convert",
+    env: "COLLIE_STT_CONVERT",
+    section: "stt",
+    kind: "enum",
+    values: ["zh-TW"],
+    default: "",
+    doc: "The script every transcript is converted to. zh-TW is Taiwan Traditional; absent converts nothing.",
+  },
+  {
     key: "stt_wire_identity",
     env: "COLLIE_STT_WIRE_IDENTITY",
     section: "stt",
