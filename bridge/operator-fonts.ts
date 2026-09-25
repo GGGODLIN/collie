@@ -13,7 +13,7 @@ import type { OperatorFontRow } from "./types.ts";
 // TWO THINGS ARE DIFFERENT HERE, and both are stated in ADR 0033 rather than left to be inferred.
 //
 // POSTURE. Keys and quick replies replace their shipped lists (ADR 0018); Claude commands merge
-// with their maintained reference catalog (ADR 0064), while other command palettes replace. Fonts
+// with their maintained reference catalog (ADR 0070), while other command palettes replace. Fonts
 // always ADD to the shipped list. A font cannot fire an action, so an extra picker row shadows nothing.
 //
 // THE FILE IS NAMED `theme.toml`, NOT `fonts.toml`, so a colour block can join it later without

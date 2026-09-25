@@ -1,9 +1,9 @@
-# 0065 — The Agent palette stages commands, never sends them
+# 0071 — The Agent palette stages commands, never sends them
 
 - **Status:** Accepted
 - **Date:** 2026-09-23
 - **Shipped in:** pending
-- **Trail:** operator report in the 2026-09-23 Claude Code thread ("這個 agent 面板會點了就送出？我不喜歡這樣") · `web/src/components/command-palette.tsx` · `web/src/components/composer.tsx` · [ADR 0064](./0064-claude-operator-commands-join-the-reference-catalog.md)
+- **Trail:** operator report in the 2026-09-23 Claude Code thread ("這個 agent 面板會點了就送出？我不喜歡這樣") · `web/src/components/command-palette.tsx` · `web/src/components/composer.tsx` · [ADR 0070](./0070-claude-operator-commands-join-the-reference-catalog.md)
 
 ## Context
 

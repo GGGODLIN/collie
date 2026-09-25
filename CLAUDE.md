@@ -456,8 +456,15 @@ lint guard, the crew-wire guard or the `flake.lock` guard.
   (`web/src/lib/loaders.ts`) fetch the snapshot + pane; **polling is `useRevalidator()` on an
   adaptive interval** (`web/src/hooks/use-polling.ts`); mutations are direct `lib/api.ts` calls
   followed by `revalidator.revalidate()`. There is **no TanStack Query** — don't reintroduce it.
-- Routes (`web/src/router.tsx`): `/`, `/space/:spaceId`, `/settings`, `/pane/:paneId` and
-  `/pane/:paneId/history`. The router instance is module-scoped so it keeps its location.
+- Routes (`web/src/router.tsx`): `/`, `/space/:spaceId`, `/settings`, `/pane/:paneId`,
+  `/pane/:paneId/history`, `/pane/:paneId/changes` and `/space/:spaceId/changes` (both matched as
+  `changes/*`, so the commit view `…/changes/commit` shares the list's component). The router
+  instance is module-scoped so it keeps its location.
+- **Back goes up one level.** Navigate through `useNav()` (`web/src/hooks/use-nav.ts`): down is a
+  push that records `from`, sideways is a replace, up steps back onto a legitimate parent or
+  replaces onto the structural one, never a push. A new route gets its place in `ancestorsOf` and
+  `parentChain` (`web/src/lib/nav.ts`). Sheets own no history
+  ([ADR 0067](./.adr/0067-back-goes-up-one-level.md), DESIGN.md §12).
 - **The idle lock pauses; it does not gate.** It only appears when Collie is left *open, visible and
   untouched* — a hidden page never locks, and returning to the foreground auto-resumes. It covers a
   still-mounted router (unmounting it ate in-progress composer drafts) and pauses polling through
@@ -482,12 +489,12 @@ lint guard, the crew-wire guard or the `flake.lock` guard.
 - **The operator's rows in `commands.toml` join Claude's maintained reference catalog** — matching
   rows appear first, an exact-name operator row replaces the reference row without lowering its
   dangerous classification, and every other harness still uses ADR 0018's replacement rule
-  ([ADR 0064](./.adr/0064-claude-operator-commands-join-the-reference-catalog.md)). The bridge re-reads
+  ([ADR 0070](./.adr/0070-claude-operator-commands-join-the-reference-catalog.md)). The bridge re-reads
   the file behind an mtime check, so edits are live and need no restart.
 - **The Agent palette stages commands; it never sends them** — tapping any row puts its text in the
   composer, an argument-taking row includes one trailing space, and only the explicit Send action
   submits it. The harness bar is the separate direct-action surface
-  ([ADR 0065](./.adr/0065-the-agent-palette-stages-never-sends.md)).
+  ([ADR 0071](./.adr/0071-the-agent-palette-stages-never-sends.md)).
 - **The composition rule runs PER SURFACE, and the harness bar still replaces** — a row with
   `bar = true` goes on the bar above the keys as well as into the palette, and the bar's
   replace-or-fall-back runs over the `bar = true` rows ALONE
@@ -615,10 +622,15 @@ the rule below: `stt.json` in the state dir when the operator ran `collie stt se
 font files under `<config-dir>/fonts`, served read-only through `bridge/operator-fonts.ts`
 ([ADR 0033](./.adr/0033-the-app-face-is-a-device-preference.md)).
 
-**The law is that the journal is the only place a CLIENT-SUPPLIED value becomes a path** — and even
-there it is a pane id, never a path. `GET /api/fonts/<basename>` does not become a second such place:
-the request's name is **looked up** in the rows the operator's own `theme.toml` declared and that
-row's path is taken, so a name nobody declared is refused before any path exists. The containment
+**The law is that a CLIENT-SUPPLIED value becomes a path in two places only: the journal, and the
+Changes view** — in the journal it is a pane id, never a path. The Changes view
+(`bridge/changes.ts`, [ADR 0065](./.adr/0065-the-changes-view-reads-git-read-only.md)) is bounded by
+a listed-paths rule: a diff is served only for a repo the bridge's own discovery returned and a path
+git listed there, and an untracked read goes through `containedRealpath` too. Its git runs are
+hardened against repo-driven code execution (fsmonitor, external diff, textconv, filter drivers);
+don't drop a `-c` there without reading the module header. `GET /api/fonts/<basename>` does not
+become a third such place: the request's name is **looked up** in the rows the operator's own
+`theme.toml` declared and that row's path is taken, so a name nobody declared is refused before any path exists. The containment
 rule in [`files.ts`](./bridge/journal/files.ts) then runs anyway, on both surfaces and as an
 independent second check: **every** path about to be read goes through `containedRealpath` — after
 symlink resolution, on the real paths, including paths derived from one already checked. Reuse that

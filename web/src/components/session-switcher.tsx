@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router";
 import { Check, Layers } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useNav } from "@/hooks/use-nav";
 import { BottomSheet } from "@/components/ui/sheet";
 import { ListGroup } from "@/components/ui/list-group";
 import { StatusDot } from "@/components/status-badge";
@@ -63,7 +63,7 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
   const current = scope.session;
   const [open, setOpen] = useState(false);
   const [sessionOrder, setSessionOrder] = useState<string[]>([]);
-  const navigate = useNavigate();
+  const nav = useNav();
 
   const reachableCount = sessions.filter((s) => s.reachable).length;
   const onNonPrimary = current !== undefined;
@@ -102,7 +102,8 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
     if (!s.reachable) return; // unreachable rows are non-clickable (disabled), guard anyway
     const target = s.isPrimary ? undefined : s.name; // primary carries no `?s=`
     if (target === current && !viewAll) return; // already here
-    navigate(homePath({ host: scope.host, session: target }));
+    // Sideways, like the machine switcher: a replace (ADR 0067).
+    nav.side(homePath({ host: scope.host, session: target }));
   }
 
   /**
@@ -117,7 +118,7 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
    */
   function widen(): void {
     setOpen(false);
-    navigate(homePath({ host: scope.host }, { all: true }));
+    nav.side(homePath({ host: scope.host }, { all: true }));
   }
 
   return (

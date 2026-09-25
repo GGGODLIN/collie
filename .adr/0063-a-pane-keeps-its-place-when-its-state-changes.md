@@ -1,6 +1,6 @@
 # 0063 — A pane keeps its place when its state changes
 
-> Amended in scope by [0066](./0066-the-switcher-orders-a-section-by-its-latest-state-change.md): the
+> Amended in scope by [0072](./0072-the-switcher-orders-a-section-by-its-latest-state-change.md): the
 > switcher's attention sections order newest state change first.
 
 - **Status:** Accepted

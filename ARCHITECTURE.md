@@ -337,7 +337,7 @@ graph TD
 - **The operator's slash-command rows ride `/api/config`** too, read from their `commands.toml`
   behind an mtime check (`bridge/operator-commands.ts`), so editing the file is live like a web
   rebuild. Claude panes put matching rows before the maintained reference catalog and remove exact
-  name duplicates; other harnesses still replace their catalog ([ADR 0064](./.adr/0064-claude-operator-commands-join-the-reference-catalog.md)). Their **Keys-tray presets**
+  name duplicates; other harnesses still replace their catalog ([ADR 0070](./.adr/0070-claude-operator-commands-join-the-reference-catalog.md)). Their **Keys-tray presets**
   ride the same request but keep the replacement rule, from `keys.toml` (`bridge/operator-keys.ts`),
   and their **Quick-dock groups** do the same from `quick-replies.toml`
   (`bridge/operator-quick-replies.ts`); the three share one reader (`bridge/operator-file.ts`) and one scope ladder

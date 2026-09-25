@@ -1,4 +1,4 @@
-# 0066 — The switcher orders a section by its latest state change
+# 0072 — The switcher orders a section by its latest state change
 
 - **Status:** Accepted
 - **Date:** 2026-09-25
