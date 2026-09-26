@@ -55,5 +55,8 @@ command = ["/Users/me/.local/bin/ww", "--source", "http"]
   every install that has no `retell.toml`.
 - The phone depends on the sidecar's `--session-id` and `--json` contract (added for this, sidecar
   commit a9c5d5c). A sidecar older than that fails the request with its own argparse error.
+- The timeout kills the direct child only. A `command` whose sidecar spawns a grandchild (`--source
+  cmd` or `auto`, which run `claude -p`) can leave that grandchild running after a timeout; the shipped
+  example uses `--source http`, which spawns none.
 - Revisit if a retelling needs streaming, a conversation, or history — each of those is a service,
   not a one-shot child, and would have to argue past this record.

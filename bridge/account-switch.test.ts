@@ -13,14 +13,24 @@ function fakeClock(): SwitchClock {
 }
 
 /** A pane whose Claude exits `exitAfterPolls` snapshot reads after `/exit` is submitted. */
-function fakeMux(opts: { exitAfterPolls: number | null; screenAfterExit?: string; launchFails?: boolean }) {
+function fakeMux(opts: {
+  exitAfterPolls: number | null;
+  screenAfterExit?: string;
+  launchFails?: boolean;
+  /** A draft sits in the input row until this many ctrl+c presses; null = it never clears. */
+  draftClearsAfter?: number | null;
+}) {
   const calls: string[] = [];
   let submittedExit = false;
+  let clears = 0;
+  const draft = () =>
+    opts.draftClearsAfter !== undefined && (opts.draftClearsAfter === null || clears < opts.draftClearsAfter);
   let polls = 0;
   const gone = () => submittedExit && opts.exitAfterPolls !== null && polls > opts.exitAfterPolls;
   const mux = {
     async sendKeys(_pane: string, keys: readonly string[]): Promise<MuxAck> {
       calls.push(`keys:${keys.join(",")}`);
+      if (keys[0] === "ctrl+c") clears += 1;
       if (keys[0] === "Enter" && calls.at(-2) === "text:/exit") submittedExit = true;
       return ok;
     },
@@ -38,7 +48,7 @@ function fakeMux(opts: { exitAfterPolls: number | null; screenAfterExit?: string
     async readGrid(): Promise<MuxOutcome<MuxGrid>> {
       const text = gone()
         ? (opts.screenAfterExit ?? `Resume this session with:\nclaude --resume ${SID}\n\n❯`)
-        : "╭ claude frame ╮\n❯ \n";
+        : `❯ earlier prompt\n╭ claude frame ╮\n${draft() ? "❯ a draft" : "❯ "}\n`;
       // SAFETY: the switch reads only `text` off a grid.
       return { ok: true, value: { text } as MuxGrid };
     },
@@ -49,16 +59,32 @@ function fakeMux(opts: { exitAfterPolls: number | null; screenAfterExit?: string
 const plan = (interrupt: boolean) => ({ paneId: "w1:p1", sessionId: SID, command: "cc -team-s", interrupt });
 
 describe("switchAccount", () => {
-  test("an idle pane: clear the box, /exit, wait for the exit, then resume on the new account", async () => {
+  test("an idle pane with an empty input row: /exit, wait for the exit, then resume", async () => {
     const { mux, calls } = fakeMux({ exitAfterPolls: 2 });
     expect(await switchAccount(mux, plan(false), fakeClock())).toEqual({ ok: true });
-    expect(calls).toEqual(["keys:ctrl+c", "text:/exit", "keys:Enter", `text:cc -team-s --resume ${SID}`, "keys:Enter"]);
+    expect(calls).toEqual(["text:/exit", "keys:Enter", `text:cc -team-s --resume ${SID}`, "keys:Enter"]);
   });
 
-  test("a working pane is interrupted once before the clearing ctrl+c", async () => {
+  test("a working pane is interrupted once, then /exit goes into the empty row", async () => {
     const { mux, calls } = fakeMux({ exitAfterPolls: 0 });
     expect(await switchAccount(mux, plan(true), fakeClock())).toEqual({ ok: true });
-    expect(calls.slice(0, 3)).toEqual(["keys:ctrl+c", "keys:ctrl+c", "text:/exit"]);
+    expect(calls.slice(0, 2)).toEqual(["keys:ctrl+c", "text:/exit"]);
+  });
+
+  test("a draft in the input row is cleared before /exit is typed", async () => {
+    const { mux, calls } = fakeMux({ exitAfterPolls: 0, draftClearsAfter: 1 });
+    expect(await switchAccount(mux, plan(false), fakeClock())).toEqual({ ok: true });
+    expect(calls.slice(0, 2)).toEqual(["keys:ctrl+c", "text:/exit"]);
+  });
+
+  test("an input row that never clears stops the switch before /exit", async () => {
+    const { mux, calls } = fakeMux({ exitAfterPolls: 0, draftClearsAfter: null });
+    expect(await switchAccount(mux, plan(false), fakeClock())).toEqual({
+      ok: false,
+      stage: "exit",
+      reason: "Claude's input row did not clear",
+    });
+    expect(calls).toEqual(["keys:ctrl+c", "keys:ctrl+c"]);
   });
 
   test("an exit never confirmed starts nothing", async () => {

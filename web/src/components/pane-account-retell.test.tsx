@@ -78,7 +78,33 @@ describe("switch account", () => {
     await waitFor(() => expect(bodies).toEqual([{ account: "Team-S", interrupt: true }]));
   });
 
-  it("is not offered for a pane with no session, a non-Claude pane, or with no accounts", async () => {
+  it("a pane the bridge sees working arms the row, and the next tap interrupts", async () => {
+    withAccounts(["Team-S"]);
+    const bodies: unknown[] = [];
+    server.use(
+      http.post("/api/pane/:id/switch-account", async ({ request }) => {
+        // SAFETY: the only sender in this case is api.switchAccount, whose body always carries `interrupt`.
+        const body = (await request.json()) as { interrupt: boolean };
+        bodies.push(body);
+        return body.interrupt
+          ? HttpResponse.json({ ok: true })
+          : HttpResponse.json({ ok: false, error: "working", code: "account.confirm_interrupt" }, { status: 409 });
+      }),
+    );
+    const user = userEvent.setup();
+    renderSheet(claude);
+    await user.click(await screen.findByRole("button", { name: "Switch account" }));
+    await user.click(screen.getByRole("button", { name: "Team-S" }));
+    await user.click(await screen.findByRole("button", { name: /interrupt this turn and switch to Team-S/ }));
+    await waitFor(() =>
+      expect(bodies).toEqual([
+        { account: "Team-S", interrupt: false },
+        { account: "Team-S", interrupt: true },
+      ]),
+    );
+  });
+
+  it("is not offered for a pane with no session", async () => {
     withAccounts(["Team-S"]);
     renderSheet({ ...claude, hasSession: false });
     await screen.findByRole("button", { name: "Rename" });

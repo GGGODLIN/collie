@@ -260,11 +260,16 @@ export function PaneActionsSheet({
    */
   async function requestSwitch(account: string) {
     if (!pane || switching !== null) return;
+    const key = `${pane.paneId}\n${account}`;
+    // Armed either by this phone seeing the pane busy, or by the bridge refusing because IT saw the
+    // pane busy while this phone's last poll still said idle.
+    const armed = accountConfirm.pending === key;
     const busy = pane.status === "working" || pane.status === "blocked";
-    if (busy && !accountConfirm.confirm(`${pane.paneId}\n${account}`)) return;
+    if (busy && !accountConfirm.confirm(key)) return;
+    if (armed && !busy) accountConfirm.reset();
     setSwitching(account);
     try {
-      const res = await api.switchAccount(pane.paneId, account, busy, scope);
+      const res = await api.switchAccount(pane.paneId, account, busy || armed, scope);
       if (res.ok) {
         setStatus(t("paneActions.account.done", { account }), "success");
         onClose();
@@ -273,7 +278,9 @@ export function PaneActionsSheet({
         setStatus(describeApiError(res, t("paneActions.account.failed")), "error");
       }
     } catch (e) {
-      setStatus(describeThrownError(e), "error");
+      // The bridge answers "confirm the interrupt" with a 409, which arrives as a thrown refusal.
+      if (api.apiErrorFields(e)?.code === "account.confirm_interrupt") accountConfirm.confirm(key);
+      else setStatus(describeThrownError(e), "error");
     } finally {
       setSwitching(null);
     }

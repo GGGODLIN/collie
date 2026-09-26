@@ -3105,7 +3105,7 @@ const switchingPanes = new Set<string>();
 // session (bridge/account-switch.ts holds the sequence and why it is ordered as it is). The client
 // names an `accounts.toml` label and says whether it accepted interrupting a running turn; the
 // command line and the session id both come from the bridge.
-async function switchAccountPane(
+export async function switchAccountPane(
   herdr: MuxAdapter,
   engine: StateEngine,
   cfg: Config,
@@ -3137,13 +3137,14 @@ async function switchAccountPane(
   const busy = claude.status === "working" || claude.status === "blocked";
   if (busy && fields.interrupt !== true) return refuse("account.confirm_interrupt", 409);
   if (switchingPanes.has(paneId)) return refuse("account.in_progress", 409);
-  const log = await claudeLogTail(cfg.journalRoots.claude, claude.sessionId);
-  if (log === null) return refuse("account.no_transcript", 409);
-  if (settingsChangedSinceLastTurn(log)) return refuse("account.settings_pending", 409);
-
+  // Claimed before the first await, so a second request arriving while the log is read is refused
+  // rather than typing a second `/exit` into the same pane.
   switchingPanes.add(paneId);
   let outcome: Awaited<ReturnType<typeof switchAccount>>;
   try {
+    const log = await claudeLogTail(cfg.journalRoots.claude, claude.sessionId);
+    if (log === null) return refuse("account.no_transcript", 409);
+    if (settingsChangedSinceLastTurn(log)) return refuse("account.settings_pending", 409);
     outcome = await switchAccount(
       herdr,
       { paneId, sessionId: claude.sessionId, command: account.command, interrupt: busy },
@@ -3172,7 +3173,7 @@ const retellingPanes = new Set<string>();
 
 // Retell a Claude pane's last turn ("plain") or whole session ("lost") with the operator's own
 // sidecar (bridge/retell.ts, ADR 0074). Off unless `retell.toml` names a command.
-async function retellPane(
+export async function retellPane(
   engine: StateEngine,
   paneId: string,
   req: Request,

@@ -9,11 +9,11 @@ import type { MuxAdapter } from "./mux/types.ts";
 //
 // The sequence is the one measured on Claude Code 2.1.283 (2026-09-26):
 //   • working → one ctrl+c interrupts the turn and puts the sent prompt back in the input box;
-//   • one more ctrl+c clears a non-empty input box, or only arms the exit hint on an empty one;
+//   • ctrl+c on a non-empty input box clears it;
 //   • `/exit` then exits and prints `claude --resume <id>`, and Herdr drops the pane's agent;
 //   • `<account command> --resume <id>` restores the last turn's model, effort and 1M context.
-// The unconditional second ctrl+c is what makes `/exit` safe to type: without it, a draft the
-// operator left in the input box would be submitted with `/exit` appended to it.
+// `/exit` is typed only once the screen shows an EMPTY input row: otherwise a draft the operator
+// left there, or the prompt an interrupt handed back, would be submitted with `/exit` appended.
 
 export interface SwitchPlan {
   readonly paneId: string;
@@ -48,6 +48,19 @@ const EXIT_CEILING_MS = 20_000;
 const EXIT_POLL_MS = 500;
 /** How far up the screen the printed resume line may sit and still belong to THIS exit. */
 const EXIT_TAIL_LINES = 8;
+/** Clearing ctrl+c presses tried before the switch gives up on an input row that stays full. */
+const CLEAR_ATTEMPTS = 2;
+
+/**
+ * Whether Claude's input row is empty: the LOWEST `❯` row on screen, which is the input box's (the
+ * transcript above echoes earlier prompts with the same mark). Null when no such row is on screen,
+ * which the caller treats as "cannot tell" and refuses on.
+ */
+export function inputRowEmpty(screen: string): boolean | null {
+  const rows = screen.split(/\r?\n/).filter((line) => line.trimStart().startsWith("❯"));
+  const row = rows.at(-1);
+  return row === undefined ? null : row.trim() === "❯";
+}
 
 /**
  * Whether the screen shows this session's own exit line at its foot.
@@ -118,9 +131,16 @@ export async function switchAccount(mux: SwitchMux, plan: SwitchPlan, clock: Swi
     if (failed !== null) return { ok: false, stage: "exit", reason: failed };
     await clock.sleep(INTERRUPT_SETTLE_MS);
   }
-  const cleared = await keys(["ctrl+c"]);
-  if (cleared !== null) return { ok: false, stage: "exit", reason: cleared };
-  await clock.sleep(KEY_SETTLE_MS);
+  for (let attempt = 0; ; attempt++) {
+    const read = await mux.readGrid(plan.paneId, { scope: "viewport", lines: 60, styling: "strip" });
+    const empty = read.ok ? inputRowEmpty(read.value.text) : null;
+    if (empty === true) break;
+    if (empty === null) return { ok: false, stage: "exit", reason: "Claude's input row is not on screen" };
+    if (attempt >= CLEAR_ATTEMPTS) return { ok: false, stage: "exit", reason: "Claude's input row did not clear" };
+    const cleared = await keys(["ctrl+c"]);
+    if (cleared !== null) return { ok: false, stage: "exit", reason: cleared };
+    await clock.sleep(KEY_SETTLE_MS);
+  }
   const typed = await mux.typeText(plan.paneId, "/exit");
   if (!typed.ok) return { ok: false, stage: "exit", reason: typed.detail };
   await clock.sleep(KEY_SETTLE_MS);

@@ -148,6 +148,7 @@ the pointer, it was a supersede.
 | [0071](./0071-the-agent-palette-stages-never-sends.md) | The Agent palette stages commands, never sends them | Accepted |
 | [0072](./0072-the-switcher-orders-a-section-by-its-latest-state-change.md) | The switcher orders a section by its latest state change, as Herdr's priority panel does (amends 0063) | Amended in scope by 0073 |
 | [0073](./0073-both-pane-switcher-entries-use-attention.md) | Both pane switcher entries use a frozen attention list (amends 0063 and 0072) | Accepted |
+| [0074](./0074-retell-is-a-one-shot-operator-child.md) | A retelling is one short-lived child the operator named in `retell.toml`, never a service or a prompt Collie owns | Accepted |
 
 Numbers are claimed across **both** branches: 0011–0016 were accepted here on `v1` while `main` was
 still at 0010, so a new ADR continues from the highest number in use anywhere, not the highest one on
