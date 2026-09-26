@@ -1,6 +1,6 @@
 // What a pane is doing, in one description every surface reads — the herd row, the pane screen and
 // the Web Push body. The bridge computes it ONCE per pane, here, and no surface composes its own text
-// or its own priority order (research/moshi-pro/recap-design.md § 原則).
+// or its own priority order.
 //
 // PURE. No fs, no clock. The tracker beside this file (./tracker.ts) collects the two readings off
 // disk on the state engine's poll; this module only decides, so every rule is table-testable.

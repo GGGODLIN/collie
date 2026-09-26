@@ -1,3 +1,0 @@
-23:41 Connected — mirroring active (window: 326x720, pos=(1095,243), portrait)
-00:11 Connected — mirroring active (window: 326x720, pos=(604,166), portrait)
-00:41 Connected — mirroring active (window: 326x720, pos=(604,166), portrait)

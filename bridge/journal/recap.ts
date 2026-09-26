@@ -1,5 +1,5 @@
-// The recap file a Claude Code plugin writes beside the journal: `~/.cache/cc-recap/<sessionId>.json`
-// (research/moshi-pro/recap-design.md § 產生端). It lives here, under bridge/journal/, because it is
+// The recap file a Claude Code plugin writes beside the journal: `~/.cache/cc-recap/<sessionId>.json`.
+// It lives here, under bridge/journal/, because it is
 // the same kind of read as a transcript and obeys the same law (files.ts): the session id comes from
 // Herdr, never the client, it is pattern-checked before it touches a path, and the built path is put
 // through `containedRealpath` with the recap directory as its root.

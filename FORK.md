@@ -44,8 +44,8 @@ Each entry says what it is, where it lives, and what it assumes.
   Claude Code mod writes to `~/.cache/cc-recap/<sessionId>.json`. The other two, a waiting
   approval and the newest prompt, work anywhere.
 - **Where.** [`bridge/journal/recap.ts`](/bridge/journal/recap.ts), read by
-  [`bridge/description/resolve.ts`](/bridge/description/resolve.ts); the design is in
-  [`research/moshi-pro/recap-design.md`](/research/moshi-pro/recap-design.md).
+  [`bridge/description/resolve.ts`](/bridge/description/resolve.ts). The design notes stay in the
+  operator's local research folder, outside the repo.
 - **Assumes.** cc-mod-waitwhat's recap hook is installed; without it that source is simply absent.
 - **To upstream.** The description can go as it is. The recap source needs the file format written
   down as a contract any plugin can produce, not one mod's output.

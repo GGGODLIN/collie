@@ -2,7 +2,7 @@
 
 Status: **Accepted** (2026-09-26)
 
-Trail: [research/moshi-pro/roadmap.md](/research/moshi-pro/roadmap.md) item 4, where option a ("the
+Trail: item 4 of the operator's roadmap (kept outside the repo), where option a ("the
 producer stays in the host's mod or sidecar, because the bridge may not call a model") was the
 chosen road, and the implementation hand-off that proposed the alternatives below. Files:
 `bridge/retell.ts`, `bridge/server.ts` (`retellPane`), `web/src/components/retell-sheet.tsx`.

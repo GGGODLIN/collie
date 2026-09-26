@@ -1,8 +1,0 @@
-object which has been auready passed t
-任何終端曾話
-在Mosh 中捲動
-Mosh 會保持即時終端連線，但重新連線後不
-會攜帶無限制的捲動歷史。需要較長歷史時，
-請在 tmux 中工作；Moshi 可以重新連到該會
-話，而 tmux 會保留 scrollback。
-查看文件
