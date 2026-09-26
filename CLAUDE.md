@@ -12,7 +12,7 @@ decisions [`.adr/`](./.adr/) · adding a harness
 [`HARNESS_CONTRIBUTING.md`](./HARNESS_CONTRIBUTING.md) · adding a multiplexer
 [`MUX_CONTRIBUTING.md`](./MUX_CONTRIBUTING.md).
 
-## Project mode — personal vibe coding
+## Project mode — personal vibe coding, published fork
 
 This fork is a personal vibe coding project. Make the smallest change that satisfies the user's
 explicit need, verify it with the nearest targeted tests, lint and `bun run build`, then stop.
@@ -21,7 +21,23 @@ the full test / E2E suite unless the user asks or the requested change directly 
 
 A task is not finished at commit or push. After verification, deploy the resulting build to the
 active local Collie instance and leave it ready for phone acceptance. If a change has no deployable
-runtime effect, say so explicitly instead of silently skipping deployment.
+runtime effect, say so explicitly instead of silently skipping deployment. This applies to the
+operator's own runtime changes, not to preparing an upstream PR or to someone else's clone.
+
+The fork is also published for other people to install and use, and its general changes are
+candidates for upstream. Two rules follow from that:
+
+- **Someone without this operator's setup still gets a working Collie.** A change may lean on the
+  operator's own tools, paths or labels, but without them Collie still installs, starts and runs
+  everything that does not depend on them; the feature simply stays away. Cover that missing path
+  in the nearest test. Not configured means a quiet absence; configured but broken (the named
+  command is gone, the file is malformed) means a clear reason, never a silent no-op. Such a
+  feature may stay personal for good and owes no later generalisation.
+- **Upstream PRs are proposed, never opened unasked.** Pick candidates by feature and dependency,
+  not by whether a commit appears in `FORK.md`, and open a PR to AltanS/collie only after the user
+  approves that PR. This overrides the default that a personal repo's PRs need no confirmation;
+  commits and pushes to this fork keep their existing authorisation. What a fork PR leaves out of
+  the version files is under *Versioning*.
 
 ## Decision records — read before reopening a settled question
 
@@ -723,7 +739,9 @@ Environment traps and trajectories live in `e2e-live/trajectories/`.
 A change that only works on this operator's setup (their own mods, paths, labels or services) gets
 an entry under *Personal changes* in [`FORK.md`](./FORK.md) in the same commit: what, where, what it
 assumes, and what upstreaming it would take. Its code carries a `Fork-only (FORK.md …)` header so an
-upstream PR can leave it out. General-purpose fork work stays in `CHANGELOG.md` only.
+upstream PR can leave it out. General-purpose fork work stays in `CHANGELOG.md` only. An entry is a
+record, not an exemption from *Project mode*'s working-Collie rule, and it does not by itself decide
+what goes upstream.
 
 ## 帳本生命週期
 
