@@ -742,7 +742,3 @@ assumes, and what upstreaming it would take. Its code carries a `Fork-only (FORK
 upstream PR can leave it out. General-purpose fork work stays in `CHANGELOG.md` only. An entry is a
 record, not an exemption from *Project mode*'s working-Collie rule, and it does not by itself decide
 what goes upstream.
-
-## 帳本生命週期
-
-> 帳本生命週期：規則見 `~/.claude/references/ledger-lifecycle.md`；門檻以 `~/.claude/scripts/ledger-lifecycle/registry.json` 為準。
