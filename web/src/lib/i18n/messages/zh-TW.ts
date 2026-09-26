@@ -315,6 +315,7 @@ export const zhTW: Dictionary = {
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "選擇操作",
   "prompt.family.permission": "需要權限",
+  "approval.openPane": "開啟 pane",
   "prompt.family.trust": "是否信任此目錄？",
   "prompt.family.plan": "查看執行計畫",
   "prompt.sendingAria": "正在傳送",

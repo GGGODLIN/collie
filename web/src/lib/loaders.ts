@@ -156,6 +156,8 @@ export interface PaneData {
    * a reply can never land on the right pane name on the wrong machine. */
   scope: Scope;
   text: string;
+  /** 空讀取仍可沿用 pane 鏡像快取，但批准面板不能把快取當作目前的終端畫面。 */
+  emptyRead?: boolean;
   /** True when the buffer was cut off at the requested line count — older scrollback still exists. */
   truncated: boolean;
   /** The same rows with soft wraps undone, when the bridge found a URL the pane split — the mirror
@@ -523,6 +525,7 @@ export async function paneLoader({
       paneId,
       scope,
       text,
+      emptyRead: read.text === "",
       truncated: read.truncated,
       logicalText: read.logicalText,
       requestedLines: lines,

@@ -332,6 +332,7 @@ export const es: Dictionary = {
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "Seleccionar una opción",
   "prompt.family.permission": "Permiso requerido",
+  "approval.openPane": "Abrir panel",
   "prompt.family.trust": "Confiar en este directorio",
   "prompt.family.plan": "Revisar el plan",
   "prompt.sendingAria": "Enviando",

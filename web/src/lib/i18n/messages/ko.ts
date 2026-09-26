@@ -327,6 +327,7 @@ export const ko: Dictionary = {
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "옵션 선택",
   "prompt.family.permission": "권한 필요",
+  "approval.openPane": "패널 열기",
   "prompt.family.trust": "이 디렉터리를 신뢰합니까?",
   "prompt.family.plan": "계획 검토",
   "prompt.sendingAria": "전송 중",

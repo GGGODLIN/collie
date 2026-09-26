@@ -329,6 +329,7 @@ export const ja: Dictionary = {
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "オプションを選択",
   "prompt.family.permission": "権限が必要です",
+  "approval.openPane": "ペインを開く",
   "prompt.family.trust": "このディレクトリを信頼しますか？",
   "prompt.family.plan": "プランの確認",
   "prompt.sendingAria": "送信中",

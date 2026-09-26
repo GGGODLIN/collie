@@ -353,6 +353,7 @@ export const en = {
   // --- prompt (the native prompt-select / plan-feedback block) ---
   "prompt.family.select": "Choose an option",
   "prompt.family.permission": "Permission required",
+  "approval.openPane": "Open pane",
   "prompt.family.trust": "Trust this folder?",
   "prompt.family.plan": "Review the plan",
   "prompt.sendingAria": "Sending",

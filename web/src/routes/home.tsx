@@ -24,6 +24,7 @@ import { useWorkspaceChangeCounts } from "@/hooks/use-workspace-change-counts";
 import { useSpaceActions } from "@/hooks/use-spaces";
 import { useNav } from "@/hooks/use-nav";
 import { usePaneOpen } from "@/hooks/use-pane-open";
+import { useListApproval } from "@/hooks/use-list-approval";
 import { useScrollMemory } from "@/hooks/use-scroll-memory";
 import { useMuxCapability } from "@/lib/mux-capability";
 import { ambientHost, ambientPanes, paneScope, sessionsOnHost } from "@/lib/hosts";
@@ -132,6 +133,7 @@ export function HomeRoute() {
   // right pane name on the wrong terminal. Solo: every pane is untagged, so this is `data.scope`.
   // The tap glides the row into the pane header when the pane's read is in time (use-pane-open.ts).
   const paneOpen = usePaneOpen(data.scope, data.servers, data.sessions);
+  const approval = useListApproval(data, paneOpen);
   const showSwitcher = () => setSwitcherAgents([...data.agents]);
   const closeSwitcher = () => setSwitcherAgents(null);
   const selectFromSwitcher = (pane: AgentView) => {
@@ -204,9 +206,9 @@ export function HomeRoute() {
             agents={data.agents}
             shellPanes={data.shellPanes}
             bridge={data.bridge}
-            onOpen={paneOpen.open}
+            onOpen={approval.open}
             glideKeyOf={paneOpen.glideKeyOf}
-            onPress={paneOpen.press}
+            onPress={approval.press}
             error={data.error}
             lastSeenAt={data.lastSeenAt}
             tabs={data.tabs}
@@ -309,6 +311,8 @@ export function HomeRoute() {
           className="px-0 py-1"
         />
       </BottomSheet>
+
+      {approval.sheet}
 
       <NewSpaceSheet
         open={newSpaceOpen}

@@ -14,6 +14,7 @@ import { UpdateBanner } from "@/components/update-banner";
 import { useSpaceActions } from "@/hooks/use-spaces";
 import { useNav } from "@/hooks/use-nav";
 import { usePaneOpen } from "@/hooks/use-pane-open";
+import { useListApproval } from "@/hooks/use-list-approval";
 import { useScrollMemory } from "@/hooks/use-scroll-memory";
 import { homePath, spacePath } from "@/lib/nav";
 import { ambientHost } from "@/lib/hosts";
@@ -64,6 +65,7 @@ export function SpaceRoute() {
   // A pane is down, and its tap glides the row into the pane header when the pane's read is in time
   // (use-pane-open.ts); the header's back arrow glides it back into this list.
   const paneOpen = usePaneOpen(data.scope, data.servers, data.sessions);
+  const approval = useListApproval(data, paneOpen);
 
   // Same fix as home.tsx's dashboard scroller, same cause: ScreenTransition remounts this route on
   // every space<->pane move, so the scroller below is a fresh DOM node each time. Keyed on scope +
@@ -149,9 +151,9 @@ export function SpaceRoute() {
                 agents={data.agents}
                 shellPanes={data.shellPanes}
                 selectedTab={tab}
-                onOpen={paneOpen.open}
+                onOpen={approval.open}
                 glideKeyOf={paneOpen.glideKeyOf}
-                onPress={paneOpen.press}
+                onPress={approval.press}
                 host={navHost}
               />
             </main>
@@ -171,6 +173,7 @@ export function SpaceRoute() {
         <StatusArea />
       </ToastViewport>
 
+      {approval.sheet}
       <NewSpaceSheet open={newSpaceOpen} onClose={() => setNewSpaceOpen(false)} onCreate={newSpace} />
     </div>
   );

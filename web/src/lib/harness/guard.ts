@@ -11,7 +11,7 @@
 import { fetchPane } from "../api";
 import { describeThrownError } from "../api-error-message";
 import { parseAnsi } from "../ansi";
-import { splitLines, type StyledLine } from "../blocks";
+import { lineText, splitLines, type StyledLine } from "../blocks";
 import type { Scope } from "../scope";
 
 /**
@@ -53,9 +53,10 @@ export async function readModel<M>(
   requestedLines: number,
   scope: Scope | undefined,
   detect: Detect<M>,
-): Promise<{ revision: number; model: M | null }> {
+): Promise<{ revision: number; model: M | null; text: string; plain: string }> {
   const fresh = await fetchPane(paneId, requestedLines, scope);
-  return { revision: fresh.revision, model: detect(splitLines(parseAnsi(fresh.text))) };
+  const lines = splitLines(parseAnsi(fresh.text));
+  return { revision: fresh.revision, model: detect(lines), text: fresh.text, plain: lines.map(lineText).join("\n") };
 }
 
 /**
@@ -76,6 +77,7 @@ export async function entryGuard<M>(
     requestedLines: number;
     /** The `revision` the rendered dialog was detected against. */
     detectedRevision: number;
+    expectedText?: string;
     /** The session the pane lives in (undefined = primary) — scopes the read. */
     scope?: Scope;
   },
@@ -104,7 +106,10 @@ export async function entryGuard<M>(
   if (!fresh.model || !equals(fresh.model, tapped)) {
     return { ok: false, result: { status: "changed" } };
   }
-  return { ok: true, region: regionOf(fresh.model) };
+  if (args.expectedText !== undefined && fresh.text !== args.expectedText) {
+    return { ok: false, result: { status: "changed" } };
+  }
+  return { ok: true, region: args.expectedText === undefined ? regionOf(fresh.model) : fresh.plain };
 }
 
 /**

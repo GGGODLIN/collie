@@ -5,7 +5,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { vi } from "vitest";
 
 import { CrewProvider } from "@/components/crew-provider";
-import { ROOT_ROUTE_ID, type HomeData } from "@/lib/loaders";
+import { paneLoader, ROOT_ROUTE_ID, type HomeData } from "@/lib/loaders";
 import {
   fixtureAgents,
   fixtureCrewAgents,
@@ -66,7 +66,7 @@ function renderHome(data: HomeData, initialPath?: string) {
           </CrewProvider>,
         ),
       },
-      { path: "/pane/:paneId", element: <div data-testid="pane" /> },
+      { path: "/pane/:paneId", loader: paneLoader, element: <div data-testid="pane" /> },
       { path: "/space/:spaceId/changes", element: <div data-testid="space-changes" /> },
       { path: "/crew", element: <div data-testid="crew" /> },
     ],
@@ -358,14 +358,14 @@ describe("the dashboard across sessions", () => {
     const router = renderHome(widened(), "/?all=1");
     await settled();
     await userEvent.click(rows()[1]!);
-    expect(url(router)).toBe("/pane/w1%3Ap1?s=work");
+    await waitFor(() => expect(url(router)).toBe("/pane/w1%3Ap1?s=work"));
   });
 
   it("opens the primary row at today's bare url", async () => {
     const router = renderHome(widened(), "/?all=1");
     await settled();
     await userEvent.click(rows()[0]!);
-    expect(url(router)).toBe("/pane/w1%3Ap1");
+    await waitFor(() => expect(url(router)).toBe("/pane/w1%3Ap1"));
   });
 
   it("keeps the space navigator on the ambient session", async () => {

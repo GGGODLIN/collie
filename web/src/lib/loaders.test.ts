@@ -219,6 +219,23 @@ describe("paneLoader", () => {
     expect(data.authError).toBe(true);
   });
 
+  it("preserves the mirror on an empty read but marks that it is not fresh terminal content", async () => {
+    const { paneLoader } = await import("./loaders");
+    const params = { paneId: "w1:p1" };
+    const first = await paneLoader({ params });
+    server.use(http.get("/api/pane/:id", () => HttpResponse.json({
+      paneId: params.paneId, text: "", revision: first.revision, truncated: false,
+    })));
+    const empty = await paneLoader({ params });
+    expect(empty).toMatchObject({
+      text: first.text, error: false, revision: first.revision, emptyRead: true,
+    });
+    server.use(http.get("/api/pane/:id", () => HttpResponse.json({
+      paneId: params.paneId, text: "Fresh output", revision: first.revision, truncated: false,
+    })));
+    expect(await paneLoader({ params })).toMatchObject({ text: "Fresh output", emptyRead: false });
+  });
+
   it("keeps the last-good pane text (flagged error) when a refresh fails", async () => {
     const { paneLoader } = await import("./loaders");
     await paneLoader({ params: { paneId: "w1:p1" } }); // prime per-pane cache
