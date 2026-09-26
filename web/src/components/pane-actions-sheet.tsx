@@ -1,5 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { Maximize2, Monitor, Pencil, ScrollText, Search, SlidersHorizontal, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpenText,
+  Compass,
+  Maximize2,
+  Monitor,
+  Pencil,
+  ScrollText,
+  Search,
+  SlidersHorizontal,
+  UserRoundCog,
+  XCircle,
+} from "lucide-react";
 
 import { BottomSheet } from "@/components/ui/sheet";
 import { ActionRow, DestructiveActionRow, RenameView } from "@/components/action-sheet-rows";
@@ -15,6 +27,8 @@ import { useMuxCapability, useMuxName } from "@/lib/mux-capability";
 import { setStatus } from "@/lib/status";
 import { stampTopology } from "@/lib/poll-intent";
 import { paneName } from "@/lib/pane-name";
+import { useOperatorAccounts } from "@/lib/operator-config";
+import type { RetellMode } from "@/components/retell-sheet";
 import type { AgentView } from "@/lib/types";
 import type { Scope } from "@/lib/scope";
 
@@ -60,9 +74,14 @@ interface PaneActionsSheetProps {
    *  buffered output to look at. Absence IS the gate, exactly as it is for find and history above —
    *  a device that never asked for zen sees a sheet byte-identical to today's. */
   onZen?: () => void;
+  /** Ask for a plain (last turn) or lost (whole session) retelling of this pane's Claude session
+   *  (ADR 0074). Absence is the gate, as for find and history: the pane header passes it only when
+   *  the host has a retell command, the pane is a local Claude with a session, and this device may
+   *  write. */
+  onRetell?: (mode: RetellMode) => void;
 }
 
-type Mode = "actions" | "rename";
+type Mode = "actions" | "rename" | "accounts";
 
 // The actions for a single pane. TWO entry points, one sheet: long-pressing (or re-tapping) a pane
 // pill in the strip, and the ⋮ button in the pane header — which is why find, history and zen live
@@ -86,6 +105,7 @@ export function PaneActionsSheet({
   onHistory,
   onSettings,
   onZen,
+  onRetell,
 }: PaneActionsSheetProps) {
   useLocale();
   const [mode, setMode] = useState<Mode>("actions");
@@ -129,6 +149,16 @@ export function PaneActionsSheet({
   // "bridge hasn't answered yet" case `useMuxName()` itself returns — both get the same generic,
   // never-wrong fallback copy below.
   const focusMux = pane?.host === undefined || pane.host === lead ? localMuxName : "";
+  // Switch account restarts Claude on THIS host's accounts, so it is offered only for a local Claude
+  // pane that reported a session to resume (bridge/account-switch.ts).
+  const accounts = useOperatorAccounts();
+  const canSwitchAccount =
+    accounts.length > 0 &&
+    pane?.agent === "claude" &&
+    pane.hasSession === true &&
+    (pane.host === undefined || pane.host === lead);
+  const accountConfirm = usePendingConfirm();
+  const [switching, setSwitching] = useState<string | null>(null);
 
   // Reset to the action list — and reprefill the label — whenever the sheet opens on a (new) pane,
   // AND whenever it closes, so reopening never lands you mid-rename. Intentionally NOT keyed on the
@@ -224,6 +254,31 @@ export function PaneActionsSheet({
     }
   }
 
+  /**
+   * Restart this Claude on another account in the same pane. A running turn is interrupted only on
+   * a second tap — the first one arms the row and says so — and an idle pane switches at once.
+   */
+  async function requestSwitch(account: string) {
+    if (!pane || switching !== null) return;
+    const busy = pane.status === "working" || pane.status === "blocked";
+    if (busy && !accountConfirm.confirm(`${pane.paneId}\n${account}`)) return;
+    setSwitching(account);
+    try {
+      const res = await api.switchAccount(pane.paneId, account, busy, scope);
+      if (res.ok) {
+        setStatus(t("paneActions.account.done", { account }), "success");
+        onClose();
+        stampTopology();
+      } else {
+        setStatus(describeApiError(res, t("paneActions.account.failed")), "error");
+      }
+    } catch (e) {
+      setStatus(describeThrownError(e), "error");
+    } finally {
+      setSwitching(null);
+    }
+  }
+
   const confirming = !!pane && pending === pane.paneId;
 
   return (
@@ -263,7 +318,7 @@ export function PaneActionsSheet({
           sheet; rename and close are the half you arrive at deliberately.
           Hidden in `rename` mode with the rest of the list — that view is a sub-screen, not a
           section. */}
-      {mode === "actions" && (onFind || onHistory || onSettings || onZen) && (
+      {mode === "actions" && (onFind || onHistory || onSettings || onZen || onRetell) && (
         <div className="mb-1 flex flex-col gap-1">
           {onFind && (
             <ActionRow
@@ -316,6 +371,28 @@ export function PaneActionsSheet({
               }}
             />
           )}
+          {/* The two retellings read the session rather than type into it, so they join the looking
+              rows. Close-then-act: the reading sheet they open is the only thing on screen. */}
+          {onRetell && (
+            <>
+              <ActionRow
+                icon={<BookOpenText className="size-4 shrink-0 text-muted-foreground" />}
+                label={t("retell.plain")}
+                onClick={() => {
+                  onClose();
+                  onRetell("plain");
+                }}
+              />
+              <ActionRow
+                icon={<Compass className="size-4 shrink-0 text-muted-foreground" />}
+                label={t("retell.lost")}
+                onClick={() => {
+                  onClose();
+                  onRetell("lost");
+                }}
+              />
+            </>
+          )}
         </div>
       )}
       {readOnly ? (
@@ -344,6 +421,16 @@ export function PaneActionsSheet({
               icon={<Pencil className="size-4 shrink-0 text-muted-foreground" />}
               label={t("paneActions.rename.label")}
               onClick={() => setMode("rename")}
+            />
+          )}
+          {canSwitchAccount && (
+            <ActionRow
+              icon={<UserRoundCog className="size-4 shrink-0 text-muted-foreground" />}
+              label={t("paneActions.account.label")}
+              onClick={() => {
+                accountConfirm.reset();
+                setMode("accounts");
+              }}
             />
           )}
           {canFocus.capable && (
@@ -378,6 +465,31 @@ export function PaneActionsSheet({
               {canRename.note || canClose.note || canFocus.note || t("paneActions.empty.fallback")}
             </p>
           )}
+        </div>
+      ) : mode === "accounts" && pane ? (
+        <div className="flex flex-col gap-1">
+          <ActionRow
+            icon={<ArrowLeft className="size-4 shrink-0 text-muted-foreground" />}
+            label={t("paneActions.account.back")}
+            onClick={() => setMode("actions")}
+          />
+          {accounts.map((account) => {
+            const armed = accountConfirm.pending === `${pane.paneId}\n${account}`;
+            return (
+              <ActionRow
+                key={account}
+                icon={<UserRoundCog className="size-4 shrink-0 text-muted-foreground" />}
+                label={
+                  switching === account
+                    ? t("paneActions.account.switching", { account })
+                    : armed
+                      ? t("paneActions.account.confirmInterrupt", { account })
+                      : account
+                }
+                onClick={() => void requestSwitch(account)}
+              />
+            );
+          })}
         </div>
       ) : (
         <RenameView

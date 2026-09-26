@@ -60,6 +60,10 @@ let currentStt: SttCapability | null = null;
 // on purpose: both mean "nothing said otherwise", and lib/attachments.ts answers both with the
 // contract that shipped before attachments existed — 10 MB, images only.
 let currentUpload: UploadCapability | null = null;
+// The operator's `accounts.toml` labels and whether `retell.toml` names a command (ADR 0074). Empty
+// and false until a read succeeds, which is also what a host that declared neither sends.
+let currentAccounts: readonly string[] = [];
+let currentRetell = false;
 let inflight: Promise<void> | null = null;
 let loaded = false;
 const listeners = new Set<() => void>();
@@ -87,6 +91,8 @@ export function loadOperatorCommands(): Promise<void> {
       currentMux = cfg.mux ?? null;
       currentStt = cfg.stt ?? null;
       currentUpload = cfg.upload ?? null;
+      currentAccounts = cfg.accounts ?? [];
+      currentRetell = cfg.retell === true;
       loaded = true;
       emit();
     } catch {
@@ -278,6 +284,30 @@ export function useOperatorQuickReplies(): readonly OperatorQuickReplyRow[] {
   );
 }
 
+export function getOperatorAccounts(): readonly string[] {
+  return currentAccounts;
+}
+
+export function getRetellEnabled(): boolean {
+  return currentRetell;
+}
+
+/** Reactive read of the switch-account labels. Same one-shot fetch, same contract. */
+export function useOperatorAccounts(): readonly string[] {
+  useEffect(() => {
+    void loadOperatorCommands();
+  }, []);
+  return useSyncExternalStore(subscribeOperatorConfig, getOperatorAccounts, getOperatorAccounts);
+}
+
+/** Reactive read of whether this host can retell a session. Same one-shot fetch, same contract. */
+export function useRetellEnabled(): boolean {
+  useEffect(() => {
+    void loadOperatorCommands();
+  }, []);
+  return useSyncExternalStore(subscribeOperatorConfig, getRetellEnabled, getRetellEnabled);
+}
+
 /** Test helper — reset module state between cases. */
 export function __resetOperatorCommands(): void {
   hostMux.clear();
@@ -289,6 +319,8 @@ export function __resetOperatorCommands(): void {
   currentMux = null;
   currentStt = null;
   currentUpload = null;
+  currentAccounts = [];
+  currentRetell = false;
   inflight = null;
   loaded = false;
   listeners.clear();

@@ -88,6 +88,34 @@ export const ERROR_CODES = {
    */
   "launch.pane_unknown": "pane not found",
 
+  // ── Switch account / retell: POST /api/pane/:id/{switch-account,retell} (ADR 0074) ──────
+  /** The label the client named is in no row of the operator's `accounts.toml`. Nothing was touched. */
+  "account.not_allowlisted": "account not in accounts.toml",
+  /** The pane runs no Claude, or its Claude reported no session id. Nothing was touched. */
+  "account.not_claude": "this pane is not running a Claude session Collie can resume",
+  /** The pane is mid-turn and the client did not say it accepts interrupting it. Nothing was touched. */
+  "account.confirm_interrupt": "the agent is working — confirm interrupting this turn",
+  /** A switch for this pane is still running. Nothing was touched. */
+  "account.in_progress": "a switch is already running on this pane",
+  /** The session's own log is not on disk, so `--resume` would find nothing. Nothing was touched. */
+  "account.no_transcript": "this session has no transcript yet — send one message first",
+  /** `/model` or `/effort` ran after the last answer; `--resume` would restore the old setting. Nothing was touched. */
+  "account.settings_pending": "model or effort changed since the last answer — send one message first",
+  /** Keys meant to end Claude were refused before it was seen to exit. Nothing new was started. */
+  "account.exit_failed": "{reason}",
+  /** The old process was never seen gone, so the new one was not typed. Check the pane. */
+  "account.exit_unconfirmed": "Claude did not confirm it exited — nothing was started",
+  /** The old Claude exited but the resume line did not reach the pane. The pane is at a shell. */
+  "account.launch_failed": "{reason}",
+  /** No `retell.toml` names a command (ADR 0074). */
+  "retell.off": "retell is not configured on this host",
+  /** The pane runs no Claude, or its Claude reported no session id. */
+  "retell.not_claude": "this pane is not running a Claude session",
+  /** The same pane and mode is already running; each one is a model call. */
+  "retell.in_progress": "a retelling is already being written for this pane",
+  /** The retell child failed; `{reason}` is its own words. */
+  "retell.failed": "{reason}",
+
   // ── Worktrees: /api/workspace/:id/worktree[s|/open|/remove] (ADR 0032) ─────────────
   /** The list could not be read — the space is not in a Git work tree, or the mux refused. */
   "worktree.list_failed": "{reason}",

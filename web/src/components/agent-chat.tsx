@@ -54,6 +54,8 @@ import { StripsSummary } from "@/components/strips-summary";
 import { PaneMeta } from "@/components/pane-meta";
 import { CacheSheet } from "@/components/cache-sheet";
 import { PaneActionsSheet } from "@/components/pane-actions-sheet";
+import { RetellSheet, useRetell } from "@/components/retell-sheet";
+import { useRetellEnabled } from "@/lib/operator-config";
 import { PaneSettingsSheet } from "@/components/pane-settings-sheet";
 import { CompactStripLabels, TAB_ROW_SQUARE_TAP_TARGET } from "@/components/ui/labelled-strip";
 import { ReadOnlyBanner } from "@/components/read-only-banner";
@@ -780,6 +782,17 @@ export function AgentChat({
   // loud. Hiding it is what leaves someone wondering whether Collie is broken.
   const sessionLog = useMuxCapability("agentSessionRef", scope);
   const historyAvailable = Boolean(agent?.hasSession) && sessionLog.capable;
+  // "Plain" / "lost" retellings (ADR 0074): the host's own sidecar reads this host's transcripts, so
+  // only a local Claude pane with a session qualifies, and the route is a write because each one is
+  // a paid model call.
+  const retellEnabled = useRetellEnabled();
+  const retell = useRetell(paneId, scope);
+  const retellAvailable =
+    retellEnabled &&
+    !readOnly &&
+    agent?.agent === "claude" &&
+    agent.hasSession === true &&
+    scope?.host === undefined;
   // A FOURTH state, and the per-pane sibling of the third (#137). `hasSession` folds two facts into
   // one flag bridge-side — "this pane named a session" AND "this agent has a journal adapter" — so
   // its absence alone cannot say which half failed, and the two want opposite words. On an agent
@@ -2385,7 +2398,9 @@ export function AgentChat({
           // already spent. It hands over to the sheet below in one React event, so the actions sheet
           // unmounts in the same commit the settings sheet mounts.
           onSettings={() => setDrawer("paneSettings")}
+          onRetell={retellAvailable ? (mode) => void retell.start(mode) : undefined}
         />
+        <RetellSheet retell={retell} />
         {/* This pane's own settings — one switch today, the prompt-cache warning (ADR 0042). Scoped to
             the PANE's machine, because `?host=` there names where the pane lives; the preference itself
             lands on the collie this phone is talking to, which is the only one that can push. */}

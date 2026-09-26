@@ -58,6 +58,21 @@ export const API_ERROR_CODES = [
   "launch.not_allowlisted",
   "launch.pane_unknown",
 
+  // Switch account / retell — POST /api/pane/:id/{switch-account,retell} (ADR 0074)
+  "account.not_allowlisted",
+  "account.not_claude",
+  "account.confirm_interrupt",
+  "account.in_progress",
+  "account.no_transcript",
+  "account.settings_pending",
+  "account.exit_failed",
+  "account.exit_unconfirmed",
+  "account.launch_failed",
+  "retell.off",
+  "retell.not_claude",
+  "retell.in_progress",
+  "retell.failed",
+
   // Worktrees — /api/workspace/:id/worktree[s|/open|/remove] (ADR 0032)
   "worktree.list_failed",
   "worktree.create_failed",

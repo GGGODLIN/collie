@@ -607,6 +607,7 @@ describe("solo zero-tax — routes", () => {
       // `changes` is the Changes view (ADR 0065): read-only git over the pane's folder, read-gated
       // like `history` beside it and forwarded to the member that owns the pane.
       "/^\\/api\\/pane\\/([^/]+)(?:\\/(reply|keys|upload|close|rename|history|changes|focus))?$/",
+      "/^\\/api\\/pane\\/([^/]+)\\/(switch-account|retell)$/",
       "/^\\/api\\/tab\\/([^/]+)\\/(rename|close)$/",
       // The Changes view asked by workspace (ADR 0065): the same read as the pane route's `changes`,
       // read-gated and forwarded with `?host=` to the member that owns the space.
@@ -719,6 +720,8 @@ const CONFIG_KEYS = {
   themeFile: true,
   fontsDir: true,
   launchersFile: true,
+  accountsFile: true,
+  retellFile: true,
   cacheRulesFile: true,
   maxUploadBytes: true,
   port: true,
@@ -754,6 +757,7 @@ describe("solo zero-tax — config", () => {
   test("Config carries no crew/peer/lead key", () => {
     const keys = Object.keys(CONFIG_KEYS).toSorted();
     expect(keys).toEqual([
+      "accountsFile",
       "allowAnyHost",
       "allowNonLoopbackBind",
       "allowedOrigins",
@@ -781,6 +785,7 @@ describe("solo zero-tax — config", () => {
       "publicHosts",
       "quickRepliesFile",
       "readLines",
+      "retellFile",
       "skipServe",
       "socketPath",
       "stateDir",

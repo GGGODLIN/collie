@@ -37,6 +37,8 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 - **The pane switcher shows what each agent is doing too.** A described pane's switcher row keeps its name on top and shows the same description line as its dashboard row underneath, in place of where the pane sits.
 - **A described row keeps its name on top.** On the dashboard and in the switcher the pane's name stays on line 1, the fixed thing a row is found by, and the description moves to the smaller line 2, where more of it fits.
 - **Tool permissions can be answered directly from pane lists.** Tapping a blocked row opens a bottom sheet with the terminal content and its existing approval choices; changed prompts close the sheet, while questions and unknown dialogs still open the pane.
+- **A Claude pane can switch account and keep its conversation.** Declare accounts in `accounts.toml`; the pane sheet's Switch account row ends Claude in the same pane, confirms it exited, and resumes the same session on the chosen account with its model, effort and context. A running turn is interrupted only after a second tap.
+- **The phone can retell a Claude session in plain words.** With `retell.toml` naming your cc-sidecar-waitwhat command, the pane sheet offers Plain (the last turn) and Lost (the whole session), shown in a reading sheet and sharing the sidecar's prompts and cache (ADR 0074).
 
 ### Changed
 

@@ -666,6 +666,11 @@ configuration keeps the egress on loopback, and the wire identity is probed hone
 ([ADR 0029](./.adr/0029-speech-to-text-is-a-provider-seam-collie-owns.md)). Setup is a CLI act, never
 a web form, for the reason pairing is.
 
+**A retelling is one short-lived child the operator named, and nothing else** — the argv in
+`retell.toml`, run once per phone request with the pane's multiplexer-reported session id appended,
+never a shell, a daemon or a client-chosen string. Absent file, absent feature
+([ADR 0074](./.adr/0074-retell-is-a-one-shot-operator-child.md)).
+
 **Two device gates guard writes, independently, and compose by AND.** `COLLIE_DEVICE_HEADER` trusts
 a name a proxy injects; **pairing** (`bridge/pairing.ts`, `collie pair` / `collie devices`) requires a
 bearer credential the device holds, and is on exactly when the registry is non-empty. Reads stay

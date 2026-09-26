@@ -36,7 +36,7 @@ import type { Launcher } from "./types.ts";
  * A scan rather than a regular expression: a control-character CLASS in a pattern is itself the
  * thing the lint rule warns about, and the question here is a plain one about code points.
  */
-function hasControlChar(line: string): boolean {
+export function hasControlChar(line: string): boolean {
   for (const ch of line) {
     const code = ch.codePointAt(0) ?? 0;
     if (code < 0x20 || code === 0x7f) return true;

@@ -88,6 +88,14 @@ export const ACK_MANIFEST = {
     channel: "status",
     why: "The one act whose outcome lands on a screen the operator is not looking at (the terminal, ADR 0031) — nothing here can show it, so the phone has to say it.",
   },
+  switchAccount: {
+    channel: "status",
+    why: "The sheet closes on success and the restarted Claude only shows up on the next poll, so the phone has to say that the session resumed on the chosen account.",
+  },
+  retellPane: {
+    channel: "inline",
+    why: "The answer IS the acknowledgement: the reading sheet shows its own spinner, the retelling, or the refusal in its own chrome, and the answer outlives the operator's next tap.",
+  },
   renamePane: {
     channel: "status",
     why: "The sheet closes on success and the new label only reaches the strip on the next poll, so at the moment of the tap there is nothing on screen that changed.",

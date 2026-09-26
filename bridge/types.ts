@@ -826,6 +826,11 @@ export type ActionResponse =
       detail?: ApiErrorDetail;
     };
 
+/** POST /api/pane/:id/retell — a plain or lost retelling of the pane's Claude session (ADR 0074). */
+export type RetellResponse =
+  | { ok: true; mode: "plain" | "lost"; label: string; answer: string; cached: boolean; source: string }
+  | { ok: false; error: string; code?: ErrorCode; detail?: ApiErrorDetail };
+
 /** POST /api/pane/:id/upload — image saved to a host file; `path` is the absolute path to ref. */
 export type UploadResponse =
   | { ok: true; path: string }
@@ -1211,6 +1216,13 @@ export interface BridgeConfig {
    * decides whether to draw a button, not where the audio goes.
    */
   stt?: SttCapability;
+  /**
+   * The labels of the operator's `accounts.toml` rows, for the pane sheet's "Switch account".
+   * Absent when the file declares none, so the phone draws no such row.
+   */
+  accounts?: string[];
+  /** Present when `retell.toml` names a command, so the phone draws "Plain" / "Lost" (ADR 0074). */
+  retell?: true;
   /**
    * What this collie accepts as an attachment. **Absent is a bridge older than this field**, which
    * a client reads as the contract that shipped before it: 10 MB, images only. Present, it is the

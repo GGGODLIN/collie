@@ -272,6 +272,16 @@ export interface Config {
    */
   launchersFile: string;
   /**
+   * The operator's Claude accounts for "switch account" — `accounts.toml`, read by
+   * bridge/operator-accounts.ts on the same contract as `launchers.toml`.
+   */
+  accountsFile: string;
+  /**
+   * The operator's retell command — `retell.toml`, read by bridge/retell.ts. Absent file means the
+   * phone draws no retell buttons (ADR 0074).
+   */
+  retellFile: string;
+  /**
    * Where the operator's prompt-cache overrides live — `cache-rules.toml`, the sixth file on the same
    * contract, read the same way (bridge/operator-cache-rules.ts) and likewise never read here.
    */
@@ -633,6 +643,8 @@ export function loadConfig(env: Environment = process.env): Config {
     themeFile: join(configDir, "theme.toml"),
     fontsDir: join(configDir, "fonts"),
     launchersFile: join(configDir, "launchers.toml"),
+    accountsFile: join(configDir, "accounts.toml"),
+    retellFile: join(configDir, "retell.toml"),
     cacheRulesFile: join(configDir, "cache-rules.toml"),
     trustedUser: env.COLLIE_TRUSTED_USER ?? "",
     trustedUserOptional: envBool("COLLIE_TRUSTED_USER_OPTIONAL", false, env),

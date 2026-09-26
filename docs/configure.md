@@ -321,6 +321,50 @@ a row launches on whichever machine's dashboard or pane you tapped it from, not 
 To verify, reload the dashboard and look under the herd. If a row fails to load,
 `journalctl --user -u collie -n 20` prints the error.
 
+## Switch a Claude pane's account
+
+A Claude pane can move to another of your accounts without losing its conversation.
+
+```toml
+# ~/.config/collie/accounts.toml
+[[accounts]]
+label = "Team-P"          # required; what the pane sheet shows
+command = "cc -team-p"    # required; the shell line that starts Claude on this account
+```
+
+The pane sheet (⋮ in a pane) then offers **Switch account**, and a second list of your labels.
+
+1. The bridge ends Claude in the same pane and waits until it has exited.
+2. It types your `command` followed by `--resume <session id>` and sends Enter.
+
+`--resume` restores the session's own model, effort and context size, so the file has no model
+field. A working or blocked agent is interrupted only after a second tap on the account.
+
+> **Note.** The switch is refused when `/model` or `/effort` ran after the last answer, because
+> `--resume` would bring back the old setting. Send one message first.
+
+If Claude is never seen to exit, nothing new is started and the phone says so. The file is the
+allowlist: the phone sends a label, never a command line.
+
+## Retell a Claude session
+
+With cc-sidecar-waitwhat installed, the pane sheet can retell a Claude session in plain words.
+
+```toml
+# ~/.config/collie/retell.toml
+command = ["/Users/you/.local/bin/ww", "--source", "http"]
+```
+
+The sheet then offers **Plain** (the last turn) and **Lost** (the whole session). The answer opens
+in a reading sheet on the same screen.
+
+`command` is an argv array, never a shell line. The bridge appends `--session-id <id> --json`, and
+`1` for Plain, so the sidecar's own prompts and cache serve the phone, the terminal and the mod
+alike. Each request runs one child for at most 180 seconds.
+
+> **Note.** Without this file the rows do not appear. Where the model call goes is decided by your
+> `command`: `--source http` keeps it on the local proxy (ADR 0074).
+
 ## Your own typefaces
 
 The interface font is a per-device setting. Under **Settings → Typeface**, you can choose between

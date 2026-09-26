@@ -1,4 +1,4 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, readdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { extname, join, normalize, sep } from "node:path";
 import type { JsonObject, JsonValue } from "./json.ts";
@@ -30,6 +30,9 @@ import { createOperatorKeys } from "./operator-keys.ts";
 import { createOperatorQuickReplies } from "./operator-quick-replies.ts";
 import { createOperatorFonts, resolveOperatorFont } from "./operator-fonts.ts";
 import { createOperatorLaunchers } from "./operator-launchers.ts";
+import { createOperatorAccounts, type Account } from "./operator-accounts.ts";
+import { settingsChangedSinceLastTurn, switchAccount } from "./account-switch.ts";
+import { bunRetellSpawn, createOperatorRetell, retellArgv, runRetell, type RetellConfig, type RetellMode, type RetellSpawn } from "./retell.ts";
 import {
   DEFAULT_PROMPT_TAIL_LINES,
   verifyExpectedPrompt,
@@ -52,7 +55,8 @@ import { adapterFor, buildJournalRegistry } from "./journal/registry.ts";
 import { TranscriptStore } from "./journal/store.ts";
 import type { JournalAdapter } from "./journal/types.ts";
 import { isBlobHash, resolveBlobPath } from "./journal/pi.ts";
-import { statFile } from "./journal/files.ts";
+import { containedRealpath, statFile } from "./journal/files.ts";
+import { isSessionId } from "./journal/claude.ts";
 import {
   bearerToken,
   normalizeLabel,
@@ -104,6 +108,7 @@ import type {
   WorkspaceChangesResponse,
   PaneHistoryResponse,
   PaneReadResponse,
+  RetellResponse,
   PaneWire,
   SnapshotResponse,
   SttCapability,
@@ -199,6 +204,11 @@ export function isLoopbackPeer(address: string | null | undefined): boolean {
 }
 
 const PANE_ROUTE = /^\/api\/pane\/([^/]+)(?:\/(reply|keys|upload|close|rename|history|changes|focus))?$/;
+/**
+ * Pane actions that stay on the host the phone talks to: they read this host's own `accounts.toml`,
+ * `retell.toml` and Claude transcripts, so they are not on the crew link's table (forward.ts).
+ */
+const PANE_LOCAL_ROUTE = /^\/api\/pane\/([^/]+)\/(switch-account|retell)$/;
 
 /**
  * A pairing claim's refusal, as an error code.
@@ -568,6 +578,10 @@ export function bridgeConfigBody(opts: {
    * configured none ships the same payload as before, the same rule `mode` follows.
    */
   stt?: SttCapability;
+  /** Labels of the operator's `accounts.toml` rows. Same omit-when-empty rule as `operatorCommands`. */
+  accounts?: readonly string[];
+  /** Whether `retell.toml` names a command. Omitted when it does not (ADR 0074). */
+  retell?: boolean;
   /**
    * What this host accepts as an attachment. Optional here for the reason `mux` is — the crew-mode
    * assertions build this body by hand and are about the crew — and always passed by the real
@@ -601,6 +615,10 @@ export function bridgeConfigBody(opts: {
   // Appended after the mux block, and omit-when-absent for the reason `mode` is: no key means no
   // microphone, which is precisely true of a collie with no provider configured.
   if (opts.stt !== undefined) wire.stt = opts.stt;
+  // Omit-when-absent like `stt`: no key means no row on the phone, which is true of a host that
+  // declared no accounts or no retell command.
+  if (opts.accounts !== undefined && opts.accounts.length > 0) wire.accounts = [...opts.accounts];
+  if (opts.retell === true) wire.retell = true;
   // Same omit-when-absent rule, and the same reading on the other end: no key is an older bridge,
   // which the phone falls back to the pre-attachment contract for (images, 10 MB).
   if (opts.upload !== undefined) wire.upload = opts.upload;
@@ -805,6 +823,9 @@ export function startServer(opts: {
   const operatorFonts = createOperatorFonts(cfg.themeFile);
   // Its sibling too, on the same contract: one reader, one mtime cache, launchers.toml off the hot path.
   const operatorLaunchers = createOperatorLaunchers(cfg.launchersFile);
+  // Two more on that contract: the switch-account allowlist and the retell command (ADR 0074).
+  const operatorAccounts = createOperatorAccounts(cfg.accountsFile);
+  const operatorRetell = createOperatorRetell(cfg.retellFile);
   // The sixth on that contract: the operator's own prompt-cache TTLs, cache-rules.toml off the hot path.
   const operatorCacheRules = createCacheRulesReader(cfg.cacheRulesFile);
   // ONE registry for the process, built by the caller so the cache tracker probes through the same
@@ -1176,6 +1197,21 @@ export function startServer(opts: {
       if (action === "rename" && req.method === "POST") return renamePane(herdr, rt.engine, paneId, req, audit_, device, session);
       if (action === "focus" && req.method === "POST") return focusPane(herdr, rt.engine, paneId, req, audit_, device, session);
       return text("method not allowed", 405);
+    }
+
+    // ── Per-pane, this host only (switch account, retell) ──────────────────────
+    // Both are writes: one restarts an agent, the other spends a model call.
+    const localPaneMatch = pathname.match(PANE_LOCAL_ROUTE);
+    if (localPaneMatch && req.method === "POST") {
+      const denied = caller.gate("write");
+      if (denied) return denied;
+      const rt = await caller.resolve();
+      if (rt instanceof Response) return rt;
+      const paneId = decodeURIComponent(localPaneMatch[1]!);
+      const device = caller.device();
+      if (localPaneMatch[2] === "switch-account")
+        return switchAccountPane(rt.herdr, rt.engine, cfg, paneId, req, caller.audit, device, rt.name, operatorAccounts);
+      return retellPane(rt.engine, paneId, req, caller.audit, device, rt.name, operatorRetell);
     }
 
     return null;
@@ -1624,6 +1660,10 @@ export function startServer(opts: {
             // builds the byte-identical body it always did (CREW_PROTOCOL.md §11).
             muxWire: memberMux ?? undefined,
             stt: sttWire,
+            // This host's own files, like the rows above; a `?host=` member answer carries the lead's,
+            // and the pane sheet hides both rows for a pane on a member.
+            accounts: (await operatorAccounts()).map((a) => a.label),
+            retell: (await operatorRetell()).length > 0,
             // This host's own limits, read from cfg on every request like everything else here.
             // A crew member answers with ITS number, which is the number that will judge the bytes.
             upload: {
@@ -3023,6 +3063,176 @@ async function focusPane(
   // unfocused for as long as the adapter's declared bound (ADR 0031).
   await settleTopology(herdr, engine);
   return json({ ok: true } satisfies ActionResponse, ae);
+}
+
+/** The Claude session a pane reported, when it reported one Collie can hand to `--resume`/`ww`. */
+function claudeSessionOf(engine: StateEngine, paneId: string): { sessionId: string; status: string } | null {
+  const pane = engine.current().agents.find((p) => p.paneId === paneId);
+  const ref = pane?.agentSession;
+  if (pane?.agent !== "claude" || ref?.kind !== "id" || !isSessionId(ref.value)) return null;
+  return { sessionId: ref.value, status: pane.status };
+}
+
+/** How much of the log's end the settings check reads: the last turn is always near the end. */
+const ACCOUNT_LOG_TAIL_BYTES = 4 * 1024 * 1024;
+
+/**
+ * The end of `<sessionId>.jsonl` under a Claude projects root — the exact file `--resume` opens, not
+ * the continuation the history route follows. Contained like every journal read (files.ts).
+ */
+async function claudeLogTail(roots: readonly string[], sessionId: string): Promise<string | null> {
+  for (const root of roots) {
+    let dirs: string[];
+    try {
+      dirs = await readdir(root);
+    } catch {
+      continue;
+    }
+    for (const dir of dirs) {
+      const real = await containedRealpath(join(root, dir, `${sessionId}.jsonl`), root);
+      if (real === null) continue;
+      const file = Bun.file(real);
+      return file.slice(Math.max(0, file.size - ACCOUNT_LOG_TAIL_BYTES)).text();
+    }
+  }
+  return null;
+}
+
+/** One switch per pane at a time: a second tap would type `/exit` into the restarting pane. */
+const switchingPanes = new Set<string>();
+
+// Restart a Claude pane on another operator-declared account, in the same pane, continuing the same
+// session (bridge/account-switch.ts holds the sequence and why it is ordered as it is). The client
+// names an `accounts.toml` label and says whether it accepted interrupting a running turn; the
+// command line and the session id both come from the bridge.
+async function switchAccountPane(
+  herdr: MuxAdapter,
+  engine: StateEngine,
+  cfg: Config,
+  paneId: string,
+  req: Request,
+  audit: AuditLog,
+  device: string | null,
+  session: string,
+  getAccounts: () => Promise<Account[]>,
+): Promise<Response> {
+  let body: JsonValue;
+  try {
+    // SAFETY: as createWorkspace — checked below, never trusted as declared.
+    body = (await req.json()) as JsonValue;
+  } catch {
+    return text("bad body", 400);
+  }
+  const fields = asJsonRecord(body) ?? {};
+  if (typeof fields.account !== "string") return text("bad account", 400);
+  if (fields.interrupt !== undefined && typeof fields.interrupt !== "boolean") return text("bad interrupt", 400);
+  const ae = req.headers.get("accept-encoding");
+  const refuse = (code: ErrorCode, status: number, detail?: ApiErrorDetail) =>
+    json({ ok: false, ...apiError(code, detail) } satisfies ActionResponse, ae, status);
+
+  const account = (await getAccounts()).find((a) => a.label === fields.account);
+  if (!account) return refuse("account.not_allowlisted", 400);
+  const claude = claudeSessionOf(engine, paneId);
+  if (!claude) return refuse("account.not_claude", 409);
+  const busy = claude.status === "working" || claude.status === "blocked";
+  if (busy && fields.interrupt !== true) return refuse("account.confirm_interrupt", 409);
+  if (switchingPanes.has(paneId)) return refuse("account.in_progress", 409);
+  const log = await claudeLogTail(cfg.journalRoots.claude, claude.sessionId);
+  if (log === null) return refuse("account.no_transcript", 409);
+  if (settingsChangedSinceLastTurn(log)) return refuse("account.settings_pending", 409);
+
+  switchingPanes.add(paneId);
+  let outcome: Awaited<ReturnType<typeof switchAccount>>;
+  try {
+    outcome = await switchAccount(
+      herdr,
+      { paneId, sessionId: claude.sessionId, command: account.command, interrupt: busy },
+      { sleep: defaultSleep, now: () => Date.now() },
+    );
+  } finally {
+    switchingPanes.delete(paneId);
+  }
+  audit.record({
+    action: "pane.switch_account",
+    paneId,
+    session,
+    device,
+    detail: { account: account.label, interrupted: busy, outcome: outcome.ok ? "ok" : outcome.stage },
+  });
+  await settleTopology(herdr, engine);
+  if (outcome.ok) return json({ ok: true } satisfies ActionResponse, ae);
+  if (outcome.stage === "unconfirmed") return refuse("account.exit_unconfirmed", 200);
+  return refuse(outcome.stage === "exit" ? "account.exit_failed" : "account.launch_failed", 200, {
+    reason: outcome.reason,
+  });
+}
+
+/** One retelling per pane and mode at a time: each one is a paid model call. */
+const retellingPanes = new Set<string>();
+
+// Retell a Claude pane's last turn ("plain") or whole session ("lost") with the operator's own
+// sidecar (bridge/retell.ts, ADR 0074). Off unless `retell.toml` names a command.
+async function retellPane(
+  engine: StateEngine,
+  paneId: string,
+  req: Request,
+  audit: AuditLog,
+  device: string | null,
+  session: string,
+  getRetell: () => Promise<RetellConfig[]>,
+  spawn: RetellSpawn = bunRetellSpawn,
+): Promise<Response> {
+  let body: JsonValue;
+  try {
+    // SAFETY: as createWorkspace — checked below, never trusted as declared.
+    body = (await req.json()) as JsonValue;
+  } catch {
+    return text("bad body", 400);
+  }
+  const fields = asJsonRecord(body) ?? {};
+  if (fields.mode !== "plain" && fields.mode !== "lost") return text("bad mode", 400);
+  if (fields.fresh !== undefined && typeof fields.fresh !== "boolean") return text("bad fresh", 400);
+  const mode: RetellMode = fields.mode;
+  const ae = req.headers.get("accept-encoding");
+  const refuse = (code: ErrorCode, status: number, detail?: ApiErrorDetail) =>
+    json({ ok: false, ...apiError(code, detail) } satisfies RetellResponse, ae, status);
+
+  const [config] = await getRetell();
+  if (!config) return refuse("retell.off", 404);
+  const claude = claudeSessionOf(engine, paneId);
+  if (!claude) return refuse("retell.not_claude", 409);
+  const key = `${paneId}\n${mode}`;
+  if (retellingPanes.has(key)) return refuse("retell.in_progress", 409);
+  retellingPanes.add(key);
+  let result: Awaited<ReturnType<typeof runRetell>>;
+  try {
+    result = await runRetell(
+      spawn,
+      retellArgv(config, mode, claude.sessionId, fields.fresh === true),
+      { sessionId: claude.sessionId, mode },
+    );
+  } finally {
+    retellingPanes.delete(key);
+  }
+  audit.record({
+    action: "pane.retell",
+    paneId,
+    session,
+    device,
+    detail: result.ok ? { mode, cached: result.cached, source: result.source } : { mode, failed: true },
+  });
+  if (!result.ok) return refuse("retell.failed", 200, { reason: result.error });
+  return json(
+    {
+      ok: true,
+      mode: result.mode,
+      label: result.label,
+      answer: result.answer,
+      cached: result.cached,
+      source: result.source,
+    } satisfies RetellResponse,
+    ae,
+  );
 }
 
 // Set or clear a pane's label. Structural metadata op — strictly less powerful than the text/keys
