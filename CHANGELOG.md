@@ -49,6 +49,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 - **Working panes now sit last in the pane switcher.** Needs-you and unseen work stays first, settled Recent panes follow, and active work moves to the bottom of the sheet.
 - **Each pane switcher section now lists the latest change first.** Inside Needs you, Ready, Recent and Working, the pane whose state changed most recently comes first, matching Herdr's priority panel; the sheet still holds its order while open.
 - **The in-pane switcher now matches the dashboard's attention groups.** Opening it by tap or pull fixes the pane and shell list until it closes, so polling cannot move a row under your thumb; Shells and Launch remain available (ADR 0073).
+- **The pane mirror hides the wait-what band.** The `cc-mod-waitwhat` buttons and recap line above Claude's input box no longer show on the phone, where they cannot be tapped; the retell sheet and pane description cover them. Fork-only, see `FORK.md`.
 
 ### Fixed
 

@@ -718,6 +718,13 @@ point at the dev lane. Run it with `bash e2e-live/run.sh` (builds the world, run
 the world down). The world's agents are `ccp-free` Claudes, so a run spends only the free pool.
 Environment traps and trajectories live in `e2e-live/trajectories/`.
 
+## Personal changes go in FORK.md
+
+A change that only works on this operator's setup (their own mods, paths, labels or services) gets
+an entry under *Personal changes* in [`FORK.md`](./FORK.md) in the same commit: what, where, what it
+assumes, and what upstreaming it would take. Its code carries a `Fork-only (FORK.md …)` header so an
+upstream PR can leave it out. General-purpose fork work stays in `CHANGELOG.md` only.
+
 ## 帳本生命週期
 
 > 帳本生命週期：規則見 `~/.claude/references/ledger-lifecycle.md`；門檻以 `~/.claude/scripts/ledger-lifecycle/registry.json` 為準。
