@@ -283,7 +283,7 @@ export interface Config {
   accountsFile: string;
   /**
    * The operator's retell command — `retell.toml`, read by bridge/retell.ts. Absent file means the
-   * phone draws no retell buttons (ADR 0074).
+   * phone draws no retell buttons (ADR 9005).
    */
   retellFile: string;
   /**

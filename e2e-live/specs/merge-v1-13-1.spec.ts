@@ -84,7 +84,7 @@ test.describe("merge v1.13.1 on the live Collie", () => {
     await expect(footerTab(page, PANES)).toHaveAttribute("aria-current", "page");
   });
 
-  test("the switcher orders its sections, and the latest state change leads inside one (ADR 0072)", async ({ page }) => {
+  test("the switcher orders its sections, and the latest state change leads inside one (ADR 9003)", async ({ page }) => {
     await summary(page).click();
     const dialog = switcher(page);
     await expect(dialog).toBeVisible();

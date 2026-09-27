@@ -69,7 +69,7 @@ interface ThreadSidebarProps {
 }
 
 // The pane switcher supports place order for callers that need fixed workspace groups (ADR 0063).
-// Both the dashboard summary and the in-pane sheet open a frozen attention snapshot instead (ADR 0073),
+// Both the dashboard summary and the in-pane sheet open a frozen attention snapshot instead (ADR 9004),
 // grouped as Needs you, Ready, Recent, then Working. Switching is the ONLY action here — closing a
 // pane lives in the pane pill's long-press sheet, so a fat-thumbed switch can never destroy a pane.
 //

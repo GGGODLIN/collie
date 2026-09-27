@@ -668,7 +668,7 @@ export function switchAccount(
 /** A long session's retelling measured at 44s; the bridge gives up at 180s. */
 const RETELL_TIMEOUT_MS = 190_000;
 
-/** A plain (last turn) or lost (whole session) retelling of a Claude pane (ADR 0074). */
+/** A plain (last turn) or lost (whole session) retelling of a Claude pane (ADR 9005). */
 export function retellPane(
   paneId: string,
   mode: "plain" | "lost",

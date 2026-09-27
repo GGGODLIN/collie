@@ -1,6 +1,6 @@
 // Fork-only (FORK.md → Personal changes): the band the operator's own Claude Code mod,
 // cc-mod-waitwhat, draws above the input box. Its buttons are text in the mirror, so a tap does
-// nothing, and the phone already has both halves of it — Plain / Lost in the retell sheet (ADR 0074)
+// nothing, and the phone already has both halves of it — Plain / Lost in the retell sheet (ADR 9005)
 // and the recap line as the pane description — so the view drops the band instead of showing a
 // second, dead copy.
 //

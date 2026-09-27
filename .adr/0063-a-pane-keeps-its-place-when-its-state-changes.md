@@ -1,8 +1,8 @@
 # 0063 — A pane keeps its place when its state changes
 
-> Amended in scope by [0072](./0072-the-switcher-orders-a-section-by-its-latest-state-change.md): the
+> Amended in scope by [9003](./9003-the-switcher-orders-a-section-by-its-latest-state-change.md): the
 > switcher's attention sections order newest state change first.
-> Amended in scope by [0073](./0073-both-pane-switcher-entries-use-attention.md): the in-pane
+> Amended in scope by [9004](./9004-both-pane-switcher-entries-use-attention.md): the in-pane
 > switcher now opens a frozen attention list too.
 
 - **Status:** Accepted

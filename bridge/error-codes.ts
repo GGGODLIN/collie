@@ -88,7 +88,7 @@ export const ERROR_CODES = {
    */
   "launch.pane_unknown": "pane not found",
 
-  // ── Switch account / retell: POST /api/pane/:id/{switch-account,retell} (ADR 0074) ──────
+  // ── Switch account / retell: POST /api/pane/:id/{switch-account,retell} (ADR 9005) ──────
   /** The label the client named is in no row of the operator's `accounts.toml`. Nothing was touched. */
   "account.not_allowlisted": "account not in accounts.toml",
   /** The pane runs no Claude, or its Claude reported no session id. Nothing was touched. */
@@ -109,7 +109,7 @@ export const ERROR_CODES = {
   "account.exit_unconfirmed": "Claude did not confirm it exited — nothing was started",
   /** The old Claude exited but the resume line did not reach the pane. The pane is at a shell. */
   "account.launch_failed": "{reason}",
-  /** No `retell.toml` names a command (ADR 0074). */
+  /** No `retell.toml` names a command (ADR 9005). */
   "retell.off": "retell is not configured on this host",
   /** The pane runs no Claude, or its Claude reported no session id. */
   "retell.not_claude": "this pane is not running a Claude session",

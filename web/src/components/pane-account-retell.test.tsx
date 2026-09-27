@@ -9,7 +9,7 @@ import type { AgentView } from "@/lib/types";
 import { PaneActionsSheet } from "./pane-actions-sheet";
 import { useRetell } from "./retell-sheet";
 
-// Switch account (bridge/account-switch.ts) and retell (ADR 0074) as the pane sheet offers them.
+// Switch account (bridge/account-switch.ts) and retell (ADR 9005) as the pane sheet offers them.
 
 const claude: AgentView = {
   paneId: "w1:p1",

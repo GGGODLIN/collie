@@ -505,12 +505,12 @@ lint guard, the crew-wire guard or the `flake.lock` guard.
 - **The operator's rows in `commands.toml` join Claude's maintained reference catalog** — matching
   rows appear first, an exact-name operator row replaces the reference row without lowering its
   dangerous classification, and every other harness still uses ADR 0018's replacement rule
-  ([ADR 0070](./.adr/0070-claude-operator-commands-join-the-reference-catalog.md)). The bridge re-reads
+  ([ADR 9001](./.adr/9001-claude-operator-commands-join-the-reference-catalog.md)). The bridge re-reads
   the file behind an mtime check, so edits are live and need no restart.
 - **The Agent palette stages commands; it never sends them** — tapping any row puts its text in the
   composer, an argument-taking row includes one trailing space, and only the explicit Send action
   submits it. The harness bar is the separate direct-action surface
-  ([ADR 0071](./.adr/0071-the-agent-palette-stages-never-sends.md)).
+  ([ADR 9002](./.adr/9002-the-agent-palette-stages-never-sends.md)).
 - **The composition rule runs PER SURFACE, and the harness bar still replaces** — a row with
   `bar = true` goes on the bar above the keys as well as into the palette, and the bar's
   replace-or-fall-back runs over the `bar = true` rows ALONE
@@ -687,7 +687,7 @@ a web form, for the reason pairing is.
 **A retelling is one short-lived child the operator named, and nothing else** — the argv in
 `retell.toml`, run once per phone request with the pane's multiplexer-reported session id appended,
 never a shell, a daemon or a client-chosen string. Absent file, absent feature
-([ADR 0074](./.adr/0074-retell-is-a-one-shot-operator-child.md)).
+([ADR 9005](./.adr/9005-retell-is-a-one-shot-operator-child.md)).
 
 **Two device gates guard writes, independently, and compose by AND.** `COLLIE_DEVICE_HEADER` trusts
 a name a proxy injects; **pairing** (`bridge/pairing.ts`, `collie pair` / `collie devices`) requires a
