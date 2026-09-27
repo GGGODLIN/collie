@@ -160,4 +160,18 @@ describe("retell", () => {
     await act(() => result.current.start("lost"));
     expect(result.current.state).toEqual({ phase: "done", mode: "lost", label: "跟丟了", answer: "整段", cached: true });
   });
+
+  // Configured but broken: retell.toml names a command this host does not have. The bridge's own
+  // reason must reach the sheet, never a bare "failed" (CLAUDE.md, Project mode).
+  it("a command that cannot start shows the bridge's reason", async () => {
+    const reason = "could not start /nope/ww: Error: ENOENT";
+    server.use(
+      http.post("/api/pane/:id/retell", () =>
+        HttpResponse.json({ ok: false, error: reason, code: "retell.failed", detail: { reason } }),
+      ),
+    );
+    const { result } = renderHook(() => useRetell("w1:p1"));
+    await act(() => result.current.start("plain"));
+    expect(result.current.state).toEqual({ phase: "failed", mode: "plain", message: reason });
+  });
 });
