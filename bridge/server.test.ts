@@ -133,6 +133,7 @@ function cfg(overrides: Partial<Config> = {}): Config {
     pollMs: 1500,
     pollIdleMs: 12_000,
     notifyDelayMs: 30_000,
+    notifyDescription: false,
     cacheWarnSeconds: 300,
     readLines: 200,
     transcript: true,

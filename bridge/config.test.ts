@@ -23,6 +23,7 @@ const KEYS = [
   "COLLIE_POLL_MS",
   "COLLIE_POLL_IDLE_MS",
   "COLLIE_NOTIFY_DELAY_MS",
+  "COLLIE_NOTIFY_DESCRIPTION",
   "COLLIE_CACHE_WARN_SECONDS",
   "COLLIE_READ_LINES",
   "COLLIE_TRANSCRIPT",
@@ -284,6 +285,14 @@ describe("loadConfig", () => {
     expect(loadConfig().pollIdleMs).toBe(30_000);
     process.env.COLLIE_NOTIFY_DELAY_MS = "0";
     expect(loadConfig().notifyDelayMs).toBe(0);
+  });
+
+  test("a push names where the pane sits unless COLLIE_NOTIFY_DESCRIPTION asks for what it is doing", () => {
+    // The description can be the operator's newest prompt, word for word, and a push lands on a lock
+    // screen; so the words are opt-in.
+    expect(loadConfig().notifyDescription).toBe(false);
+    process.env.COLLIE_NOTIFY_DESCRIPTION = "1";
+    expect(loadConfig().notifyDescription).toBe(true);
   });
 
   test("COLLIE_CACHE_WARN_SECONDS defaults to 300 and is bounded at 30 and 3600", () => {

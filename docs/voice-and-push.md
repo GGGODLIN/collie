@@ -242,6 +242,10 @@ Four kinds, each with its own switch under **Settings → Notify when**.
 Every switch is bridge-wide. A push fans out to every subscribed device, so there is nothing
 per-device to set.
 
+**A push names where the pane sits, not what you typed.** Set `COLLIE_NOTIFY_DESCRIPTION=1` in the
+`.env` to put the pane's description line in the body instead: what it waits on, a recap, or your
+newest prompt word for word. It is off by default because a push lands on a lock screen.
+
 The cache warning can also be switched on for **one pane at a time**, from that pane's own settings:
 open the pane, tap the ⋮, then **Pane settings**. Those panes are listed under the global switch in
 Settings, with a Remove button each.

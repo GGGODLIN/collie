@@ -1080,7 +1080,9 @@ const makeSession: SessionFactory = (name, socketPath, isPrimary) => {
     sink,
     cfg.notifyDelayMs,
     (status) => notifyPrefs.isNotifiable(status),
-    (agent) => paneDescription?.describe(agent)?.now,
+    // Opt-in (COLLIE_NOTIFY_DESCRIPTION): the description can quote the newest prompt, and a push body
+    // lands on a lock screen. Off, the body stays the pane's place, as it always was.
+    cfg.notifyDescription ? (agent) => paneDescription?.describe(agent)?.now : () => undefined,
   );
   engine.onTransition((agent, from, to) => notifications.onTransition(agent, from, to));
   engine.onRemove((paneId) => notifications.onRemove(paneId));

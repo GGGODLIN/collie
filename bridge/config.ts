@@ -202,6 +202,11 @@ export interface Config {
    * when it later resolves. See NotificationCoordinator. 0 = notify on the next tick (no debounce).
    */
   notifyDelayMs: number;
+  /**
+   * Whether a push body says what the pane is doing (bridge/description/resolve.ts) rather than where
+   * it sits. Off by default: the line can be the operator's newest prompt, verbatim, on a lock screen.
+   */
+  notifyDescription: boolean;
   /** How many lines of scrollback to pull for the agent detail view. */
   readLines: number;
   /**
@@ -623,6 +628,7 @@ export function loadConfig(env: Environment = process.env): Config {
     pollMs: envInt("COLLIE_POLL_MS", 1500, { min: 250 }, env),
     pollIdleMs: envInt("COLLIE_POLL_IDLE_MS", 12_000, { min: 1000 }, env),
     notifyDelayMs: envInt("COLLIE_NOTIFY_DELAY_MS", 30_000, { min: 0 }, env),
+    notifyDescription: envBool("COLLIE_NOTIFY_DESCRIPTION", false, env),
     // How early a watched pane's prompt-cache warning goes out. The floor is 30 s (a window shorter
     // than one poll's idle resolution is noise, not a warning) and the ceiling an hour, which is past
     // the longest TTL any shipped rule claims.

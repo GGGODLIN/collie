@@ -171,6 +171,15 @@ export const CONFIG_SETTINGS: readonly ConfigSetting[] = [
     configField: "notifyDelayMs",
   },
   {
+    key: "notify_description",
+    env: "COLLIE_NOTIFY_DESCRIPTION",
+    section: "bridge",
+    kind: "bool",
+    default: false,
+    doc: "Put what the pane is doing (its newest prompt or recap) in the push body instead of where it sits.",
+    configField: "notifyDescription",
+  },
+  {
     key: "read_lines",
     env: "COLLIE_READ_LINES",
     section: "bridge",
