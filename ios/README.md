@@ -68,14 +68,56 @@ Wi-Fi as the Mac.
 bash ios/scripts/resign.sh --force
 ```
 
-Its log is `~/Library/Application Support/collie-island/resign.log`. To run it daily, point a
-launchd agent at it: without `--force` it renews only once fewer than `ISLAND_RENEW_BELOW_DAYS` days
-remain (2 by default), so most runs leave the app alone. Xcode reuses a still-valid profile, so the
-script moves this app's old profiles aside first; otherwise the expiry would not move. With
-`ISLAND_RESTART_COREDEVICE = YES`, a failed install restarts this user's CoreDevice daemons and
-retries once; they serve every device the Mac talks to, so it is off by default.
+Its log is `~/Library/Application Support/collie-island/resign.log`. Without `--force` it renews
+only once fewer than `ISLAND_RENEW_BELOW_DAYS` days remain (2 by default), so a daily run mostly
+leaves the app alone. Xcode reuses a still-valid profile, so the script moves this app's old
+profiles aside first; otherwise the expiry would not move. With `ISLAND_RESTART_COREDEVICE = YES`, a
+failed install restarts this user's CoreDevice daemons and retries once; they serve every device the
+Mac talks to, so it is off by default.
 
-Reinstalling closes the app, and the island stays gone until it is restarted (next section).
+### Run it every night
+
+1. Save this as `~/Library/LaunchAgents/collie-island-resign.plist`, with your own checkout path
+   and home folder in place of the two `/Users/you` paths.
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+     "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+   <plist version="1.0">
+   <dict>
+     <key>Label</key><string>collie-island-resign</string>
+     <key>ProgramArguments</key>
+     <array>
+       <string>/bin/bash</string>
+       <string>/Users/you/collie/ios/scripts/resign.sh</string>
+     </array>
+     <key>StartCalendarInterval</key>
+     <dict>
+       <key>Hour</key><integer>3</integer>
+       <key>Minute</key><integer>30</integer>
+     </dict>
+     <key>StandardOutPath</key>
+     <string>/Users/you/Library/Application Support/collie-island/launchd.log</string>
+     <key>StandardErrorPath</key>
+     <string>/Users/you/Library/Application Support/collie-island/launchd.log</string>
+   </dict>
+   </plist>
+   ```
+
+2. Load it.
+
+   ```bash
+   launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/collie-island-resign.plist
+   ```
+
+To stop it: `launchctl bootout gui/$(id -u)/collie-island-resign`. The Mac must be awake at that
+hour and the phone on the same Wi-Fi or a cable; if the Mac sleeps, launchd runs the job when it
+wakes, which fails if the phone has left by then, and the next night tries again. A locked phone is
+fine: a 03:30 run has installed onto a phone locked all night.
+
+Reinstalling closes the app, and the island stays gone until it is restarted (next section). Pick
+the re-sign hour a few hours before one of the restart times, so the island is back by morning.
 
 ## The 8-hour limit
 
@@ -83,7 +125,20 @@ iOS shows a Live Activity for at most 8 hours, and an app can normally start one
 foreground. `RestartIslandIntent` is the exception and can restart it in the background, from:
 
 - the Control Center button "重啟 Collie 靈動島", or
-- a Shortcuts automation that runs the "重啟靈動島" shortcut, for example every 8 hours.
+- a Shortcuts automation that runs the app's "重啟靈動島" action.
+
+### Restart it every 8 hours
+
+These steps were taken on iOS 27 in Traditional Chinese; the labels in quotes are what it shows.
+
+1. In Shortcuts, make a new shortcut and add Collie Island's "重啟靈動島" action.
+2. Open the panel under the shortcut, choose "自動化操作", and add a time trigger at 00:00.
+3. Open the trigger's ">" options: repeat every day, let it run on its own, and turn its
+   notification off.
+4. Add two more time triggers to the same shortcut, 08:00 and 16:00, with the same options.
+
+One shortcut takes all three triggers, joined by "或". Three times eight hours apart match the
+limit. With the re-sign at 03:30, the 08:00 trigger brings the island back.
 
 ## Known limits
 
