@@ -26,7 +26,8 @@ each with what it assumes; without those tools, they stay out of the way.
 
 The Quickstart further down installs upstream Collie, not this fork. Build the fork instead; it needs
 [Bun](https://bun.sh) (1.3.14 or newer), git, and a multiplexer ([Herdr](https://herdr.dev), tmux or
-zellij).
+zellij). Have the multiplexer running first: `start` mirrors the one it finds running, and refuses
+when there is none.
 
 ```bash
 git clone https://github.com/GGGODLIN/collie.git ~/.local/share/collie
