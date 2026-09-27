@@ -12,6 +12,73 @@
   <sub>A real Collie build running in the page against faked data.</sub>
 </p>
 
+> **Note.** This is [GGGODLIN's fork](https://github.com/GGGODLIN/collie) of
+> [AltanS/collie](https://github.com/AltanS/collie). It installs from source and tracks `main`; it
+> publishes no releases of its own. Everything below the fork section is upstream's README, unchanged.
+
+## This fork
+
+What it adds over upstream is listed under `## [Unreleased]` in [`CHANGELOG.md`](./CHANGELOG.md).
+The few changes that only make sense on the maintainer's own setup are in [`FORK.md`](./FORK.md),
+each with what it assumes; without those tools, they stay out of the way.
+
+### Install from source
+
+The Quickstart further down installs upstream Collie, not this fork. Build the fork instead; it needs
+[Bun](https://bun.sh) (1.3.14 or newer), git, and a multiplexer ([Herdr](https://herdr.dev), tmux or
+zellij).
+
+```bash
+git clone https://github.com/GGGODLIN/collie.git ~/.local/share/collie
+cd ~/.local/share/collie
+bash scripts/collie-ctl.sh build
+bin/collie start
+```
+
+Stay on `main`: the tags in this repository are upstream's older releases and carry none of the
+fork's changes. `start` and everything after it work as upstream documents them; see
+[`docs/install.md`](./docs/install.md), from *Then start it*.
+
+### Update, and roll back
+
+Update with git, not with `collie update`. That verb and the in-app update banner follow upstream's
+releases, and `collie update` refuses a checkout whose `origin` is this fork.
+
+> **Caution.** Its refusal suggests setting `COLLIE_UPDATE_REPO` to the fork. Do not: the updater
+> would then force-checkout onto this repository's newest tag, an old upstream release, and leave
+> the fork's changes behind.
+
+```bash
+cd ~/.local/share/collie
+git rev-parse --short HEAD          # note the build you are on, in case you roll back
+git pull --ff-only
+bash scripts/collie-ctl.sh build
+bin/collie restart
+```
+
+To go back to the build you noted, check it out, rebuild and restart. `git checkout main` later
+returns you to the latest.
+
+```bash
+git checkout <the-hash-you-noted>
+bash scripts/collie-ctl.sh build
+bin/collie restart
+```
+
+### Optional companions
+
+Two features read the output of the maintainer's own Claude Code tools. Both are off until you
+install the tool, and Collie runs the same without them.
+
+| Feature | Needs | Without it |
+| --- | --- | --- |
+| A pane's description can use Claude's own recap, and the mirror hides the tool's button row | [cc-mod-waitwhat](https://github.com/GGGODLIN/cc-mod-waitwhat) | The description uses the waiting approval or your newest prompt |
+| *Plain* and *Lost* retell a Claude session in plain words | [cc-sidecar-waitwhat](https://github.com/GGGODLIN/cc-sidecar-waitwhat), named in `retell.toml` ([Configure](./docs/configure.md#retell-a-claude-session)) | The two rows are not offered |
+
+The title bar reads COLLIE-GGGODLIN, so this build is told apart from an upstream install.
+
+---
+
 A mobile web interface for terminal-based AI agents, served over Tailscale. Collie connects to one
 multiplexer per instance: [Herdr](https://herdr.dev), [tmux](https://github.com/tmux/tmux), or
 [zellij](https://zellij.dev). Open the URL on your phone to check which agent needs input and
