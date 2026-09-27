@@ -1,5 +1,6 @@
-// Deciding whether the newest reply in the agent's journal is the one on the mirror, and whether the
-// mirror is showing all of it.
+// Deciding whether the newest reply in the agent's journal is the one on the mirror, whether the
+// mirror is showing all of it, and — since the card shows the exchange rather than the reply alone —
+// which turn just before that reply was the prompt it answered.
 //
 // WHY THIS EXISTS. A Claude pane runs on the terminal's alternate screen, which keeps no scrollback
 // ring, so `pane.read` can only ever hand back the visible viewport — a reply longer than the pane is
@@ -27,6 +28,8 @@
 // place that knows escape shapes — use it rather than a second regex that can drift from it.
 
 import { parseAnsi } from "./ansi";
+import { lineText, type Block } from "./blocks";
+import { BOX_CROSS_GLYPH_CLASS, BOX_VERTICAL_GLYPH_CLASS } from "./rule-glyphs";
 import type { TranscriptEntry } from "./types";
 
 /**
@@ -41,7 +44,7 @@ export const PROBE_CHARS = 48;
 export type ReplyFit =
   /** Its tail is on screen but its opening has scrolled off — the case worth surfacing. */
   | "clipped"
-  /** All of it is on screen (or it is too short to be worth the machinery). */
+  /** All of it is on screen. */
   | "whole"
   /** Not the message the mirror is showing at all — see the note on {@link locateReply}. */
   | "off-screen";
@@ -60,6 +63,63 @@ function plain(mirrorText: string): string {
     .join("");
 }
 
+const BOX_VERTICAL = new RegExp(`[${BOX_VERTICAL_GLYPH_CLASS}]`);
+const BOX_VERTICALS = new RegExp(`[${BOX_VERTICAL_GLYPH_CLASS}]`, "g");
+const BOX_CROSSES = new RegExp(`[${BOX_CROSS_GLYPH_CLASS}]`, "g");
+// A frame row: box-drawing glyphs and spaces only.
+const BOX_FRAME = /^[─-╿\s]+$/;
+
+/**
+ * The mirror's rows with every wrapped box-table row put back in SOURCE order.
+ *
+ * A renderer that wraps a table cell paints the row line by line across the columns, so the screen
+ * reads cell 1's first line, cell 2's first line, then cell 1's second line. The journal holds each
+ * cell whole. Without this, a probe that reaches into such a row misses and the reply reads as
+ * off-screen. A logical row is the run of content rows between two frame rows; its cells are joined
+ * column by column onto its LAST painted row, and the rows above it become empty. The row count never
+ * changes, so an `endLine` found here still indexes the mirror as painted.
+ *
+ * The table is found by COUNT, not by `table-run.ts`'s column offsets: those are string indices, so a
+ * cell holding double-width text (any CJK reply) misaligns them and no run is found. The anchor is a
+ * frame row carrying a cross, as there; rows join while they are frame rows or carry that many
+ * verticals (with or without outer borders), and a blank row ends the table. This only reorders the
+ * text the probes compare; what the mirror draws is untouched.
+ */
+export function sourceOrderRows(rows: readonly string[]): string[] {
+  const out = [...rows];
+  const verticals = (row: string) => row.match(BOX_VERTICALS)?.length ?? 0;
+  const isFrame = (row: string) => row.trim() !== "" && BOX_FRAME.test(row);
+  let floor = 0;
+  for (let anchor = 0; anchor < rows.length; anchor++) {
+    if (anchor < floor || !isFrame(rows[anchor]!)) continue;
+    const crosses = rows[anchor]!.match(BOX_CROSSES)?.length ?? 0;
+    if (crosses === 0) continue;
+    const member = (row: string) => isFrame(row) || [crosses, crosses + 2].includes(verticals(row));
+    let start = anchor;
+    while (start > floor && member(rows[start - 1]!)) start--;
+    let end = anchor;
+    while (end + 1 < rows.length && member(rows[end + 1]!)) end++;
+    floor = end + 1;
+
+    let group: number[] = [];
+    const flush = () => {
+      if (group.length > 1) {
+        const cells = group.map((i) => rows[i]!.split(BOX_VERTICAL));
+        const joined = cells[0]!.map((_, col) => cells.map((c) => c[col] ?? "").join(" "));
+        for (const i of group) out[i] = "";
+        out[group.at(-1)!] = joined.join(" ");
+      }
+      group = [];
+    };
+    for (let i = start; i <= end; i++) {
+      if (isFrame(rows[i]!)) flush();
+      else group.push(i);
+    }
+    flush();
+  }
+  return out;
+}
+
 /** A turn's prose — its `text` parts only. Thinking is not the reply, and a tool call is not speech. */
 export function replyProse(entry: TranscriptEntry): string {
   return entry.parts
@@ -74,23 +134,49 @@ function proseTruncated(entry: TranscriptEntry): boolean {
   return entry.parts.some((part) => part.kind === "text" && part.truncated === true);
 }
 
-/** The newest turn that is the agent SPEAKING — the last assistant entry carrying prose. */
-export function newestReply(entries: TranscriptEntry[]): TranscriptEntry | null {
+/** Index of the newest turn that is the agent SPEAKING, or -1. */
+function newestReplyIndex(entries: TranscriptEntry[]): number {
   for (let i = entries.length - 1; i >= 0; i--) {
     const entry = entries[i];
-    if (entry && entry.role === "assistant" && replyProse(entry) !== "") return entry;
+    if (entry && entry.role === "assistant" && replyProse(entry) !== "") return i;
+  }
+  return -1;
+}
+
+/** The newest turn that is the agent SPEAKING — the last assistant entry carrying prose. */
+export function newestReply(entries: TranscriptEntry[]): TranscriptEntry | null {
+  const at = newestReplyIndex(entries);
+  return at === -1 ? null : entries[at]!;
+}
+
+/** The last FINISHED exchange: what the agent said, and what was asked of it. */
+export interface LatestExchange {
+  /** The newest assistant turn carrying prose — the one `locateReply` is asked about. */
+  reply: TranscriptEntry;
+  /** The nearest prose user turn before that reply. */
+  prompt: TranscriptEntry;
+}
+
+/** Pair the newest spoken reply only with the nearest prose user turn before it. */
+export function newestExchange(entries: TranscriptEntry[]): LatestExchange | null {
+  const at = newestReplyIndex(entries);
+  if (at === -1) return null;
+  for (let i = at - 1; i >= 0; i--) {
+    const entry = entries[i];
+    if (entry && entry.role === "user" && replyProse(entry) !== "") {
+      return { reply: entries[at]!, prompt: entry };
+    }
   }
   return null;
 }
 
-/** Where a turn sits on the mirror, and — when it is clipped — which row it ends on. */
+/** Where a turn sits on the mirror, and which row it ends on when present. */
 export interface ReplyPlacement {
   fit: ReplyFit;
-  /** Index of the last mirror row the reply occupies. Only meaningful when `fit` is `clipped`. */
+  /** Index of the last mirror row the reply occupies; -1 when it is off-screen. */
   endLine: number;
 }
 
-/** A verdict with no rows to replace — every fit but `clipped` ends here. */
 const elsewhere = (fit: ReplyFit): ReplyPlacement => ({ fit, endLine: -1 });
 
 /**
@@ -103,21 +189,18 @@ const elsewhere = (fit: ReplyFit): ReplyPlacement => ({ fit, endLine: -1 });
  *   mirror by scrolling, and a >20 000-character part reaches us clamped so its real ending never
  *   arrives. When the tail is missing we answer `off-screen` and the caller shows NOTHING. Presenting
  *   an older message as "the reply you are looking at" is the one failure this must not have.
- * - The **head** probe then answers the actual question: is its opening still on the screen.
- *
- * A reply shorter than two probes is `whole` by construction — it cannot be meaningfully clipped, and
- * overlapping probes would compare a string against itself.
+ * - The **head** probe then answers whether its opening is still on the screen. Short replies use
+ *   their entire text as the probe, so they can be wrapped consistently too.
  *
  * `endLine` exists so the caller can REPLACE those rows with the full message rather than print it
  * twice. Folding erases the row boundaries, so the row that the reply ends on is recovered by keeping
  * each row's cumulative folded length and finding the first that reaches the tail probe's end.
  */
 export function locateReply(mirrorText: string, entry: TranscriptEntry): ReplyPlacement {
-  const reply = fold(replyProse(entry));
-  if (reply.length < PROBE_CHARS * 2) return elsewhere("whole");
-  if (proseTruncated(entry)) return elsewhere("off-screen");
+  const prose = replyProse(entry);
+  if (fold(prose) === "" || proseTruncated(entry)) return elsewhere("off-screen");
 
-  const rows = plain(mirrorText).split("\n");
+  const rows = sourceOrderRows(plain(mirrorText).split("\n"));
   // Folding each row and concatenating is the same string as folding the whole screen — the fold
   // drops the separators either way — so these offsets index into one folded mirror.
   const rowEnds: number[] = [];
@@ -127,12 +210,84 @@ export function locateReply(mirrorText: string, entry: TranscriptEntry): ReplyPl
     rowEnds.push(mirror.length);
   }
 
-  const tail = reply.slice(-PROBE_CHARS);
-  const at = mirror.indexOf(tail);
-  if (at === -1) return elsewhere("off-screen");
-  if (mirror.includes(reply.slice(0, PROBE_CHARS))) return elsewhere("whole");
+  // Both spellings are this same reply, so either one found is still the identity check passing.
+  for (const reply of new Set([fold(paintedSpelling(prose)), fold(prose)])) {
+    const probeLength = Math.min(PROBE_CHARS, reply.length);
+    const tail = reply.slice(-probeLength);
+    const at = mirror.indexOf(tail);
+    if (at === -1) continue;
 
-  const end = at + tail.length;
-  const endLine = rowEnds.findIndex((rowEnd) => rowEnd >= end);
-  return { fit: "clipped", endLine: endLine === -1 ? rows.length - 1 : endLine };
+    const end = at + tail.length;
+    const endLine = rowEnds.findIndex((rowEnd) => rowEnd >= end);
+    return {
+      fit: mirror.includes(reply.slice(0, probeLength)) ? "whole" : "clipped",
+      endLine: endLine === -1 ? rows.length - 1 : endLine,
+    };
+  }
+  return elsewhere("off-screen");
 }
+
+// `[label](target)` and `![alt](target)`, with an optional `"title"`.
+const MARKDOWN_LINK = /!?\[([^\]]*)\]\(\s*<?[^)\s>]*>?(?:\s+"[^"]*")?\s*\)/g;
+const HTML_TAG = /<\/?[A-Za-z][^<>\n]*>/g;
+const HTML_ENTITY = /&(?:amp|lt|gt|quot|apos|nbsp|#\d+|#x[0-9a-fA-F]+);/g;
+const FENCE_OPEN = /^(\s*)(`{3,}|~{3,})[^`\n]*$/;
+// An inline code span, kept whole: Claude paints what is inside it exactly as written.
+const CODE_SPAN = /(`+[^`\n]*`+)/;
+
+const NAMED_ENTITIES = new Map([["amp", "&"], ["lt", "<"], ["gt", ">"], ["quot", '"'], ["apos", "'"], ["nbsp", " "]]);
+
+function decodeEntity(entity: string): string {
+  const body = entity.slice(1, -1);
+  if (!body.startsWith("#")) return NAMED_ENTITIES.get(body) ?? entity;
+  const code = body.startsWith("#x") ? Number.parseInt(body.slice(2), 16) : Number(body.slice(1));
+  // fromCodePoint throws past U+10FFFF, and this runs during render: a reply that merely mentions
+  // such a reference must not take the pane view down with it.
+  return Number.isInteger(code) && code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : entity;
+}
+
+/**
+ * The reply spelled the way Claude paints it, 2026-09-27 on Herdr's grid. Each rule drops or rewrites
+ * source that never reaches the screen as written: a link keeps only its label (the terminal takes
+ * hyperlinks, so the target is not printed), a fence loses its language tag, an HTML tag is dropped
+ * and an entity decoded. Code is left alone, a fenced block's body and an inline span alike, because
+ * Claude prints those verbatim. A renderer that differs is still matched by the raw spelling, which
+ * {@link locateReply} tries second.
+ */
+function paintedSpelling(prose: string): string {
+  let inFence = false;
+  return prose
+    .split("\n")
+    .map((line) => {
+      const fence = FENCE_OPEN.exec(line);
+      if (fence) {
+        const opening = !inFence;
+        inFence = !inFence;
+        return opening ? `${fence[1]}${fence[2]}` : line;
+      }
+      if (inFence) return line;
+      return line
+        .split(CODE_SPAN)
+        .map((part, i) =>
+          i % 2 === 1
+            ? part
+            : part.replace(MARKDOWN_LINK, "$1").replace(HTML_TAG, "").replace(HTML_ENTITY, decodeEntity),
+        )
+        .join("");
+    })
+    .join("\n");
+}
+
+/**
+ * The part of the mirror whose stillness means "a message finished": every block's rows, which is
+ * the screen minus the input box and statusline each harness's buildBlocks already peeled off.
+ *
+ * The latest-reply read waits for the mirror to hold still (hooks/use-latest-reply.ts). A statusline
+ * that redraws every second (a clock, CPU, a cache countdown) never holds still, so judged on the raw
+ * screen the read fired once when the pane opened and never again: a reply that finished while you
+ * watched never became a card. The card's identity check still runs on the full screen.
+ */
+export function settleText(blocks: readonly Block[]): string {
+  return blocks.flatMap((block) => block.lines.map(lineText)).join("\n");
+}
+

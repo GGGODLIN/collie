@@ -90,6 +90,37 @@ describe("SessionSwitcher — sheet + selection", () => {
     expect(sheet.getByRole("button", { name: /crashed/ })).toBeDisabled();
   });
 
+  it("orders sessions by attention when the sheet opens", async () => {
+    const user = userEvent.setup();
+    const quietPrimary = { ...primary, working: 0, blocked: 0 };
+    const urgent = { ...demo, name: "urgent", working: 0, blocked: 2 };
+    renderSwitcher([downSession, quietPrimary, demo, urgent], undefined);
+    await user.click(screen.getByRole("button", { name: /switch session/i }));
+
+    const rows = within(screen.getByRole("list")).getAllByRole("button");
+    expect(rows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining("All sessions"),
+      expect.stringContaining("urgent"),
+      expect.stringContaining("collie-demo"),
+      expect.stringContaining("default"),
+      expect.stringContaining("crashed"),
+    ]);
+  });
+
+  it("shows the current status on the trigger and each session row", async () => {
+    const user = userEvent.setup();
+    renderSwitcher([primary, demo, downSession], undefined);
+
+    const trigger = screen.getByRole("button", { name: /switch session/i });
+    expect(within(trigger).getByRole("img", { name: /needs you/i })).toBeInTheDocument();
+    await user.click(trigger);
+
+    const sheet = within(screen.getByRole("dialog"));
+    expect(within(sheet.getByRole("button", { name: /default/ })).getByRole("img", { name: /needs you/i })).toBeInTheDocument();
+    expect(within(sheet.getByRole("button", { name: /collie-demo/ })).getByRole("img", { name: /working/i })).toBeInTheDocument();
+    expect(within(sheet.getByRole("button", { name: /crashed/ })).getByRole("img", { name: /unreachable/i })).toBeInTheDocument();
+  });
+
   it("navigates to a named session with ?s= on select", async () => {
     const user = userEvent.setup();
     const router = renderSwitcher([primary, demo], undefined);

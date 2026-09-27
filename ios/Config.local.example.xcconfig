@@ -1,0 +1,27 @@
+// Copy this file to Config.local.xcconfig and fill in the four values. git ignores that copy.
+
+// Your Apple Team ID: Xcode → Settings → Accounts → your Apple ID → the team's ID (10 characters).
+// A free Apple ID works; its Personal Team signs the app for 7 days at a time.
+DEVELOPMENT_TEAM = ABCDE12345
+
+// Reverse-DNS prefix for the app's bundle IDs. The app becomes <prefix>.collieisland and the widget
+// <prefix>.collieisland.widget. It must be yours: an ID another team registered will not sign.
+BUNDLE_ID_PREFIX = com.yourname
+
+// Your Collie's address as the phone reaches it, usually the tailnet front door `collie start`
+// printed. xcconfig reads `//` as a comment, so write the scheme as `https:/$()/`.
+COLLIE_URL = https:/$()/your-mac.your-tailnet.ts.net:8443
+
+// YES shows what the top pane is doing on the island and the lock screen. That line can be your
+// newest prompt word for word, readable without unlocking the phone, so it is off unless you say so.
+ISLAND_SHOW_DETAIL = NO
+
+// The rest is read only by scripts/resign.sh. The iPhone's CoreDevice identifier, from
+// `xcrun devicectl list devices`:
+ISLAND_DEVICE_ID =
+// Renew when fewer than this many days of the 7-day profile remain (7 = on every run). Each renewal
+// reinstalls the app, which takes the island down until it is restarted.
+ISLAND_RENEW_BELOW_DAYS = 2
+// YES lets a failed install restart this user's CoreDevice daemons and retry once. They serve every
+// device the Mac talks to, so leave it NO unless installs keep failing with "Could not allocate".
+ISLAND_RESTART_COREDEVICE = NO

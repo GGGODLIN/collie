@@ -60,6 +60,19 @@ is too little to detect from, and the model guesses. A two-letter code, or a reg
 narrows for you (`en-GB` → `en`). It rides on the `openai-compatible` provider only; the `codex`
 endpoint takes no language, and `collie stt status` says so rather than letting you believe otherwise.
 
+**Chinese in the wrong script gets converted on the host.** A transcription endpoint answers Chinese
+in whichever script its model prefers, and no `language` code can ask for Traditional. Add one field
+to `stt.json`, or set `COLLIE_STT_CONVERT`, and the bridge converts every transcript before the
+phone sees it, with any provider:
+
+```json
+"convert": "zh-TW"
+```
+
+`zh-TW` is Simplified to Taiwan Traditional, phrases included (`软件` → `軟體`), done locally with
+OpenCC's bundled dictionaries. Absent converts nothing, and an unknown value turns voice off with a
+warning rather than passing the wrong script through.
+
 **A long recording gets a long deadline.** The browser's budget for one clip is a function of that
 clip's size, not a flat number — it assumes a sustained 256 kb/s uplink and adds the bridge's own
 provider deadline on top, so the 8 MiB maximum is allowed a little under six minutes. A clip Collie
@@ -228,6 +241,10 @@ Four kinds, each with its own switch under **Settings → Notify when**.
 
 Every switch is bridge-wide. A push fans out to every subscribed device, so there is nothing
 per-device to set.
+
+**A push names where the pane sits, not what you typed.** Set `COLLIE_NOTIFY_DESCRIPTION=1` in the
+`.env` to put the pane's description line in the body instead: what it waits on, a recap, or your
+newest prompt word for word. It is off by default because a push lands on a lock screen.
 
 The cache warning can also be switched on for **one pane at a time**, from that pane's own settings:
 open the pane, tap the ⋮, then **Pane settings**. Those panes are listed under the global switch in

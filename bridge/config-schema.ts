@@ -171,6 +171,15 @@ export const CONFIG_SETTINGS: readonly ConfigSetting[] = [
     configField: "notifyDelayMs",
   },
   {
+    key: "notify_description",
+    env: "COLLIE_NOTIFY_DESCRIPTION",
+    section: "bridge",
+    kind: "bool",
+    default: false,
+    doc: "Put what the pane is doing (its newest prompt or recap) in the push body instead of where it sits.",
+    configField: "notifyDescription",
+  },
+  {
     key: "read_lines",
     env: "COLLIE_READ_LINES",
     section: "bridge",
@@ -587,7 +596,8 @@ export const CONFIG_SETTINGS: readonly ConfigSetting[] = [
     env: "COLLIE_UPDATE_REPO",
     section: "update",
     kind: "string",
-    default: "AltanS/collie",
+    // Fork-only (FORK.md → *Updates come from this fork*).
+    default: "GGGODLIN/collie",
     doc: "The owner/repo releases are taken from. Set it only when you run a fork on purpose.",
   },
   {
@@ -697,6 +707,15 @@ export const CONFIG_SETTINGS: readonly ConfigSetting[] = [
     kind: "string",
     default: "",
     doc: "The language you speak, as ISO-639-1. Empty lets the model detect it.",
+  },
+  {
+    key: "stt_convert",
+    env: "COLLIE_STT_CONVERT",
+    section: "stt",
+    kind: "enum",
+    values: ["zh-TW"],
+    default: "",
+    doc: "The script every transcript is converted to. zh-TW is Taiwan Traditional; absent converts nothing.",
   },
   {
     key: "stt_wire_identity",

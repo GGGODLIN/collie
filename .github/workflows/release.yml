@@ -506,7 +506,8 @@ jobs:
     runs-on: ubuntu-latest
     # A prerelease does not move the site, because the site only ever quotes a released line. Same
     # hyphen rule the release job above uses to set `--prerelease`, so the two cannot drift.
-    if: ${{ !contains(github.ref_name, '-') }}
+    # Fork-only (FORK.md → *Updates come from this fork*): the site and its token are upstream's.
+    if: ${{ github.repository == 'AltanS/collie' && !contains(github.ref_name, '-') }}
     steps:
       - name: Ask colliepwa.dev to re-quote the docs
         env:
@@ -539,7 +540,8 @@ jobs:
     # A prerelease is skipped. Somebody following `collie-bin` on the AUR did not sign up for a
     # beta. Same hyphen rule the release job uses to set `--prerelease` and notify-website uses to
     # stay home, so the three cannot drift apart.
-    if: ${{ !contains(github.ref_name, '-') }}
+    # Fork-only (FORK.md → *Updates come from this fork*): `collie-bin` on the AUR is upstream's.
+    if: ${{ github.repository == 'AltanS/collie' && !contains(github.ref_name, '-') }}
     steps:
       # `main`, not the tag: the pull request this job opens has to branch off the line it targets.
       # The manifest is fetched from the release, so nothing here depends on the tagged tree.

@@ -1598,7 +1598,7 @@ PLAIN="${UPDATE_HOME}/plain"
 mkdir -p "$PLAIN"
 printf 'id = "herdr.collie"\nversion = "9.9.9"\n' > "${PLAIN}/herdr-plugin.toml"
 if upd "$PLAIN" "$BIN" update; then fail "update on a non-git tree reported success"; fi
-assert_contains "$STDERR" "herdr plugin install AltanS/collie --yes"
+assert_contains "$STDERR" "herdr plugin install GGGODLIN/collie --yes"
 case "$(cat "$U_CALLS")" in
   *_apply-update*) fail "a checkout that could not advance still tried to rebuild" ;;
 esac

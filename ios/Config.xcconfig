@@ -1,0 +1,12 @@
+// Settings every build shares. Put your own values in Config.local.xcconfig, which git ignores:
+// copy Config.local.example.xcconfig to that name and fill it in. Anything it sets wins over this.
+
+BUNDLE_ID_PREFIX = com.example
+DEVELOPMENT_TEAM =
+COLLIE_URL =
+ISLAND_SHOW_DETAIL = NO
+ISLAND_DEVICE_ID =
+ISLAND_RENEW_BELOW_DAYS = 2
+ISLAND_RESTART_COREDEVICE = NO
+
+#include? "Config.local.xcconfig"

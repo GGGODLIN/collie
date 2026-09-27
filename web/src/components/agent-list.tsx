@@ -1,4 +1,4 @@
-import { Inbox, WifiOff } from "lucide-react";
+import { ChevronRight, Inbox, WifiOff } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { clockTime } from "@/lib/format";
@@ -60,6 +60,7 @@ interface AgentListProps {
   hidden?: readonly string[];
   /** Tap a chip: isolate that workspace, or clear the filter (null). */
   onIsolate?: (key: string | null) => void;
+  onOpenSwitcher?: () => void;
   /** Long-press a chip: hide the workspace, or show it again. */
   onToggleHidden?: (key: string) => void;
   /**
@@ -138,6 +139,7 @@ export function AgentList({
   isolated = null,
   hidden = NO_KEYS,
   onIsolate,
+  onOpenSwitcher,
   onToggleHidden,
   needsYouOnly = false,
   renderBody,
@@ -266,12 +268,24 @@ export function AgentList({
 
       {/* The twenty-times-a-day glance, in ONE slot of one height: every state counted, with its
           word, once for the whole dashboard (the headings below repeat the numbers, not the words).
-          The all-clear check leads when nothing needs you. A tap goes to the first workspace
-          holding something urgent. */}
+          The dashboard opens its pane switcher; other callers retain the first-urgent jump. */}
       <StatusSummaryLine
         panes={agents}
         allClear={allClear}
-        onJump={firstUrgent && !renderBody ? () => jumpTo(firstUrgent) : undefined}
+        onJump={onOpenSwitcher ?? (firstUrgent && !renderBody ? () => jumpTo(firstUrgent) : undefined)}
+        dialog={onOpenSwitcher !== undefined}
+        className={cn(
+          onOpenSwitcher &&
+            "w-full rounded-md border border-border px-3 py-2 transition-colors hover:bg-muted/50 active:bg-muted",
+        )}
+        trailing={
+          onOpenSwitcher ? (
+            <span className="ml-auto flex shrink-0 items-center text-muted-foreground">
+              <span className="sr-only">{t("chat.switcher.title")}</span>
+              <ChevronRight className="size-4" aria-hidden />
+            </span>
+          ) : undefined
+        }
       />
 
       {renderBody?.(shown)}

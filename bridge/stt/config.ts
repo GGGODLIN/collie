@@ -60,6 +60,13 @@ export const DEFAULT_CODEX_BIN = "codex";
 export const STT_WIRE_IDENTITIES = ["honest", "codex-cli"] as const;
 export type SttWireIdentity = (typeof STT_WIRE_IDENTITIES)[number];
 
+/**
+ * The script conversions an operator may name in `convert` (bridge/stt/convert.ts). `zh-TW`:
+ * Simplified to Taiwan Traditional, phrases included. Absent converts nothing.
+ */
+export const STT_CONVERSIONS = ["zh-TW"] as const;
+export type SttConversion = (typeof STT_CONVERSIONS)[number];
+
 /** One configured OpenAI-compatible endpoint. */
 export interface OpenAiSttSettings {
   provider: "openai-compatible";
@@ -85,6 +92,8 @@ export interface OpenAiSttSettings {
    * there is too little audio to detect from and the model answers in the wrong language entirely.
    */
   language?: string;
+  /** The script every transcript is converted to, or ABSENT to pass the provider's text through. */
+  convert?: SttConversion;
 }
 
 /**
@@ -103,6 +112,8 @@ export interface CodexSttSettings {
   codexBin: string;
   /** Always resolved; `honest` when unstated. See {@link STT_WIRE_IDENTITIES}. */
   wireIdentity: SttWireIdentity;
+  /** The script every transcript is converted to, or ABSENT to pass the provider's text through. */
+  convert?: SttConversion;
 }
 
 /** Everything a resolved provider can be. */
@@ -117,6 +128,7 @@ export const STT_ENV_KEYS = {
   language: "COLLIE_STT_LANG",
   codexBin: "COLLIE_CODEX_BIN",
   wireIdentity: "COLLIE_STT_WIRE_IDENTITY",
+  convert: "COLLIE_STT_CONVERT",
 } as const;
 
 /** The path `stt.json` sits at, given the bridge's state dir. */
@@ -133,6 +145,7 @@ interface RawSettings {
   language?: string;
   codexBin?: string;
   wireIdentity?: string;
+  convert?: string;
 }
 
 /** A trimmed string, or undefined when the value is absent, not a string, or blank. */
@@ -159,6 +172,7 @@ export function coerceSttFile(raw: JsonValue | undefined): RawSettings {
     language: optionalString(o.language),
     codexBin: optionalString(o.codexBin),
     wireIdentity: optionalString(o.wireIdentity),
+    convert: optionalString(o.convert),
   };
 }
 
@@ -172,6 +186,7 @@ export function sttEnvSettings(env: Record<string, string | undefined>): RawSett
     language: optionalString(env[STT_ENV_KEYS.language]),
     codexBin: optionalString(env[STT_ENV_KEYS.codexBin]),
     wireIdentity: optionalString(env[STT_ENV_KEYS.wireIdentity]),
+    convert: optionalString(env[STT_ENV_KEYS.convert]),
   };
 }
 
@@ -228,6 +243,7 @@ export function resolveSttSettings(
   const language = env.language ?? file.language;
   const codexBin = env.codexBin ?? file.codexBin;
   const wireIdentity = env.wireIdentity ?? file.wireIdentity;
+  const convert = env.convert ?? file.convert;
 
   // Nothing was configured at all — the ordinary case, and not something to warn about.
   if (
@@ -237,7 +253,8 @@ export function resolveSttSettings(
     apiKey === undefined &&
     language === undefined &&
     codexBin === undefined &&
-    wireIdentity === undefined
+    wireIdentity === undefined &&
+    convert === undefined
   ) {
     return null;
   }
@@ -245,7 +262,18 @@ export function resolveSttSettings(
     warn(`speech-to-text is off: unknown provider "${provider}" (expected ${STT_PROVIDERS.join(", ")})`);
     return null;
   }
-  if (provider === "codex") return resolveCodex(codexBin, wireIdentity, warn);
+  // Refused rather than dropped, as an unreadable language is: the operator set it to change what
+  // lands in the message box, and silently passing the provider's script through undoes that.
+  if (convert !== undefined && !STT_CONVERSIONS.some((known) => known === convert)) {
+    warn(
+      `speech-to-text is off: unknown conversion "${convert}" ` +
+        `(${STT_ENV_KEYS.convert} / "convert"; expected ${STT_CONVERSIONS.join(", ")})`,
+    );
+    return null;
+  }
+  // SAFETY: the guard above proves a present `convert` is one of STT_CONVERSIONS.
+  const conversion = convert as SttConversion | undefined;
+  if (provider === "codex") return withConvert(resolveCodex(codexBin, wireIdentity, warn), conversion);
   if (baseUrl === undefined) {
     warn(`speech-to-text is off: no endpoint configured (set ${STT_ENV_KEYS.url} or "baseUrl" in ${STT_FILENAME})`);
     return null;
@@ -276,6 +304,7 @@ export function resolveSttSettings(
   // Refused rather than dropped, for the same reason a bad base URL is: the operator set this field
   // to stop the model guessing, and a value the endpoint would ignore leaves them with the exact
   // wrong-language transcripts they configured it to end — discovered only after they have spoken.
+  if (conversion !== undefined) settings.convert = conversion;
   if (language !== undefined) {
     const code = canonicalLanguage(language);
     if (code === null) {
@@ -289,6 +318,12 @@ export function resolveSttSettings(
     settings.language = code;
   }
   return settings;
+}
+
+/** A resolved codex setting with the conversion attached, assigned only when there is one. */
+function withConvert(settings: CodexSttSettings | null, conversion: SttConversion | undefined): CodexSttSettings | null {
+  if (settings === null || conversion === undefined) return settings;
+  return { ...settings, convert: conversion };
 }
 
 /**

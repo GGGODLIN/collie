@@ -188,6 +188,42 @@ describe("the body a single alert carries — the pane's PLACE, and nothing else
   });
 });
 
+describe("the body a single alert carries when the pane has a description", () => {
+  const described = (now: string): AgentView =>
+    agentNamed("p1", "claude", "blocked", { description: { now, source: "blocked", at: 1 } });
+
+  test("the description's `now` replaces the place; the title is unchanged", () => {
+    const { clock, sink, coord } = setup();
+    coord.onTransition(described("在等你批准 Bash · bun test"), "working", "blocked");
+    clock.fireAll();
+    expect(sink.last?.title).toBe("claude needs you");
+    expect(sink.last?.body).toBe("在等你批准 Bash · bun test");
+  });
+
+  test("the injected describer is asked when the alert FIRES, not at the transition", () => {
+    const clock = new FakeClock();
+    const sink = new RecordingSink();
+    let line: string | undefined;
+    const coord = new NotificationCoordinator(clock, sink, 30_000, () => true, () => line);
+    coord.onTransition(agent("p1", "done"), "working", "done");
+    line = "你：修好 build";
+    clock.fireAll();
+    expect(sink.last?.body).toBe("你：修好 build");
+  });
+
+  test("the multi-alert digest keeps the names", () => {
+    const { clock, sink, coord } = setup();
+    coord.onTransition(described("甲"), "working", "blocked");
+    coord.onTransition(
+      agentNamed("p2", "claude", "blocked", { paneLabel: "web", description: { now: "乙", source: "blocked", at: 1 } }),
+      "working",
+      "blocked",
+    );
+    clock.fireAll();
+    expect(sink.last?.body).toBe("claude, web");
+  });
+});
+
 describe("NotificationCoordinator — multi-agent digest labels (#215)", () => {
   test("several panes of the SAME agent kind are told apart by their pane label", () => {
     const { clock, sink, coord } = setup();

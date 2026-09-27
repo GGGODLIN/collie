@@ -2,14 +2,14 @@ import { Loader2, Play, TerminalSquare } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { AgentIcon } from "@/components/agent-icon";
-import { CacheChip } from "@/components/cache-chip";
+import { PaneMeta } from "@/components/pane-meta";
 import { SectionHeader } from "@/components/section-header";
 import { StatusCounts, StatusSummaryLine } from "@/components/status-counts";
 import { paneRowKey } from "@/lib/hosts";
 import { groupPanesByWorkspace } from "@/lib/pane-groups";
 import { paneName, panePlaceParts } from "@/lib/pane-name";
 import { shortenHome } from "@/lib/shorten-home";
-import { bucketOf, isAttention, worstTriage, type TriageKey } from "@/lib/triage";
+import { bucketOf, isAttention, triage, worstTriage, type TriageKey } from "@/lib/triage";
 import type { AgentView, Launcher, ServerSummary, TabView } from "@/lib/types";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
@@ -35,6 +35,7 @@ interface ThreadSidebarProps {
   tabs?: readonly TabView[];
   /** The snapshot's machine list, for the order machines run in: the lead first. */
   servers?: readonly ServerSummary[] | undefined;
+  order?: "place" | "attention";
   /** Whether the Shells section is expanded, and how to fold it. Omit to leave it always open. */
   shellsOpen?: boolean;
   onShellsOpenChange?: (open: boolean) => void;
@@ -59,18 +60,13 @@ interface ThreadSidebarProps {
   className?: string;
 }
 
-// The pane switcher behind the swipe-up "Switch pane" sheet: every agent pane under the WORKSPACE it
-// lives in, in the dashboard's own fixed order (lib/pane-groups.ts, `order: "fixed"`), then any bare
-// shell panes under a trailing "Shells" group, with the open one highlighted. Switching is the ONLY
-// action here — closing a pane lives in the pane pill's long-press sheet (with its own confirm), so a
-// fat-thumbed switch can never destroy a pane.
+// The pane switcher supports place order for callers that need fixed workspace groups (ADR 0063).
+// Both the dashboard summary and the in-pane sheet open a frozen attention snapshot instead (ADR 0073),
+// grouped as Needs you, Ready, Recent, then Working. Switching is the ONLY action here — closing a
+// pane lives in the pane pill's long-press sheet, so a fat-thumbed switch can never destroy a pane.
 //
-// NOTHING HERE MOVES WHEN A PANE CHANGES STATE (ADR 0063). This sheet used to sort into the triage
-// sections (Needs you, Ready, Working, Recent), so a row changed section, and therefore place, every
-// time its agent took a turn: the row the thumb was reaching for was elsewhere by the time it landed,
-// and on this sheet a wrong tap opens another terminal. Urgency is a MARK now, exactly as on the
-// dashboard: the row's alarm edge, the lit heading, and one summary line on top that counts what
-// needs you and jumps to the first of it.
+// Attention order is an operator-requested exception: each caller snapshots its rows on opening,
+// so a poll cannot move a row under a thumb while the sheet stays open.
 //
 // The two long tails still fold: 30-odd bare shells, and the Launch rows, using the dashboard's own
 // header primitive and remembering it.
@@ -94,6 +90,7 @@ export function ThreadSidebar({
   onSelect,
   tabs,
   servers,
+  order = "place",
   shellsOpen = true,
   onShellsOpenChange,
   launchers = NO_LAUNCHERS,
@@ -119,7 +116,7 @@ export function ThreadSidebar({
     );
   }
 
-  // The dashboard's grouping, so the switcher and the dashboard list the same panes in the same place.
+  // Place mode uses the dashboard's workspace grouping; attention mode uses the frozen buckets below.
   const groups = groupPanesByWorkspace(agents, [], { order: "fixed", tabs, servers });
   const urgent = agents.filter((a) => URGENT.has(bucketOf(a)));
   // The first urgent row in DISPLAY order, not in the order the list arrived in.
@@ -136,38 +133,68 @@ export function ThreadSidebar({
         <p className="px-2 py-2 text-sm text-muted-foreground">{t("home.empty.noAgents")}</p>
       )}
 
-      {agents.length > 0 && (
-        // ONE slot, always drawn while there are agents, so the groups below never shift when the
-        // first pane needs you or the last one is answered. The dashboard's own line, over the urgent
-        // panes alone: "Nothing needs you", or the counts with their words.
-        <StatusSummaryLine
-          panes={urgent}
-          allClear={firstUrgent === undefined}
-          onJump={firstUrgent === undefined ? undefined : () => jumpTo(firstUrgent)}
-          className="px-2"
-        />
-      )}
-
-      {groups.map((g) => (
-        <Section
-          key={g.key}
-          id={`switch-ws-${g.key.replace(/[^A-Za-z0-9_-]/gu, "_")}`}
-          label={g.label}
-          tone="strong"
-          dot={worstTriage(g.panes) === "needs" ? "bg-status-blocked" : undefined}
-          trailing={<StatusCounts panes={g.panes} className="shrink-0 text-[11px] text-muted-foreground" />}
-        >
-          {g.panes.map((a) => (
-            <PaneRow
-              key={paneRowKey(a)}
-              id={rowDomId(a)}
-              pane={a}
-              active={paneRowKey(a) === currentPaneKey}
-              onSelect={onSelect}
+      {order === "attention" ? (
+        triage(agents)
+          .toSorted((a, b) => Number(a.key === "working") - Number(b.key === "working"))
+          .map((g) => {
+            const members = g.agents;
+            if (members.length === 0) return null;
+            return (
+              <Section
+                key={g.key}
+                id={`switch-${g.key}`}
+                label={g.label}
+                count={members.length}
+                dot={g.dot}
+                {...(g.accent !== undefined ? { accent: g.accent } : {})}
+              >
+                {members.map((a) => (
+                  <PaneRow
+                    key={paneRowKey(a)}
+                    id={rowDomId(a)}
+                    pane={a}
+                    active={paneRowKey(a) === currentPaneKey}
+                    onSelect={onSelect}
+                  />
+                ))}
+              </Section>
+            );
+          })
+      ) : (
+        <>
+          {agents.length > 0 && (
+            <StatusSummaryLine
+              panes={urgent}
+              allClear={firstUrgent === undefined}
+              onJump={firstUrgent === undefined ? undefined : () => jumpTo(firstUrgent)}
+              className="px-2"
             />
+          )}
+
+          {groups.map((g) => (
+            <Section
+              key={g.key}
+              id={`switch-ws-${g.key.replace(/[^A-Za-z0-9_-]/gu, "_")}`}
+              label={g.label}
+              tone="strong"
+              dot={worstTriage(g.panes) === "needs" ? "bg-status-blocked" : undefined}
+              trailing={
+                <StatusCounts panes={g.panes} className="shrink-0 text-[11px] text-muted-foreground" />
+              }
+            >
+              {g.panes.map((a) => (
+                <PaneRow
+                  key={paneRowKey(a)}
+                  id={rowDomId(a)}
+                  pane={a}
+                  active={paneRowKey(a) === currentPaneKey}
+                  onSelect={onSelect}
+                />
+              ))}
+            </Section>
           ))}
-        </Section>
-      ))}
+        </>
+      )}
 
       {shellPanes.length > 0 && (
         <Section
@@ -219,6 +246,7 @@ function Section({
   id,
   label,
   count,
+  accent,
   dot,
   tone,
   trailing,
@@ -229,6 +257,7 @@ function Section({
   id: string;
   label: string;
   count?: number;
+  accent?: boolean;
   /** Status-palette bullet beside the header — the same colors the status badges use. A workspace
    *  heading carries one only while a pane inside needs you, as on the dashboard. */
   dot?: string | undefined;
@@ -245,6 +274,7 @@ function Section({
         level={3}
         label={label}
         className="px-2"
+        {...(accent !== undefined ? { accent } : {})}
         {...(count !== undefined ? { count } : {})}
         {...(dot !== undefined ? { dot } : {})}
         {...(tone !== undefined ? { tone } : {})}
@@ -277,6 +307,10 @@ function PaneRow({
   // same nine characters, and the tab is the only one of the two that discriminates.
   const name = paneName(pane);
   const { space, tab } = panePlaceParts(pane);
+  // A described pane reads the way its dashboard row does (agent-card.tsx): its name on line 1,
+  // what it is doing on line 2 in place of where it sits. The switcher is where you pick a pane to
+  // jump to, so it must not be the one list that still says only the name.
+  const described = pane.description?.now;
   return (
     <button
       id={id}
@@ -311,15 +345,20 @@ function PaneRow({
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-baseline gap-1">
           <span className="min-w-0 truncate text-sm font-medium">{name}</span>
-          {/* The cache reading trails the name, same corner as the dashboard row (agent-card.tsx,
-              via PaneMeta), but without PaneMeta's host and session chips: this sheet asked for the
-              cache reading alone, and a crew-wide switcher row is a separate call. `row`, not
-              `button` — the whole row is already a `<button>`, and a button cannot nest inside one. */}
-          <CacheChip cache={pane.cache} variant="row" className="ml-auto shrink-0" />
+          <PaneMeta
+            host={pane.host}
+            cache={pane.cache}
+            session={pane.session}
+            className="ml-auto"
+          />
         </div>
         <div className="flex min-w-0 items-baseline gap-1 text-[11px] text-muted-foreground">
-          <span className="max-w-[45%] shrink truncate">{space}</span>
-          {tab && (
+          {described !== undefined ? (
+            <span className="min-w-0 flex-1 truncate">{described}</span>
+          ) : (
+            <span className="max-w-[45%] shrink truncate">{space}</span>
+          )}
+          {described === undefined && tab && (
             <>
               {/* The place's own separator (PLACE_SEP), because a space CONTAINS a tab. */}
               <span className="shrink-0 text-muted-foreground/60" aria-hidden>

@@ -83,7 +83,7 @@ const HEALTHY_ANSWERS: Scripted["answers"] = [
   ["herdr --version", { stdout: "herdr 0.8.2\n" }],
   // A healthy checkout can say where it came from: `update` asserts `origin` against the configured
   // update source before it fetches, so an origin-less checkout is a real (reported) problem.
-  [`git -C ${ROOT} remote get-url origin`, { stdout: "https://github.com/AltanS/collie.git\n" }],
+  [`git -C ${ROOT} remote get-url origin`, { stdout: "https://github.com/GGGODLIN/collie.git\n" }],
   [`git -C ${ROOT} symbolic-ref --short HEAD`, { stdout: "main\n" }],
   ["herdr integration status", { stdout: INTEGRATION_OK }],
   [
@@ -775,7 +775,7 @@ describe("collie doctor — the local checks", () => {
     expect(f?.status).toBe("ok");
     expect(f?.detail).toContain("linked clone");
     expect(f?.detail).toContain("branch main");
-    expect(f?.detail).toContain("AltanS/collie");
+    expect(f?.detail).toContain("GGGODLIN/collie");
   });
 
   test("install: a Herdr-managed checkout is named as one", async () => {

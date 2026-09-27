@@ -54,10 +54,13 @@ import { StripsSummary } from "@/components/strips-summary";
 import { PaneMeta } from "@/components/pane-meta";
 import { CacheSheet } from "@/components/cache-sheet";
 import { PaneActionsSheet } from "@/components/pane-actions-sheet";
+import { RetellSheet, useRetell } from "@/components/retell-sheet";
+import { useRetellEnabled } from "@/lib/operator-config";
 import { PaneSettingsSheet } from "@/components/pane-settings-sheet";
 import { CompactStripLabels, TAB_ROW_SQUARE_TAP_TARGET } from "@/components/ui/labelled-strip";
 import { ReadOnlyBanner } from "@/components/read-only-banner";
 import { HostStaleBanner } from "@/components/host-stale-banner";
+import { PaneDescription } from "@/components/pane-description";
 import { useHostHealth } from "@/components/crew-provider";
 import { writeRefusal } from "@/lib/host-health";
 import { StatusArea } from "@/components/status-area";
@@ -72,7 +75,7 @@ import { sendGuardedKeys } from "@/lib/dialog-guard";
 import type { PromptBlockAction } from "@/components/prompt-select-block";
 import type { PreviewBlockAction } from "@/components/preview-select-block";
 import type { MenuBlockAction } from "@/components/menu-block";
-import { locateReply } from "@/lib/latest-reply";
+import { locateReply, settleText } from "@/lib/latest-reply";
 import { canGrowRequestedLines, growRequestedLines } from "@/lib/loaders";
 import { paneName, panePlaceParts } from "@/lib/pane-name";
 import { panesOfTab } from "@/lib/pane-ordinal";
@@ -308,12 +311,19 @@ export function AgentChat({
   // Drawers/sheets are mutually exclusive — at most one open. A single value makes that invariant
   // unrepresentable to violate.
   const [drawer, setDrawer] = useState<Drawer>(null);
+  const [switcherPanes, setSwitcherPanes] = useState<{ agents: AgentView[]; shellPanes: AgentView[] } | null>(null);
+  // A poll may repaint the pane behind the sheet, but must not move a row under the operator's thumb.
+  function openSwitcher() {
+    setSwitcherPanes({ agents: [...agents], shellPanes: [...shellPanes] });
+    setDrawer("switcher");
+  }
   // The prompt-cache sheet is NOT one of the mutually-exclusive drawers above: it is a reading with no
   // control in it, opened from the header rather than from the composer, and it closes nothing the
   // operator was in the middle of. Its own boolean says so.
   const [cacheSheetOpen, setCacheSheetOpen] = useState(false);
   const closeDrawer = () => {
     setDrawer(null);
+    setSwitcherPanes(null);
     setPull(0);
   };
 
@@ -459,7 +469,7 @@ export function AgentChat({
     onAnchor: setPullFrom,
     onOpen: () => {
       buzz();
-      setDrawer("switcher");
+      openSwitcher();
       setPull(0);
       setPullFrom(0);
     },
@@ -490,7 +500,7 @@ export function AgentChat({
     agents.length + shellPanes.length > 0 || launchers.length > 0
       ? {
           ref: sheetPull.ref,
-          onClick: () => setDrawer("switcher"),
+          onClick: openSwitcher,
           label: t(elsewhereNeedsYou ? "chat.switcher.ariaNeedsYou" : "chat.switcher.aria"),
           alert: elsewhereNeedsYou,
         }
@@ -772,6 +782,17 @@ export function AgentChat({
   // loud. Hiding it is what leaves someone wondering whether Collie is broken.
   const sessionLog = useMuxCapability("agentSessionRef", scope);
   const historyAvailable = Boolean(agent?.hasSession) && sessionLog.capable;
+  // "Plain" / "lost" retellings (ADR 0074): the host's own sidecar reads this host's transcripts, so
+  // only a local Claude pane with a session qualifies, and the route is a write because each one is
+  // a paid model call.
+  const retellEnabled = useRetellEnabled();
+  const retell = useRetell(paneId, scope);
+  const retellAvailable =
+    retellEnabled &&
+    !readOnly &&
+    agent?.agent === "claude" &&
+    agent.hasSession === true &&
+    scope?.host === undefined;
   // A FOURTH state, and the per-pane sibling of the third (#137). `hasSession` folds two facts into
   // one flag bridge-side — "this pane named a session" AND "this agent has a journal adapter" — so
   // its absence alone cannot say which half failed, and the two want opposite words. On an agent
@@ -820,15 +841,19 @@ export function AgentChat({
   // still reads as the live screen, just starting where the message finished.
   //
   // Memoised on the DISPLAYED text: it folds a whole screenful, and it runs beside the grammar
-  // passes above on every poll.
+  // passes above on every poll. The gate asks about the REPLY — the turn whose rows this replaces —
+  // and the card shows the EXCHANGE: the prompt it answered is context the mirror could never hold.
+  // Stillness is judged on the blocks, not the raw screen: a statusline that redraws every second
+  // would otherwise keep the read from ever firing after the pane opened (lib/latest-reply.ts).
+  const settled = useMemo(() => settleText(blocks), [blocks]);
   const latestReply = useLatestReply({
     paneId,
     scope,
     enabled: historyAvailable && prefs.expandClippedReply,
-    mirrorText: display,
+    mirrorText: settled,
   });
   const placement = useMemo(
-    () => (latestReply ? locateReply(display, latestReply) : null),
+    () => (latestReply ? locateReply(display, latestReply.reply) : null),
     [latestReply, display],
   );
 
@@ -842,14 +867,18 @@ export function AgentChat({
     enabled: historyAvailable && imageClusterCount > 0,
     clusterCount: imageClusterCount,
   });
-  // Find searches the mirror, so while it is open the mirror is WHOLE and the card stands down —
-  // otherwise a hit inside the reply would be unfindable in the one surface find can highlight.
-  const clippedReply = placement?.fit === "clipped" && !findOpen ? latestReply : null;
-  // Collapsing the card is a judgement about ONE message ("show me the raw rows instead"), so it is
-  // remembered by uuid: a new reply arrives expanded without an effect to reset anything.
+  // Find owns the mirror; otherwise every verified latest exchange renders through the card.
+  const visibleExchange = placement && placement.fit !== "off-screen" && !findOpen ? latestReply : null;
   const [collapsedReply, setCollapsedReply] = useState<string | null>(null);
-  const replyOpen = clippedReply !== null && collapsedReply !== clippedReply.uuid;
+  const replyOpen = visibleExchange !== null && collapsedReply !== visibleExchange.reply.uuid;
   const hiddenMirrorLines = replyOpen && placement ? placement.endLine + 1 : 0;
+
+  // A full-reply card always opens at its prompt, regardless of the previous scroll state.
+  const replyAnchor = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (!replyOpen) return;
+    listRef.current?.scrollToChild(replyAnchor.current, true);
+  }, [replyOpen, visibleExchange?.reply.uuid]);
 
   // Load older scrollback: raise the per-pane requested line count and refetch. The enlarged buffer
   // prepends older lines at the top, so we adopt it into the frozen display and re-anchor the scroll
@@ -1719,6 +1748,12 @@ export function AgentChat({
                 nothing on a solo install, or while the host is live. */}
             <HostStaleBanner health={hostHealth} className="mx-3 mt-1.5" />
 
+            {/* What the pane is doing, as the bridge described it (goal / now / next). It arrives and
+                leaves through its own `Collapse`, the sanctioned way an in-flow surface appears. */}
+            <Collapse open={agent?.description !== undefined}>
+              <PaneDescription description={agent?.description} />
+            </Collapse>
+
             {/* THE TWO STRIPS, AND THE THIN BAR THAT STANDS IN FOR THEM — one band that morphs, not
                 two rows taking turns. `CollapseSwap` is nested inside zen's `Collapse`, so zen still
                 takes the whole band folded or not: the bar is chrome about the pane exactly as the
@@ -1977,18 +2012,19 @@ export function AgentChat({
                       {t(noSessionKey, { agent: agent?.agent ?? "" })}
                     </p>
                   )}
-                  {/* The newest reply in full, standing IN PLACE OF the rows it covers (the mirror
-                      below starts after it — see hideLeadingLines). It appears above a bottom-pinned
-                      scroller, which ChatMessageList's child-list observer re-pins, so the live tail
-                      never moves. */}
-                  {clippedReply && (
-                    <LatestReply
-                      entry={clippedReply}
-                      agent={agent?.agent}
-                      open={replyOpen}
-                      onToggle={() => setCollapsedReply(replyOpen ? clippedReply.uuid : null)}
-                      scope={scope}
-                    />
+                  {/* The latest verified exchange replaces the terminal rows through its reply. */}
+                  {visibleExchange && (
+                    <div ref={replyAnchor}>
+                      <LatestReply
+                        exchange={visibleExchange}
+                        agent={agent?.agent}
+                        open={replyOpen}
+                        onToggle={() =>
+                          setCollapsedReply(replyOpen ? visibleExchange.reply.uuid : null)
+                        }
+                        scope={scope}
+                      />
+                    </div>
                   )}
                   <AnsiOutput
                     text={display}
@@ -2277,8 +2313,9 @@ export function AgentChat({
           pullFrom={pullFrom}
         >
           <ThreadSidebar
-            agents={agents}
-            shellPanes={shellPanes}
+            agents={switcherPanes?.agents ?? agents}
+            shellPanes={switcherPanes?.shellPanes ?? shellPanes}
+            order="attention"
             // The full row identity, not the bare id (`hereKey`, computed above for the same reason
             // the "elsewhere needs you" dot is): on a crew this sheet lists every machine's panes,
             // and a peer's row can share this pane's own id.
@@ -2288,7 +2325,7 @@ export function AgentChat({
             servers={servers}
             // Shells fold on the same count rule Spaces uses: on a herd with dozens of bare shells
             // they'd otherwise bury the agents you opened this sheet to reach.
-            shellsOpen={openForCount(dash.prefs.shellsOpen, shellPanes.length)}
+            shellsOpen={openForCount(dash.prefs.shellsOpen, (switcherPanes?.shellPanes ?? shellPanes).length)}
             onShellsOpenChange={dash.setShellsOpen}
             launchers={launchers}
             launchersHome={launchersHome}
@@ -2369,7 +2406,9 @@ export function AgentChat({
           // already spent. It hands over to the sheet below in one React event, so the actions sheet
           // unmounts in the same commit the settings sheet mounts.
           onSettings={() => setDrawer("paneSettings")}
+          onRetell={retellAvailable ? (mode) => void retell.start(mode) : undefined}
         />
+        <RetellSheet retell={retell} />
         {/* This pane's own settings — one switch today, the prompt-cache warning (ADR 0042). Scoped to
             the PANE's machine, because `?host=` there names where the pane lives; the preference itself
             lands on the collie this phone is talking to, which is the only one that can push. */}

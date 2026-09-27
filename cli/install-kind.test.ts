@@ -171,9 +171,9 @@ describe("where updates come from", () => {
   });
 
   test("COLLIE_UPDATE_REPO is the one override, and Collie's own repo is the default", () => {
-    expect(updateRepoOf({})).toBe("AltanS/collie");
+    expect(updateRepoOf({})).toBe("GGGODLIN/collie");
     expect(updateRepoOf({ COLLIE_UPDATE_REPO: "  my/collie  " })).toBe("my/collie");
-    expect(updateRepoOf({ COLLIE_UPDATE_REPO: "" })).toBe("AltanS/collie");
+    expect(updateRepoOf({ COLLIE_UPDATE_REPO: "" })).toBe("GGGODLIN/collie");
   });
 
   test("originMatches normalises both sides — and an unreadable origin never matches", () => {

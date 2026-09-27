@@ -12,6 +12,33 @@ decisions [`.adr/`](./.adr/) · adding a harness
 [`HARNESS_CONTRIBUTING.md`](./HARNESS_CONTRIBUTING.md) · adding a multiplexer
 [`MUX_CONTRIBUTING.md`](./MUX_CONTRIBUTING.md).
 
+## Project mode — personal vibe coding, published fork
+
+This fork is a personal vibe coding project. Make the smallest change that satisfies the user's
+explicit need, verify it with the nearest targeted tests, lint and `bun run build`, then stop.
+Do not enter a full spec / ticket / review workflow, add architecture, refactor adjacent code or run
+the full test / E2E suite unless the user asks or the requested change directly requires it.
+
+A task is not finished at commit or push. After verification, deploy the resulting build to the
+active local Collie instance and leave it ready for phone acceptance. If a change has no deployable
+runtime effect, say so explicitly instead of silently skipping deployment. This applies to the
+operator's own runtime changes, not to preparing an upstream PR or to someone else's clone.
+
+The fork is also published for other people to install and use, and its general changes are
+candidates for upstream. Two rules follow from that:
+
+- **Someone without this operator's setup still gets a working Collie.** A change may lean on the
+  operator's own tools, paths or labels, but without them Collie still installs, starts and runs
+  everything that does not depend on them; the feature simply stays away. Cover that missing path
+  in the nearest test. Not configured means a quiet absence; configured but broken (the named
+  command is gone, the file is malformed) means a clear reason, never a silent no-op. Such a
+  feature may stay personal for good and owes no later generalisation.
+- **Upstream PRs are proposed, never opened unasked.** Pick candidates by feature and dependency,
+  not by whether a commit appears in `FORK.md`, and open a PR to AltanS/collie only after the user
+  approves that PR. This overrides the default that a personal repo's PRs need no confirmation;
+  commits and pushes to this fork keep their existing authorisation. What a fork PR leaves out of
+  the version files is under *Versioning*.
+
 ## Decision records — read before reopening a settled question
 
 [`.adr/`](./.adr/) holds the decisions whose reasoning would otherwise live only in a PR thread —
@@ -475,30 +502,33 @@ lint guard, the crew-wire guard or the `flake.lock` guard.
   (`web/src/lib/latest-reply.ts`). It **replaces** the rows it covers rather than sitting above them
   (`hideLeadingLines`), and that hiding is render-only, applied after every grammar has run over the
   whole screen — never trim the text a detector, guard or draft probe sees.
-- **The operator's rows in `commands.toml` replace the shipped command catalog on the panes they
-  address, never merge into it** ([ADR 0018](./.adr/0018-operator-command-rows-replace-the-catalog.md));
-  the bridge re-reads the file behind an mtime check, so edits are live and need no restart.
-- **That replace-law runs PER SURFACE, and the harness bar is the second surface** — a row with
+- **The operator's rows in `commands.toml` join Claude's maintained reference catalog** — matching
+  rows appear first, an exact-name operator row replaces the reference row without lowering its
+  dangerous classification, and every other harness still uses ADR 0018's replacement rule
+  ([ADR 0070](./.adr/0070-claude-operator-commands-join-the-reference-catalog.md)). The bridge re-reads
+  the file behind an mtime check, so edits are live and need no restart.
+- **The Agent palette stages commands; it never sends them** — tapping any row puts its text in the
+  composer, an argument-taking row includes one trailing space, and only the explicit Send action
+  submits it. The harness bar is the separate direct-action surface
+  ([ADR 0071](./.adr/0071-the-agent-palette-stages-never-sends.md)).
+- **The composition rule runs PER SURFACE, and the harness bar still replaces** — a row with
   `bar = true` goes on the bar above the keys as well as into the palette, and the bar's
-  replace-or-fall-back runs over the `bar = true` rows ALONE, so one bar row never blanks the Agent
-  palette ([ADR 0043](./.adr/0043-operator-bar-rows-replace-the-bar-not-the-palette.md)).
+  replace-or-fall-back runs over the `bar = true` rows ALONE
+  ([ADR 0043](./.adr/0043-operator-bar-rows-replace-the-bar-not-the-palette.md)).
   `web/src/lib/harness-bar.ts` is a VIEW of `agent-commands.ts`, never a second catalog: a command it
   spells that the catalog lacks is a failing test, and a row for a capture-sourced harness needs an
-  `evidence` path that exists. `commandsFor` is unchanged.
-- **`keys.toml` is `commands.toml`'s sibling** — the operator's rows replace the Keys tray's shipped
-  Ctrl presets on the panes they address (ADR 0018 again), and only those presets: the tray's
-  keyboard is fixed. Both files share one reader (`bridge/operator-file.ts`) and one scope ladder
-  (`web/src/lib/operator-scope.ts`); teach both, never one.
-- **`quick-replies.toml` is the third on that contract** — the operator's groups replace the Quick
-  dock's shipped phrases on the panes they address (ADR 0018 once more), shell panes included when
-  a row is scoped to them. Same reader, same scope ladder: the three files differ in grammar and
-  never in posture, so teach all three or none.
-- **`theme.toml` is the operator's fourth file, and it is the one that ADDS rather than replaces** —
-  its `[[font]]` rows put extra UI typefaces UNDER the shipped three in the Settings picker, and the
-  bridge serves the files read-only from `<config-dir>/fonts` at `GET /api/fonts/<basename>`. Same
-  reader, same mtime liveness; the opposite posture, because a font cannot fire an action and so
-  shadows nothing ([ADR 0033](./.adr/0033-the-app-face-is-a-device-preference.md)). Don't dilute
-  ADR 0018's replace-law to cover it.
+  `evidence` path that exists.
+- **`keys.toml` is `commands.toml`'s sibling, not its composition policy** — the operator's rows
+  replace the Keys tray's shipped Ctrl presets on the panes they address, and only those presets:
+  the tray's keyboard is fixed. Both files share one reader (`bridge/operator-file.ts`) and one
+  scope ladder (`web/src/lib/operator-scope.ts`).
+- **`quick-replies.toml` keeps the replacement rule too** — the operator's groups replace the Quick
+  dock's shipped phrases on the panes they address, shell panes included when a row is scoped to
+  them. It shares the reader and scope ladder without inheriting Claude's palette exception.
+- **`theme.toml` adds rather than shadows** — its `[[font]]` rows put extra UI typefaces UNDER the
+  shipped three in the Settings picker, and the bridge serves the files read-only from
+  `<config-dir>/fonts` at `GET /api/fonts/<basename>`. Same reader, same mtime liveness; a font cannot
+  fire an action and so shadows nothing ([ADR 0033](./.adr/0033-the-app-face-is-a-device-preference.md)).
 - **`launchers.toml` is the operator's fifth file, and the only one whose rows CREATE a pane** — its
   rows are the allowlist `POST /api/launch` matches exactly, so the client names a row and never
   supplies a command line. Same reader, same mtime liveness; no scope ladder, because a row that
@@ -654,6 +684,11 @@ configuration keeps the egress on loopback, and the wire identity is probed hone
 ([ADR 0029](./.adr/0029-speech-to-text-is-a-provider-seam-collie-owns.md)). Setup is a CLI act, never
 a web form, for the reason pairing is.
 
+**A retelling is one short-lived child the operator named, and nothing else** — the argv in
+`retell.toml`, run once per phone request with the pane's multiplexer-reported session id appended,
+never a shell, a daemon or a client-chosen string. Absent file, absent feature
+([ADR 0074](./.adr/0074-retell-is-a-one-shot-operator-child.md)).
+
 **Two device gates guard writes, independently, and compose by AND.** `COLLIE_DEVICE_HEADER` trusts
 a name a proxy injects; **pairing** (`bridge/pairing.ts`, `collie pair` / `collie devices`) requires a
 bearer credential the device holds, and is on exactly when the registry is non-empty. Reads stay
@@ -690,3 +725,51 @@ level ITSELF to the release its lead is running, fetching that public tag from G
 HTTPS on its own decision, which adds no code, route or verb to the link). How the operator
 reached a member is remembered locally in `crew-ops.json`, which is never a wire field and never merged into the trust
 store.
+
+## Fork-only live e2e
+
+`e2e-live/` is this fork's own browser suite: it drives the ACTIVE Collie through the tailnet front
+door against a throwaway Herdr session, so it stays out of `web/e2e/live/`, whose Tier 2 may only
+point at the dev lane. Run it with `bash e2e-live/run.sh` (builds the world, runs every spec, tears
+the world down). The world's agents are `ccp-free` Claudes, so a run spends only the free pool.
+Environment traps and trajectories live in `e2e-live/trajectories/`.
+
+## Fork branches and releases
+
+This fork keeps two branches, and the split overrides the personal-repo default of committing
+straight to `main`.
+
+- **`dev` takes every change.** Commit and push to `dev`, never to `main`. The operator's active
+  Collie runs a checkout of `dev`, so *Project mode*'s deploy step means rebuilding that checkout.
+- **`main` holds releases and nothing else.** It is upstream's history followed by one commit per
+  fork release, whose tree is exactly the tree of that release's commit on `dev`. `dev`'s own
+  history never reaches `main`: before 1.14.0 it carries material this fork does not publish.
+- **Version numbers are plain `x.y.z`, above both this fork's last release and upstream's newest.**
+  The updater offers only a strict `vX.Y.Z` to a stable install (`SEMVER_TAG` in `bridge/update.ts`),
+  so a tail like `-gg.1` would reach nobody.
+
+Cutting a release:
+
+1. On `dev`, make the ordinary `chore(release): x.y.z` commit (*Versioning* above), with each
+   CHANGELOG hash linked as `https://github.com/GGGODLIN/collie/commit/<hash>`.
+2. Build `main`'s commit from that tree. Add `-p <upstream commit>` when this release is the first
+   to carry an upstream merge, so GitHub does not count `main` as behind upstream.
+
+   ```bash
+   git commit-tree 'dev^{tree}' -p origin/main -m "chore(release): x.y.z"
+   ```
+
+3. Push that commit to `main` (`git push origin <sha>:main`) and wait for its CI run to pass.
+4. Tag that commit `vx.y.z` (annotated) and push the tag. Never push upstream's tags to `origin`.
+
+An upstream PR branches off `upstream/main` and takes its commits by cherry-pick; *Project mode*
+still decides when one may be opened.
+
+## Personal changes go in FORK.md
+
+A change that only works on this operator's setup (their own mods, paths, labels or services) gets
+an entry under *Personal changes* in [`FORK.md`](./FORK.md) in the same commit: what, where, what it
+assumes, and what upstreaming it would take. Its code carries a `Fork-only (FORK.md …)` header so an
+upstream PR can leave it out. General-purpose fork work stays in `CHANGELOG.md` only. An entry is a
+record, not an exemption from *Project mode*'s working-Collie rule, and it does not by itself decide
+what goes upstream.

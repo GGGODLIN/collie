@@ -2,10 +2,10 @@
 // what's running, then everything else. Every mark reads it (the row wash, the chip dots, the
 // summary line), kept in one place so no two surfaces can disagree about what needs you.
 //
-// It CLASSIFIES; it no longer places. No list is laid out by bucket any more: the dashboard and the
-// pane switcher both keep every pane where it sits (ADR 0063), and a bucket only decides a mark.
+// It classifies every pane; the dashboard keeps place order (ADR 0063), while the two operator-opened
+// switchers arrange a frozen snapshot by bucket (ADR 0073).
 //
-// It puts each pane in a BUCKET and keeps the order the bridge sent inside it (see {@link triage}).
+// It puts each pane in a BUCKET and orders by its latest state change (see {@link triage}).
 // The two timestamps the bridge keeps per pane (bridge/activity.ts) still decide one bucket:
 //   lastActiveAt — when the agent last changed status
 //   lastSeenAt   — when you last opened or drove it through Collie
@@ -130,28 +130,29 @@ function sectionMeta() {
  *
  * The first three sections are pinned: they never move and never invert. `dir` reaches Recent only.
  *
- * ── A BUCKET KEEPS THE ORDER IT WAS SENT ─────────────────────────────────────
- * This buckets and it no longer SORTS. Each section used to be re-sorted by `lastActiveAt` (and
- * Recent by `lastSeenAt`), so a row moved under your thumb every time an agent took a turn: the pane
- * you were reaching for was somewhere else by the time you got there, and the list you learned this
- * morning was a different list this afternoon. The bridge already sends one stable order — space,
- * then tab, then the pane's position in its tab, never status (bridge/state-engine.ts) — and that is
- * the multiplexer's own arrangement, the one the operator made. Within a bucket, panes therefore
- * read in the order they sit on the desk.
+ * ── INSIDE A BUCKET, THE LATEST STATE CHANGE FIRST ───────────────────────────
+ * Herdr's own `agent_panel_sort = "priority"` orders its panel this way (status, then the newest
+ * state change), and the operator reads both lists side by side, so the phone matches it (ADR 0072).
+ * A pane with no `lastActiveAt` (an older bridge) sinks below the timed ones and otherwise keeps the
+ * order it was sent. The switcher freezes its rows when it opens, so this does not move a row under
+ * a thumb; place-ordered surfaces never call this for position (ADR 0063).
  *
- * `dir` still reverses Recent, because that one is the operator asking, not the clock deciding.
- * "When did I last touch this" has not gone anywhere: it is on the row, as its time.
+ * `dir` reverses Recent only, because that one is the operator asking, not the clock deciding.
  */
 export function triage(agents: readonly AgentView[], dir: RecentDir = "newest"): TriageSection[] {
-  const needs: AgentView[] = [];
-  const ready: AgentView[] = [];
-  const working: AgentView[] = [];
-  const recent: AgentView[] = [];
+  const needsIn: AgentView[] = [];
+  const readyIn: AgentView[] = [];
+  const workingIn: AgentView[] = [];
+  const recentIn: AgentView[] = [];
 
-  const into = { needs, ready, working, recent };
+  const into = { needs: needsIn, ready: readyIn, working: workingIn, recent: recentIn };
   for (const a of agents) into[bucketOf(a)].push(a);
 
-  if (dir === "oldest") recent.reverse();
+  const needs = newestFirst(needsIn);
+  const ready = newestFirst(readyIn);
+  const working = newestFirst(workingIn);
+  const recentNewest = newestFirst(recentIn);
+  const recent = dir === "oldest" ? recentNewest.toReversed() : recentNewest;
 
   const meta = sectionMeta();
   return [
@@ -160,6 +161,14 @@ export function triage(agents: readonly AgentView[], dir: RecentDir = "newest"):
     { ...meta.working, agents: working },
     { ...meta.recent, agents: recent },
   ];
+}
+
+function newestFirst(agents: readonly AgentView[]): AgentView[] {
+  return agents.toSorted((a, b) => {
+    if (a.lastActiveAt === undefined) return b.lastActiveAt === undefined ? 0 : 1;
+    if (b.lastActiveAt === undefined) return -1;
+    return b.lastActiveAt - a.lastActiveAt;
+  });
 }
 
 /** The other direction — for the toggle. */

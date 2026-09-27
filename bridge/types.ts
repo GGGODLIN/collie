@@ -3,6 +3,7 @@
 
 import type { Confidence } from "./cache/claims.ts";
 import type { PaneCache } from "./cache/engine.ts";
+import type { PaneDescription } from "./description/resolve.ts";
 import type { ApiErrorDetail, ErrorCode } from "./error-codes.ts";
 import type { AgentSessionRef, TranscriptEntry } from "./journal/types.ts";
 import type { MuxCapability, MuxSpaceCapacity, MuxTopologyLatency } from "./mux/capabilities.ts";
@@ -13,6 +14,7 @@ import type { UpdateRun } from "./update-run.ts";
 // same reason — it is a pane field now, so a reader of this module needs no second import.
 export type { TranscriptEntry, TranscriptPart } from "./journal/types.ts";
 export type { CacheStateName, PaneCache } from "./cache/engine.ts";
+export type { PaneDescription } from "./description/resolve.ts";
 export type { Confidence } from "./cache/claims.ts";
 
 export type AgentStatus = "idle" | "working" | "blocked" | "done" | "unknown";
@@ -141,6 +143,13 @@ export interface AgentView {
    * solo body byte-identical to 1.8.2's for every non-agent pane (`solo-baseline.test.ts`).
    */
   cache?: PaneCache;
+  /**
+   * What this pane is doing, in the one description every surface reads — the herd row, the pane
+   * screen and the push body (bridge/description/resolve.ts). Attached at serialise time from the
+   * description tracker's memo, exactly as {@link cache} is, and ABSENT, NEVER A PLACEHOLDER, when
+   * there is nothing to say.
+   */
+  description?: PaneDescription;
 }
 
 /**
@@ -817,6 +826,11 @@ export type ActionResponse =
       detail?: ApiErrorDetail;
     };
 
+/** POST /api/pane/:id/retell — a plain or lost retelling of the pane's Claude session (ADR 0074). */
+export type RetellResponse =
+  | { ok: true; mode: "plain" | "lost"; label: string; answer: string; cached: boolean; source: string }
+  | { ok: false; error: string; code?: ErrorCode; detail?: ApiErrorDetail };
+
 /** POST /api/pane/:id/upload — image saved to a host file; `path` is the absolute path to ref. */
 export type UploadResponse =
   | { ok: true; path: string }
@@ -881,11 +895,10 @@ export type WorktreeOpenResponse =
 export type CrewMode = "solo" | "lead" | "peer";
 
 /**
- * One operator-declared slash command (a `[[commands]]` row in their `commands.toml`). A pane any of
- * these rows address shows them INSTEAD of the shipped Agent-commands catalog; a pane none of them
- * address keeps it (ADR 0018). This is the escape hatch for commands the shipped catalog cannot know
- * about — plugin- or user-registered ones like omp's `/fork-in-herdr` — which exist only on THIS
- * operator's machine and so must never be hard-coded into `web/src/lib/agent-commands.ts`.
+ * One operator-declared slash command (a `[[commands]]` row in their `commands.toml`). Claude panes
+ * show these rows before the maintained reference catalog; every other addressed harness replaces
+ * its catalog, and an unaddressed pane keeps what ships (ADRs 0018 and 0054). This is the escape hatch
+ * for plugin- or user-registered commands that must not be hard-coded into the reference catalog.
  */
 export interface OperatorCommand {
   /** Herdr agent name this applies to, lowercased. Omitted = every agent. */
@@ -894,21 +907,20 @@ export interface OperatorCommand {
   command: string;
   /** One-line description shown in the palette (also searched). */
   description: string;
-  /** True when tapping should insert `/cmd ` into the composer instead of submitting it. */
+  /** True when selection should append a space for an argument. */
   takesArg: boolean;
-  /** Placeholder shown after insert, e.g. `<name>`. Empty when {@link takesArg} is false. */
+  /** Placeholder shown beside the command, e.g. `<name>`. Empty when {@link takesArg} is false. */
   argHint: string;
   /**
-   * The operator marking their own row dangerous — it then gets the same two-tap confirmation a
-   * shipped dangerous command gets. Only ever ADDS: a row naming a shipped command inherits that
-   * command's confirm regardless (rule 3 in agent-commands.ts), and `false` cannot lift it.
+   * The operator marking their own row dangerous. The palette only stages commands; direct-action
+   * surfaces use this for their two-tap confirmation. A shipped classification remains the floor.
    */
   confirm: boolean;
   /**
    * The operator putting this row on the HARNESS BAR, the row of the running agent's own commands
    * above the key rail. It is the only way onto that bar, and a bar row is still an ordinary palette
    * row. Replacement is per surface: bar rows replace the shipped BAR for the panes they address and
-   * leave the Agent palette alone (ADR 0043, which applies ADR 0018's rule to one surface).
+   * leave the Agent palette alone (ADR 0043).
    */
   bar: boolean;
   /**
@@ -922,7 +934,7 @@ export interface OperatorCommand {
 /**
  * One operator-declared Keys-tray preset (a `[[keys]]` row in their `keys.toml`). A pane any of
  * these rows address shows them INSTEAD of the shipped Ctrl presets; a pane none of them address
- * keeps the shipped ones (ADR 0018, the same rule `commands.toml` follows). Only the PRESETS are
+ * keeps the shipped ones (ADR 0018). Only the PRESETS are
  * configurable — the tray's keyboard (Esc/arrows/Enter/Tab/Space, modifiers, digits, F1–F12) is
  * fixed.
  */
@@ -1027,7 +1039,7 @@ export const OPERATOR_FONTS_PATH = "/api/fonts/";
 /**
  * One operator-declared Quick-dock group (a `[[replies]]` row in their `quick-replies.toml`). A
  * pane any of these rows address shows them INSTEAD of the shipped groups; a pane none of them
- * address keeps the shipped ones (ADR 0018, the same rule `commands.toml` and `keys.toml` follow).
+ * address keeps the shipped ones (ADR 0018, the same rule `keys.toml` follows).
  *
  * The shipped phrases are English, which is a content choice rather than a technical one — an
  * operator working in another language, or one whose harness wants "approve" over "yes", has no
@@ -1045,8 +1057,8 @@ export interface OperatorQuickReplyRow {
 /**
  * One operator-declared UI typeface (a `[[font]]` row in their `theme.toml`, the fourth operator
  * file beside `commands.toml`). The Typeface setting offers these UNDER the shipped faces — fonts
- * ADD to the shipped list, they never replace it, which is where this file parts company with the
- * ADR 0018 trio (ADR 0033: a font cannot fire an action, so there is nothing to shadow).
+ * ADD to the shipped list, they never replace it (ADR 0033: a font cannot fire an action, so there
+ * is nothing to shadow).
  *
  * Every field here enters CSS on the phone, so every field is validated on BOTH sides — the bridge
  * skips a bad row and the web re-validates and drops one. See {@link OPERATOR_FONT_FAMILY_PATTERN}.
@@ -1204,6 +1216,13 @@ export interface BridgeConfig {
    * decides whether to draw a button, not where the audio goes.
    */
   stt?: SttCapability;
+  /**
+   * The labels of the operator's `accounts.toml` rows, for the pane sheet's "Switch account".
+   * Absent when the file declares none, so the phone draws no such row.
+   */
+  accounts?: string[];
+  /** Present when `retell.toml` names a command, so the phone draws "Plain" / "Lost" (ADR 0074). */
+  retell?: true;
   /**
    * What this collie accepts as an attachment. **Absent is a bridge older than this field**, which
    * a client reads as the contract that shipped before it: 10 MB, images only. Present, it is the

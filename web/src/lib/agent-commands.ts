@@ -1,9 +1,8 @@
-// Pre-generated slash-command catalogs, keyed by Herdr's detected agent type (`pane.agent`).
+// Maintained slash-command reference catalogs, keyed by Herdr's detected agent type (`pane.agent`).
 // Sourced from each agent's official docs (Claude Code: code.claude.com/docs; Codex:
 // developers.openai.com/codex + openai/codex; pi: pi.dev/docs; opencode: opencode.ai/docs) and
-// curated for one-tap use from a phone. A slash command is just text:
-// the UI sends `/command` (+ submit key) for no-arg commands, or inserts `/command ` into the
-// composer for the user to complete when the command takes an argument.
+// curated for phone use. They are not a runtime capability registry. The Agent palette always puts
+// a selected command in the composer for review; the harness bar is the separate direct-action surface.
 //
 // `omp` is the one catalog sourced from CAPTURES rather than docs — see its section for the two rules
 // that follow from that, both of which apply to any future palette-sourced agent: only what a capture
@@ -25,13 +24,13 @@ export interface AgentCommand {
   command: string;
   /** One-line, action-oriented description. */
   description: string;
-  /** True if the command commonly takes an argument — tap inserts it into the composer to edit. */
+  /** True if the command commonly takes an argument; selection then adds a trailing space. */
   takesArg: boolean;
-  /** Placeholder shown after insert, e.g. "[instructions]" / "<model>". Empty if no arg. */
+  /** Placeholder shown beside the command, e.g. "[instructions]" / "<model>". Empty if no arg. */
   argHint: string;
   /** True for the handful surfaced first on a phone. The rest are reachable via search. */
   common: boolean;
-  /** Destructive/disruptive enough to warrant a two-tap confirm (e.g. /clear wipes context). */
+  /** Destructive/disruptive: red in the palette and confirmed on direct-action surfaces. */
   dangerous: boolean;
 }
 
@@ -303,16 +302,9 @@ const CATALOG = new Map<string, readonly AgentCommand[]>([
  * quick-replies.ts applies to its twin lookup, and adapterFor() to the registry.
  *
  * Which of your rows address a pane is decided in lib/operator-scope.ts (`keys.toml` resolves the
- * same way, ADR 0018). What that leaves to this function is the CATALOG half:
- *
- * 1. YOUR LIST IS THE PALETTE. A pane addressed by even one of your rows shows your rows for that
- *    pane and nothing else. This surface is a handful of one-thumb shortcuts, and the value of the
- *    shipped catalog is that someone chose those ten; a list half-chosen by you and half-guessed
- *    for you is worse than either. Discovery is not lost by this — the agent's own `/` completion
- *    renders in the mirrored pane, complete and live, which no copy here could stay.
- * 2. DANGER IS INHERITED, NOT RESET. A row naming a shipped command keeps that row's `dangerous`
- *    classification, so re-describing a session wipe cannot turn a two-tap command into a one-tap
- *    one. A row that names nothing shipped is not dangerous — nothing out here knows otherwise.
+ * same way). Claude panes merge those rows before the maintained reference catalog; every other
+ * harness keeps ADR 0018's replacement rule. A row naming a shipped command keeps that row's
+ * `dangerous` classification, so re-describing a session wipe cannot make it one tap.
  */
 export function commandsFor(
   agent: string | undefined | null,
@@ -320,20 +312,20 @@ export function commandsFor(
 ): readonly AgentCommand[] {
   const shipped = catalogFor(agent);
   const aimed = rowsFor(mine, agent, (row) => row.command);
-  // Rule 2: nothing of yours points here, so this pane was never part of what you were choosing.
   if (aimed.length === 0) return shipped;
   const byName = new Map(shipped.map((c) => [c.command, c] as const));
-  return aimed.map((row) => ({
+  const operator = aimed.map((row) => ({
     command: row.command,
     description: row.description,
     takesArg: row.takesArg,
     argHint: row.argHint,
-    // A row you typed into your own config is by definition one you want on the first screen.
     common: true,
-    // Inheriting is a FLOOR, never a default: `confirm = false` on a row that names a shipped
-    // dangerous command still confirms, so the only direction this field moves is up.
     dangerous: (byName.get(row.command)?.dangerous ?? false) || row.confirm === true,
   }));
+  const family = canonicalAgent(agent?.toLowerCase().trim() ?? "");
+  if (family !== "claude") return operator;
+  const operatorNames = new Set(operator.map((row) => row.command));
+  return [...operator, ...shipped.filter((row) => !operatorNames.has(row.command))];
 }
 
 /** The agent names the shipped catalog is filed under — pinned against AGENT_FAMILIES in the tests. */

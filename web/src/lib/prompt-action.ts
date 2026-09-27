@@ -24,7 +24,6 @@ import {
   pollDialog,
   readDialog,
   sendBoundKeys,
-  sendGuardedKeys,
   type DialogTarget,
 } from "./dialog-guard";
 import { promptsSameIdentity } from "./harness/prompt-model";
@@ -58,6 +57,7 @@ interface GuardArgs {
   /** The `revision` the rendered menu was detected against. */
   detectedRevision: number;
   prompt: PromptModel;
+  expectedText?: string;
   /** Which machine + which named session the pane lives in — scopes the read + keystroke. */
   scope?: Scope;
   /** The pane's agent — which adapter re-derives the fresh screen. No adapter = the guard refuses. */
@@ -85,10 +85,14 @@ function target(args: GuardArgs): DialogTarget<"prompt-select"> & { sleep?: Slee
  * goes out. The renderer's lock is UX; this is the invariant. Don't remove it as redundant.
  */
 export async function submitPromptOption(
-  args: GuardArgs & { option: PromptOption },
+  args: GuardArgs & { option: PromptOption; canSend?: () => boolean },
 ): Promise<PromptActionResult> {
-  if (args.prompt.feedback?.focused) return { status: "changed" };
-  return sendGuardedKeys({ ...args, kind: "prompt-select", model: args.prompt }, args.option.keys);
+  if (args.prompt.feedback?.focused || args.canSend?.() === false) return { status: "changed" };
+  const guarded = await guardDialog(target(args));
+  if (!guarded.ok) return guarded.result;
+  // 讀取期間面板可能已關閉或手機已鎖定；畫面相同不代表仍可送出。
+  if (args.canSend?.() === false) return { status: "changed" };
+  return sendBoundKeys(args, args.option.keys, guarded.region);
 }
 
 /**

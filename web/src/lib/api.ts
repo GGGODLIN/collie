@@ -12,6 +12,7 @@ import { observeServerBuild, SERVER_BUILD_HEADER } from "./server-build";
 import { mounted } from "./base-path";
 import type {
   ActionResponse,
+  RetellResponse,
   BridgeConfig,
   CreateResponse,
   DismissScope,
@@ -288,10 +289,11 @@ function captureBuild(res: Response): void {
  */
 type Recover<T> = (status: number, detail: string) => T | null;
 
-async function doReq<T>(path: string, init?: RequestInit, recover?: Recover<T>): Promise<T> {
-  // GET reads get the short leash; anything mutating gets the longer mutation budget.
+async function doReq<T>(path: string, init?: RequestInit, recover?: Recover<T>, deadlineMs?: number): Promise<T> {
+  // GET reads get the short leash; anything mutating gets the longer mutation budget. A caller whose
+  // route is known to outlast both passes its own deadline.
   const method = init?.method?.toUpperCase() ?? "GET";
-  const timeoutMs = method === "GET" ? GET_TIMEOUT_MS : MUTATION_TIMEOUT_MS;
+  const timeoutMs = deadlineMs ?? (method === "GET" ? GET_TIMEOUT_MS : MUTATION_TIMEOUT_MS);
   const res = await apiFetch(path, {
     ...init,
     signal: withTimeout(init?.signal, timeoutMs),
@@ -330,8 +332,8 @@ async function doReq<T>(path: string, init?: RequestInit, recover?: Recover<T>):
 // Every mutating request (non-GET) feeds the app-wide busy signal so the top progress bar shows
 // while it's in flight; GET reads (snapshot/config polling) don't, or the bar would never rest.
 // trackBusy increments synchronously, so a caller sees `isBusy()` true the instant it fires.
-function req<T>(path: string, init?: RequestInit, recover?: Recover<T>): Promise<T> {
-  const op = doReq<T>(path, init, recover);
+function req<T>(path: string, init?: RequestInit, recover?: Recover<T>, deadlineMs?: number): Promise<T> {
+  const op = doReq<T>(path, init, recover, deadlineMs);
   const method = init?.method?.toUpperCase() ?? "GET";
   return method === "GET" ? op : trackBusy(op);
 }
@@ -639,6 +641,45 @@ export function focusPane(paneId: string, scope?: Scope): Promise<ActionResponse
   return req<ActionResponse>(withScope(`/api/pane/${encodeURIComponent(paneId)}/focus`, scope), {
     method: "POST",
   });
+}
+
+/** The bridge waits up to 20s for the old Claude to exit before it types the new one. */
+const SWITCH_ACCOUNT_TIMEOUT_MS = 45_000;
+
+/**
+ * Restart a Claude pane on another `accounts.toml` account, continuing the same session. The body
+ * names a label and whether a running turn may be interrupted; the bridge supplies everything else.
+ */
+export function switchAccount(
+  paneId: string,
+  account: string,
+  interrupt: boolean,
+  scope?: Scope,
+): Promise<ActionResponse> {
+  return req<ActionResponse>(
+    withScope(`/api/pane/${encodeURIComponent(paneId)}/switch-account`, scope),
+    { method: "POST", body: JSON.stringify({ account, interrupt }) },
+    undefined,
+    SWITCH_ACCOUNT_TIMEOUT_MS,
+  );
+}
+
+/** A long session's retelling measured at 44s; the bridge gives up at 180s. */
+const RETELL_TIMEOUT_MS = 190_000;
+
+/** A plain (last turn) or lost (whole session) retelling of a Claude pane (ADR 0074). */
+export function retellPane(
+  paneId: string,
+  mode: "plain" | "lost",
+  fresh: boolean,
+  scope?: Scope,
+): Promise<RetellResponse> {
+  return req<RetellResponse>(
+    withScope(`/api/pane/${encodeURIComponent(paneId)}/retell`, scope),
+    { method: "POST", body: JSON.stringify({ mode, fresh }) },
+    undefined,
+    RETELL_TIMEOUT_MS,
+  );
 }
 
 /** Set (or clear) a pane's label. An empty/blank `label` clears it (the bridge sends `null` on). */

@@ -133,6 +133,7 @@ function cfg(overrides: Partial<Config> = {}): Config {
     pollMs: 1500,
     pollIdleMs: 12_000,
     notifyDelayMs: 30_000,
+    notifyDescription: false,
     cacheWarnSeconds: 300,
     readLines: 200,
     transcript: true,
@@ -151,6 +152,8 @@ function cfg(overrides: Partial<Config> = {}): Config {
     themeFile: "/nope/theme.toml",
     fontsDir: "/nope/fonts",
     launchersFile: "/nope/launchers.toml",
+    accountsFile: "/nope/accounts.toml",
+    retellFile: "/nope/retell.toml",
     cacheRulesFile: "/nope/cache-rules.toml",
     trustedUser: "",
     trustedUserOptional: false,
@@ -2066,11 +2069,11 @@ describe("the host gate — `?host=` selects among enrolled members and nothing 
     // The load-bearing claim: `?h=laptop` + `w1:p1` must never be served the DESK's `w1:p1`, and
     // pane ids collide across machines, so a fall-through here is a cross-host write.
     //
-    // All ELEVEN session-scoped routes (tab create, workspace create, launch, this host's launcher
-    // rows, one journal blob, a workspace's Changes list, tab action, the pane family, "look now",
-    // the worktree listing and the worktree actions) reach their runtime through the caller's
-    // resolver and nothing else.
-    expect([...src.matchAll(/await caller\.resolve\(\);/g)]).toHaveLength(11);
+    // All TWELVE session-scoped routes (tab create, workspace create, launch, this host's launcher
+    // rows, one journal blob, a workspace's Changes list, tab action, the pane family, the
+    // this-host-only pane pair (switch account, retell), "look now", the worktree listing and the
+    // worktree actions) reach their runtime through the caller's resolver and nothing else.
+    expect([...src.matchAll(/await caller\.resolve\(\);/g)]).toHaveLength(12);
     // Exactly seven `registry.get(` calls remain, and each is a sanctioned one, named here rather
     // than exempted: assembling THIS collie's own snapshot body; `localRuntime`, the single
     // "(session) → runtime, or 404" helper both callers share; `/api/config`, which reports THIS

@@ -1,6 +1,6 @@
 {
   "name": "collie",
-  "version": "1.13.3",
+  "version": "1.14.0",
   "private": true,
   "license": "MIT",
   "description": "Collie — a mobile web UI to monitor and reply to the AI agents in your terminal, over Tailscale",
@@ -35,6 +35,7 @@
   "dependencies": {
     "commander": "^15.0.0",
     "ink": "^7.1.1",
+    "opencc-js": "^1.4.2",
     "qrcode-terminal": "^0.12.0",
     "react": "^19.2.8"
   },

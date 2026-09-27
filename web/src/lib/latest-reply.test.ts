@@ -1,4 +1,9 @@
-import { fold, locateReply, newestReply, PROBE_CHARS, replyProse } from "./latest-reply";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { splitLines } from "./blocks";
+import { buildBlocks } from "./harness";
+import { parseAnsi } from "./ansi";
+import { fold, locateReply, newestExchange, newestReply, replyProse, settleText, sourceOrderRows } from "./latest-reply";
 import type { TranscriptEntry, TranscriptPart } from "./types";
 
 // The predicates behind "the mirror is only showing the end of this reply". The cases that matter are
@@ -98,6 +103,27 @@ describe("newestReply", () => {
   });
 });
 
+describe("newestExchange", () => {
+  const ask = (text: string, uuid = `u-${text.slice(0, 6)}`) => turn("user", text, { uuid });
+  const say = (text: string, uuid = `a-${text.slice(0, 6)}`) => turn("assistant", text, { uuid });
+
+  it("pairs the newest spoken reply with the prompt above it", () => {
+    const exchange = newestExchange([ask("first q"), say("first a"), ask("second q"), say("second a")]);
+    expect(replyProse(exchange!.reply)).toBe("second a");
+    expect(replyProse(exchange!.prompt!)).toBe("second q");
+  });
+
+  it("ignores a prompt written after the reply", () => {
+    const exchange = newestExchange([ask("the q"), say("the a"), ask("the NEXT q")]);
+    expect(replyProse(exchange!.reply)).toBe("the a");
+    expect(replyProse(exchange!.prompt!)).toBe("the q");
+  });
+
+  it("returns null instead of a reply-only exchange when the prompt is absent", () => {
+    expect(newestExchange([say("orphan answer")])).toBeNull();
+  });
+});
+
 describe("locateReply", () => {
   const fitOf = (mirror: string, entry: TranscriptEntry) => locateReply(mirror, entry).fit;
   const reply = turn("assistant", REPLY);
@@ -136,9 +162,10 @@ describe("locateReply", () => {
     );
   });
 
-  it("calls a reply shorter than two probes whole without probing at all", () => {
-    const short = turn("assistant", "a".repeat(PROBE_CHARS * 2 - 10));
-    expect(fitOf("nothing of the sort is on this screen", short)).toBe("whole");
+  it("locates a short reply instead of assuming it is on screen", () => {
+    const short = turn("assistant", "short answer");
+    expect(fitOf(rendered("short answer"), short)).toBe("whole");
+    expect(fitOf("nothing of the sort is on this screen", short)).toBe("off-screen");
   });
 
   // SGR parameters are digits, and digits survive the fold — an unstripped escape would corrupt the
@@ -171,10 +198,156 @@ describe("locateReply — where the reply ends", () => {
     expect(endLine).toBe(painted.length - 1);
   });
 
-  // Nothing may be hidden on a verdict that isn't `clipped` — -1 makes a caller that forgets to check
-  // hide nothing rather than hide a row.
-  it("reports no row at all when the reply is not the clipped message on screen", () => {
+  it("reports an end row for a whole reply and none when it is off-screen", () => {
+    const painted = rendered(REPLY).split("\n");
+    expect(locateReply(painted.join("\n"), reply).endLine).toBe(painted.length - 1);
     expect(locateReply("some other screen entirely", reply).endLine).toBe(-1);
-    expect(locateReply(rendered(REPLY), reply).endLine).toBe(-1);
   });
 });
+
+// A real Claude pane, 2026-09-27: the reply ended in a Markdown table whose cells Claude wrapped. The
+// renderer prints a wrapped row line by line ACROSS the columns, so the screen reads a row's cells in
+// a different order than the source does, and a tail probe that reached into the table missed.
+describe("locateReply — a reply that ends in a wrapped table", () => {
+  const source = [
+    "我建議先處理這三題，理由都列在表格裡，你可以逐題看。",
+    "",
+    "| 題目 | 建議 | 信心 |",
+    "|---|---|---|",
+    "| 1. 要不要重問 Pro | 不重問。它的限制是這條管道打不開 GitHub，重送一樣讀不到。真的要它看全部內容，只能把檔案印進對話給它讀，但那就不算從 GitHub 用乾淨的視角看了 | 中 |",
+    "| 2. 計畫要不要加 Pro 的三項驗收 | 要。① 和 ② 可以在這台機器用一個臨時、空白的使用者目錄實測，不動你現在的設定；③ 寫進 README，並實際走一次 | 高 |",
+    "| 3. 其他照我上一則的建議 | 只支援原始碼安裝、README 最上面補一段 fork 說明、更新提示這次只寫說明不改程式 | 中 |",
+    "",
+    "你可以回「全照建議」，或挑題號調整。照建議的話，我會先做驗收 ① 和 ②，把結果拿回來，再寫 README。",
+  ].join("\n");
+  // The screen as captured: the table's top has scrolled off, so the reply is clipped.
+  const painted = [
+    "  │ 1. 要不要重問 Pro    │ GitHub，重送一樣讀不到。真的要它看全部內容，只能把檔案印進對話給它讀，但那就不算從    │ 中   │",
+    "  │                      │ GitHub 用乾淨的視角看了                                                               │      │",
+    "  ├──────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┼──────┤",
+    "  │ 2. 計畫要不要加 Pro  │ 要。① 和 ② 可以在這台機器用一個臨時、空白的使用者目錄實測，不動你現在的設定；③ 寫進   │ 高   │",
+    "  │ 的三項驗收           │ README，並實際走一次                                                                  │      │",
+    "  ├──────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┼──────┤",
+    "  │ 3.                   │ 只支援原始碼安裝、README 最上面補一段 fork 說明、更新提示這次只寫說明不改程式         │ 中   │",
+    "  │ 其他照我上一則的建議 │                                                                                       │      │",
+    "  └──────────────────────┴───────────────────────────────────────────────────────────────────────────────────────┴──────┘",
+    "",
+    "  你可以回「全照建議」，或挑題號調整。照建議的話，我會先做驗收 ① 和 ②，把結果拿回來，再寫 README。",
+  ];
+  const after = ["", "✻ Cogitated for 36s · done 12:11 PM"];
+
+  it("still finds the reply, and still ends it on its last row", () => {
+    const { fit, endLine } = locateReply([...painted, ...after].join("\n"), turn("assistant", source));
+    expect(fit).toBe("clipped");
+    expect(endLine).toBe(painted.length - 1);
+  });
+
+  it("leaves a screen with no crossed frame row exactly as painted", () => {
+    const inputBox = ["╭────────────────╮", "│ > type here    │", "│   second line  │", "╰────────────────╯"];
+    const prose = ["⏺ A reply with a │ pipe-ish glyph", "  and a second │ line"];
+    expect(sourceOrderRows([...prose, ...inputBox])).toEqual([...prose, ...inputBox]);
+  });
+
+  it("finds a tail that lies wholly inside the table's last row", () => {
+    const tableEnd = source.slice(0, source.lastIndexOf("\n\n"));
+    const { fit, endLine } = locateReply(painted.slice(0, 9).join("\n"), turn("assistant", tableEnd));
+    expect(fit).toBe("clipped");
+    // The last source row spans two painted rows; the reply ends on the lower one, above the frame.
+    expect(endLine).toBe(7);
+  });
+});
+
+// A real Claude pane, 2026-09-27 (paths shortened): the reply's last table linked each row to a file.
+// Claude painted only the link text, so the URL the journal holds was nowhere on screen and a tail
+// probe that reached into it missed.
+describe("locateReply — a reply whose tail holds Markdown links", () => {
+  const source = [
+    "完整證據與未驗證範圍都在下表的連結裡，你可以逐項打開核對。這段是為了讓回覆夠長。",
+    "",
+    "| 選項 | 處置 | 來源 |",
+    "|---|---|---|",
+    "| **a．推薦** | 只修已重現的目錄解析、補回歸測試 | [解析重現與延輪日期](file:///tmp/review-evidence/2026-09-27.md) |",
+    "| b | 不修改，原樣延輪；保留已知缺陷 | [現行函式的失敗重現](file:///tmp/review-evidence/2026-09-27.md) |",
+    "",
+    "🔎 self-verify: COMPLIANT",
+  ].join("\n");
+  const painted = [
+    "  ┌─────────┬──────────────────────────────────┬────────────────────┐",
+    "  │  選項   │               處置               │        來源        │",
+    "  ├─────────┼──────────────────────────────────┼────────────────────┤",
+    "  │ a．推薦 │ 只修已重現的目錄解析、補回歸測試 │ 解析重現與延輪日期 │",
+    "  ├─────────┼──────────────────────────────────┼────────────────────┤",
+    "  │ b       │ 不修改，原樣延輪；保留已知缺陷   │ 現行函式的失敗重現 │",
+    "  └─────────┴──────────────────────────────────┴────────────────────┘",
+    "",
+    "  🔎 self-verify: COMPLIANT",
+  ];
+
+  it("finds the reply when only the link text was painted", () => {
+    const { fit, endLine } = locateReply(painted.join("\n"), turn("assistant", source));
+    expect(fit).toBe("clipped");
+    expect(endLine).toBe(painted.length - 1);
+  });
+
+  it("still finds it when the renderer printed the URL as well", () => {
+    const withUrls = painted.map((row) => row.replace("失敗重現 │", "失敗重現 (file:///tmp/review-evidence/2026-09-27.md) │"));
+    const tailOnly = "[現行函式的失敗重現](file:///tmp/review-evidence/2026-09-27.md) |\n\n🔎 self-verify: COMPLIANT";
+    expect(locateReply(withUrls.join("\n"), turn("assistant", `開頭不在畫面上的一段很長的前文。\n${tailOnly}`)).fit).toBe("clipped");
+  });
+});
+
+// More source that Claude does not paint as written. Each case pairs the journal's Markdown with the
+// rows Claude drew for it, and each would have missed with the raw text alone.
+describe("locateReply — source spelled differently on screen", () => {
+  const lead = "開頭已經捲出畫面的一段很長的前文，只是為了讓這則回覆被判定成 clipped。";
+
+  // A real Claude pane, 2026-09-27: the fence's info string is not painted.
+  it("a code block's language tag", () => {
+    const source = `${lead}\n\n- 沒變成卡片：證實這個 bug 存在，我照上面的計畫修。\n- 有變成卡片：代表 Claude 其實有畫出語言標記，這一項就不用修。\n\n\`\`\`bash\necho "這個區塊的語言標記是 bash"\n\`\`\``;
+    const painted = [
+      "  - 沒變成卡片：證實這個 bug 存在，我照上面的計畫修。",
+      "  - 有變成卡片：代表 Claude 其實有畫出語言標記，這一項就不用修。",
+      "",
+      '  echo "這個區塊的語言標記是 bash"',
+    ];
+    expect(locateReply(painted.join("\n"), turn("assistant", source))).toEqual({ fit: "clipped", endLine: 3 });
+  });
+
+  it("an HTML entity and a tag", () => {
+    const source = `${lead}\n\n前面再多墊一行夠長的文字，確保比對範圍不會伸進畫面外的前文。\n這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：A &amp; B<br>C`;
+    const painted = ["  前面再多墊一行夠長的文字，確保比對範圍不會伸進畫面外的前文。", "  這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：A & BC"];
+    expect(locateReply(painted.join("\n"), turn("assistant", source)).fit).toBe("clipped");
+  });
+
+  it("never throws on an entity outside Unicode, and leaves it as written", () => {
+    const tail = "這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：&#x110000; 和 &#1114112; 都照原樣";
+    const painted = [`  ${tail}`];
+    for (const text of [`${lead}\n\n${tail}`]) {
+      expect(() => locateReply(painted.join("\n"), turn("assistant", text))).not.toThrow();
+      expect(locateReply(painted.join("\n"), turn("assistant", text)).fit).toBe("clipped");
+    }
+  });
+
+  it("keeps code spans literal while it reduces the link beside them", () => {
+    const source = `${lead}\n\n這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：分工寫在 [分工說明](file:///tmp/split.md)，路徑是 \`<repo>/wt\``;
+    const painted = ["  這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：分工寫在 分工說明，路徑是 <repo>/wt"];
+    expect(locateReply(painted.join("\n"), turn("assistant", source)).fit).toBe("clipped");
+  });
+});
+
+// A real Claude capture: one reply, the input box, and a statusline row under it.
+describe("settleText — what counts as the mirror holding still", () => {
+  const screen = readFileSync(join(import.meta.dirname, "..", "fixtures", "panes", "claude--done.txt"), "utf8");
+  const settle = (text: string) => settleText(buildBlocks(splitLines(parseAnsi(text)), { agent: "claude" }));
+
+  it("ignores a statusline that redrew, so a quiet pane still counts as settled", () => {
+    expect(screen).toContain("32.7k tokens");
+    expect(settle(screen.replace("32.7k tokens", "33.1k tokens").replace("ctx:3%", "ctx:4%"))).toBe(settle(screen));
+  });
+
+  it("still moves when the reply itself changes", () => {
+    expect(screen).toContain("containing the single word ");
+    expect(settle(screen.replace("containing the single word ", "holding the single word "))).not.toBe(settle(screen));
+  });
+});
+

@@ -142,6 +142,13 @@ export interface AgentView {
    * all, and a 1.8.x peer simply omits it — every one of those renders as nothing.
    */
   cache?: PaneCache;
+  /**
+   * What this pane is doing, as the bridge decided it. Mirrors `PaneDescription` in
+   * bridge/description/resolve.ts. **Absent, never a placeholder**, and absent from every older
+   * bridge. The words are agent-authored or bridge-composed text: render them, never translate or
+   * parse them.
+   */
+  description?: PaneDescription;
 }
 
 /**
@@ -183,6 +190,15 @@ export interface CacheResetWire {
   ruleId: string;
   /** The rule's own label, a clause in English ("The model changed"). The sheet slots it into a sentence. */
   label: string;
+  at: number;
+}
+
+/** One pane's description. Mirrors `PaneDescription` in bridge/description/resolve.ts. */
+export interface PaneDescription {
+  now: string;
+  goal?: string;
+  next?: string;
+  source: "recap" | "blocked" | "prompt";
   at: number;
 }
 
@@ -982,6 +998,11 @@ export type ActionResponse =
       detail?: ApiErrorDetail;
     };
 
+/** POST /api/pane/:id/retell — a plain or lost retelling of the pane's Claude session (ADR 0074). */
+export type RetellResponse =
+  | { ok: true; mode: "plain" | "lost"; label: string; answer: string; cached: boolean; source: string }
+  | { ok: false; error: string; code?: ApiErrorCode; detail?: ApiErrorDetail };
+
 export type UploadResponse =
   | { ok: true; path: string }
   | { ok: false; error: string; code?: ApiErrorCode; detail?: ApiErrorDetail };
@@ -1008,10 +1029,9 @@ export type CrewMode = "solo" | "lead" | "peer";
 
 /**
  * One operator-declared palette row (a `[[commands]]` table in their `commands.toml`). Mirrors
- * OperatorCommand in
- * bridge/types.ts. Resolved against the shipped catalog by `commandsFor()`, which hands a pane
- * these rows instead of the catalog when any of them address it — see agent-commands.ts for why a
- * plugin- or user-registered command can only arrive this way.
+ * OperatorCommand in bridge/types.ts. `commandsFor()` merges these rows into Claude's reference
+ * catalog and replaces other harness catalogs — see agent-commands.ts. The palette stages every row
+ * in the composer; direct-action behavior belongs to the harness bar.
  */
 export interface OperatorCommand {
   /** Herdr agent name this applies to, lowercased. Omitted = every agent. */
@@ -1020,7 +1040,7 @@ export interface OperatorCommand {
   description: string;
   takesArg: boolean;
   argHint: string;
-  /** The operator marking their own row dangerous. Optional so an older bridge stays readable. */
+  /** Dangerous styling and direct-action confirmation. Optional so an older bridge stays readable. */
   confirm?: boolean;
   /**
    * The operator putting this row on the harness bar above the key rail. Resolved by `barFor()` in
@@ -1237,6 +1257,13 @@ export interface BridgeConfig {
    * feature is absent, not disabled.
    */
   stt?: SttCapability;
+  /**
+   * The labels of the operator's `accounts.toml` rows, for the pane sheet's "Switch account".
+   * Absent when the file declares none, so the phone draws no such row.
+   */
+  accounts?: string[];
+  /** Present when `retell.toml` names a command, so the phone draws "Plain" / "Lost" (ADR 0074). */
+  retell?: true;
   /**
    * What this collie accepts as an attachment. Mirrors `UploadCapability` in bridge/types.ts.
    *

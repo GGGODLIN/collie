@@ -150,9 +150,8 @@ describe("commandsFor", () => {
   );
 });
 
-// The operator's own rows (commands.toml → /api/config). The shipped catalogs cannot carry a
-// plugin- or user-registered command, and a list half-chosen by you and half-guessed for you is
-// worse than either — so a pane your rows address shows your rows and nothing else.
+// The operator's own rows (commands.toml → /api/config). Claude panes merge them ahead of the
+// maintained reference catalog; every other harness keeps the replacement rule from ADR 0018.
 describe("commandsFor with the operator's own rows", () => {
   const forkIn = {
     agent: "omp",
@@ -161,6 +160,46 @@ describe("commandsFor with the operator's own rows", () => {
     takesArg: false,
     argHint: "",
   };
+
+  it("merges operator rows before shipped rows on Claude panes", () => {
+    const deploy = {
+      agent: "claude",
+      command: "/deploy",
+      description: "Deploy staging",
+      takesArg: false,
+      argHint: "",
+    };
+    const rows = commandsFor("claude", [deploy]);
+    expect(rows[0]).toMatchObject({
+      command: "/deploy",
+      description: "Deploy staging",
+      common: true,
+      dangerous: false,
+    });
+    expect(rows.some((row) => row.command === "/compact")).toBe(true);
+  });
+
+  it("lets a Claude row replace a shipped name without lowering its confirmation", () => {
+    const override = {
+      agent: "claude",
+      command: "/clear",
+      description: "Clear after saving notes",
+      takesArg: true,
+      argHint: "[note]",
+      confirm: false,
+    };
+    const rows = commandsFor("claude", [override]);
+    const clear = rows.filter((row) => row.command === "/clear");
+    expect(clear).toHaveLength(1);
+    expect(clear[0]).toMatchObject({
+      description: "Clear after saving notes",
+      takesArg: true,
+      argHint: "[note]",
+      common: true,
+      dangerous: true,
+    });
+    expect(rows[0]).toBe(clear[0]);
+  });
 
   it("replaces the catalog on the panes it addresses", () => {
     const omp = commandsFor("omp", [forkIn]);
@@ -276,10 +315,11 @@ describe("commandsFor with the operator's own rows", () => {
     ).toEqual(["Everywhere"]);
   });
 
-  it("reaches an agent variant the same way its catalog does", () => {
+  it("reaches a Claude variant with the same merge behavior as the catalog lookup", () => {
     const mine = { agent: "claude", command: "/mine", description: "Mine", takesArg: false, argHint: "" };
-    // The scope resolves the variant, and having done so it owns that pane's palette.
-    expect(commandsFor("claude-code", [mine]).map((c) => c.command)).toEqual(["/mine"]);
+    const commands = commandsFor("claude-code", [mine]).map((c) => c.command);
+    expect(commands[0]).toBe("/mine");
+    expect(commands).toContain("/compact");
   });
 
   it("does not let the catalog's prefix tolerance widen a narrow scope", () => {

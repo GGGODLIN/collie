@@ -310,6 +310,9 @@ const PANE_WIRE_KEYS = {
   // its tab. Computed on the machine the pane lives on; an older peer omits both.
   soleTabName: true,
   tabPosition: true,
+  // The pane's description (bridge/description/resolve.ts). Not a crew dimension, and absent here:
+  // the baseline builds no description tracker, so no golden byte moved.
+  description: true,
 } satisfies Record<keyof PaneWire, true>;
 
 const DEVICE_AUTH_KEYS = {
@@ -424,6 +427,7 @@ describe("solo zero-tax — wire shapes carry no crew dimension", () => {
       "agent",
       "cache",
       "cwd",
+      "description",
       "focused",
       "hasSession",
       "hint",
@@ -603,6 +607,7 @@ describe("solo zero-tax — routes", () => {
       // `changes` is the Changes view (ADR 0065): read-only git over the pane's folder, read-gated
       // like `history` beside it and forwarded to the member that owns the pane.
       "/^\\/api\\/pane\\/([^/]+)(?:\\/(reply|keys|upload|close|rename|history|changes|focus))?$/",
+      "/^\\/api\\/pane\\/([^/]+)\\/(switch-account|retell)$/",
       "/^\\/api\\/tab\\/([^/]+)\\/(rename|close)$/",
       // The Changes view asked by workspace (ADR 0065): the same read as the pane route's `changes`,
       // read-gated and forwarded with `?host=` to the member that owns the space.
@@ -715,6 +720,8 @@ const CONFIG_KEYS = {
   themeFile: true,
   fontsDir: true,
   launchersFile: true,
+  accountsFile: true,
+  retellFile: true,
   cacheRulesFile: true,
   maxUploadBytes: true,
   port: true,
@@ -722,6 +729,7 @@ const CONFIG_KEYS = {
   pollMs: true,
   pollIdleMs: true,
   notifyDelayMs: true,
+  notifyDescription: true,
   readLines: true,
   transcript: true,
   journalRoots: true,
@@ -750,6 +758,7 @@ describe("solo zero-tax — config", () => {
   test("Config carries no crew/peer/lead key", () => {
     const keys = Object.keys(CONFIG_KEYS).toSorted();
     expect(keys).toEqual([
+      "accountsFile",
       "allowAnyHost",
       "allowNonLoopbackBind",
       "allowedOrigins",
@@ -771,12 +780,14 @@ describe("solo zero-tax — config", () => {
       "mux",
       "muxEndpoint",
       "notifyDelayMs",
+      "notifyDescription",
       "pollIdleMs",
       "pollMs",
       "port",
       "publicHosts",
       "quickRepliesFile",
       "readLines",
+      "retellFile",
       "skipServe",
       "socketPath",
       "stateDir",
@@ -845,6 +856,7 @@ describe("solo zero-tax — config", () => {
       "COLLIE_MUX",
       "COLLIE_MUX_ENDPOINT_",
       "COLLIE_NOTIFY_DELAY_MS",
+      "COLLIE_NOTIFY_DESCRIPTION",
       "COLLIE_OPENCODE_ROOT",
       "COLLIE_PI_ROOT",
       "COLLIE_POLL_IDLE_MS",

@@ -144,7 +144,14 @@ export function AgentCard({
   // line 2 would repeat it; it carries the title Claude writes instead, so that stays in sight.
   const nameIsTab = soleTabName(agent) !== null && paneName(agent) === soleTabName(agent);
   const liveTitle = agent.terminalTitle && agent.terminalTitleStale !== true ? agent.terminalTitle : null;
-  const lines: RowLines = inPlace
+  // ── A DESCRIBED PANE SAYS WHAT IT IS DOING UNDER ITS NAME ────────────────────
+  // When the bridge sent a description (bridge/description/resolve.ts), line 1 stays the pane's name
+  // and line 2 is the description's `now`, in every scope. The name leads because it is the fixed
+  // thing you find a row by; the description changes every turn, and the smaller line 2 fits more of
+  // it. The two lines keep their 20px / 16px slots and truncate, so a described row is the same
+  // height as any other (DESIGN.md §2). Absent, the row is unchanged.
+  const described = agent.description?.now;
+  const placed: RowLines = inPlace
     ? {
         primary: paneName(agent),
         detailLead: null,
@@ -167,11 +174,15 @@ export function AgentCard({
           tailMono: false,
           tailPositional: place.tab?.positional ?? false,
         };
+  const lines: RowLines =
+    described === undefined
+      ? placed
+      : { primary: paneName(agent), detailLead: null, detailTail: described, tailMono: false, tailPositional: false };
   const { primary, detailLead, detailTail } = lines;
   // A workspace-grouped row whose tab has no name of its own reads its position instead — `tab 2` —
   // via `tabTitle` (`lib/pane-name.ts`) — or, when the raw label carries no digit at all, nothing:
   // the slot is then skipped outright.
-  const skipBlankSlot = inPlace && detailTail === null;
+  const skipBlankSlot = inPlace && detailTail === null && described === undefined;
   // The dot leads line 1, INLINE, ahead of the tile — not on the tile's corner. The corner was
   // right at `size-9`: a 10px badge on a 36px tile is a badge. On a 16px tile it is most of the
   // artwork, and shrinking it to fit kills the one glance cue the row has — the resting states are

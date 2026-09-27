@@ -63,6 +63,8 @@ export interface DialogTarget<K extends DialogKind> {
   kind: K;
   /** The model the user actually tapped (from the render). */
   model: DialogModels[K];
+  /** 列表批准綁定完整可見畫面，避免長指令超出 grammar 的局部比對範圍。 */
+  expectedText?: string;
 }
 
 /**

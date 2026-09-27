@@ -39,6 +39,24 @@ describe("ThreadSidebar", () => {
     expect(screen.queryByText("Recent")).toBeNull();
   });
 
+  it("puts Working last in the operator-opened attention order", () => {
+    const unseen = { ...idleAgent, paneId: "w3:p2", lastActiveAt: 200, lastSeenAt: 100 };
+    render(
+      <ThreadSidebar
+        agents={[...fixtureAgents, unseen, idleAgent]}
+        currentPaneKey=""
+        onSelect={vi.fn()}
+        order="attention"
+      />,
+    );
+    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual([
+      expect.stringContaining("Needs you"),
+      expect.stringContaining("Ready · unseen"),
+      expect.stringContaining("Recent"),
+      expect.stringContaining("Working"),
+    ]);
+  });
+
   it("moves no row and no heading when a pane changes state (ADR 0063)", () => {
     // Before, an unread completion jumped from Recent up into "Ready · unseen" and dropped back once
     // read, and a blocked pane sat in "Needs you" above everything. Now every flip repaints only.
@@ -127,6 +145,19 @@ describe("ThreadSidebar", () => {
     // and line 2 is its place. Same way round as every other list in the app (lib/pane-name.ts).
     expect(current).toHaveTextContent("collie");
     expect(current).toHaveTextContent("codex");
+  });
+
+  it("keeps a described row's name on line 1 and puts what it is doing where the place was", () => {
+    const described: AgentView = {
+      ...idleAgent,
+      description: { now: "在等你批准 Bash · ls", source: "blocked", at: 1 },
+    };
+    render(<ThreadSidebar agents={[described]} currentPaneKey="" onSelect={vi.fn()} />);
+    const row = screen.getByRole("button", { name: /在等你批准 Bash · ls/ });
+    const [line1, line2] = row.querySelectorAll(".min-w-0.flex-1 > div");
+    expect(line1).toHaveTextContent("claude");
+    expect(line2).toHaveTextContent(/^在等你批准 Bash · ls$/);
+    expect(row).not.toHaveTextContent("sandbox");
   });
 
   it("does not mark any pane current when the key matches nothing", () => {

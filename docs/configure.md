@@ -134,9 +134,11 @@ Put machine-specific commands, such as a Herdr plugin `/fork-in-herdr` or a cust
 These files are unchanged by the config file. They share the instance `config.toml`'s
 directory, they keep their own formats and their own live reload, and nothing merges them into it.
 
-Any row with the flag set requires a two-tap confirmation before it fires. Edits to any of these
-files take effect without restarting the service. If Collie rejects a row, `journalctl --user -u
-collie -n 20` prints the line number and the error.
+The Agent palette never fires a command: tapping a row puts it in the composer for review. A
+`commands.toml` confirm flag marks it dangerous and requires two taps only when `bar = true` also
+puts it on the direct-action row. A `keys.toml` danger flag still protects its preset directly.
+Edits take effect without restarting the service. If Collie rejects a row,
+`journalctl --user -u collie -n 20` prints the line number and the error.
 
 ```bash
 cp commands.toml.example ~/.config/collie/commands.toml
@@ -156,10 +158,14 @@ bar = true
 bar_label = "Status"
 ```
 
-A pane that matches your configured rows displays only those rows. The narrowest row wins, as
-documented in [ADR 0018](../.adr/0018-operator-command-rows-replace-the-catalog.md).
+On a Claude pane, matching rows appear first and the maintained reference commands remain searchable.
+An exact-name row replaces that reference row without lowering its dangerous classification. Other harnesses
+still display only matching rows. The narrowest scope wins, as documented in
+[ADR 0070](../.adr/0070-claude-operator-commands-join-the-reference-catalog.md).
 
-To verify, open a pane and tap **/**; your rows appear on the first screen.
+To verify, open a pane and tap **/**; your rows appear on the first screen. Tap one and Collie puts
+its command in the composer without sending it
+([ADR 0071](../.adr/0071-the-agent-palette-stages-never-sends.md)).
 
 ### Putting a command on the actions row
 
@@ -200,8 +206,8 @@ everywhere else. The Agent palette is a separate surface and one bar row never b
 A `bar_label` longer than 12 characters is shortened and the button still appears. A `bar` that is
 not `true` or `false` drops that one row, the same way a bad `confirm` does.
 
-The row sends while the agent is busy, the same as the command palette. The checkmark appears only
-when the pane took the text.
+The actions row sends while the agent is busy; the Agent palette only stages text in the composer.
+The checkmark appears only when the pane took the action-row command.
 
 A Switch button sits at the belt's right end and opens the pane switcher. It draws the layers mark
 alone, behind a hairline, and carries no word. A drag up, anywhere on the belt, opens the same
@@ -314,6 +320,50 @@ a row launches on whichever machine's dashboard or pane you tapped it from, not 
 
 To verify, reload the dashboard and look under the herd. If a row fails to load,
 `journalctl --user -u collie -n 20` prints the error.
+
+## Switch a Claude pane's account
+
+A Claude pane can move to another of your accounts without losing its conversation.
+
+```toml
+# ~/.config/collie/accounts.toml
+[[accounts]]
+label = "Work"            # required; what the pane sheet shows
+command = "cc -work"      # required; the shell line that starts Claude on this account
+```
+
+The pane sheet (⋮ in a pane) then offers **Switch account**, and a second list of your labels.
+
+1. The bridge ends Claude in the same pane and waits until it has exited.
+2. It types your `command` followed by `--resume <session id>` and sends Enter.
+
+`--resume` restores the session's own model, effort and context size, so the file has no model
+field. A working or blocked agent is interrupted only after a second tap on the account.
+
+> **Note.** The switch is refused when `/model` or `/effort` ran after the last answer, because
+> `--resume` would bring back the old setting. Send one message first.
+
+If Claude is never seen to exit, nothing new is started and the phone says so. The file is the
+allowlist: the phone sends a label, never a command line.
+
+## Retell a Claude session
+
+With cc-sidecar-waitwhat installed, the pane sheet can retell a Claude session in plain words.
+
+```toml
+# ~/.config/collie/retell.toml
+command = ["/Users/you/.local/bin/ww", "--source", "http"]
+```
+
+The sheet then offers **Plain** (the last turn) and **Lost** (the whole session). The answer opens
+in a reading sheet on the same screen.
+
+`command` is an argv array, never a shell line. The bridge appends `--session-id <id> --json`, and
+`1` for Plain, so the sidecar's own prompts and cache serve the phone, the terminal and the mod
+alike. Each request runs one child for at most 180 seconds.
+
+> **Note.** Without this file the rows do not appear. Where the model call goes is decided by your
+> `command`: `--source http` keeps it on the local proxy (ADR 0074).
 
 ## Your own typefaces
 

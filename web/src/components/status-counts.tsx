@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Check } from "lucide-react";
 
 import { StatusDot } from "@/components/status-badge";
@@ -110,17 +111,22 @@ export function StatusSummaryLine({
   panes,
   allClear,
   onJump,
+  dialog = false,
+  trailing,
   className,
 }: {
   panes: readonly AgentView[];
   allClear: boolean;
   onJump?: (() => void) | undefined;
+  dialog?: boolean;
+  trailing?: ReactNode;
   className?: string;
 }) {
   useLocale();
   return (
     <button
       type="button"
+      aria-haspopup={dialog ? "dialog" : undefined}
       onClick={onJump}
       disabled={onJump === undefined}
       className={cn(
@@ -135,6 +141,7 @@ export function StatusSummaryLine({
         </span>
       )}
       <StatusCounts panes={panes} labelled={!allClear} className={allClear ? "text-muted-foreground" : undefined} />
+      {trailing}
     </button>
   );
 }

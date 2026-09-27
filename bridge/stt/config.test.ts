@@ -195,6 +195,57 @@ describe("stt settings — the spoken language", () => {
   });
 });
 
+describe("stt settings — the script conversion", () => {
+  test("a conversion rides on the codex provider", () => {
+    const { warn, lines } = collectWarnings();
+    const settings = resolveSttSettings(
+      coerceSttFile({ provider: "codex", convert: "zh-TW" }),
+      sttEnvSettings(NO_ENV),
+      warn,
+    );
+
+    expect(settings).toEqual({
+      provider: "codex",
+      codexBin: DEFAULT_CODEX_BIN,
+      wireIdentity: "honest",
+      convert: "zh-TW",
+    });
+    expect(lines).toEqual([]);
+  });
+
+  test("a conversion rides on the openai-compatible provider, and the environment wins", () => {
+    const { warn } = collectWarnings();
+    const settings = openAi(
+      resolveSttSettings(
+        coerceSttFile({ baseUrl: "http://127.0.0.1:8080/v1", convert: "nope" }),
+        sttEnvSettings({ COLLIE_STT_CONVERT: "zh-TW" }),
+        warn,
+      ),
+    );
+
+    expect(settings.convert).toBe("zh-TW");
+  });
+
+  test("no conversion is the ABSENCE of the field", () => {
+    const { warn } = collectWarnings();
+    const settings = resolveSttSettings(coerceSttFile({ provider: "codex" }), sttEnvSettings(NO_ENV), warn);
+
+    expect(settings !== null && "convert" in settings).toBe(false);
+  });
+
+  test("an unknown conversion refuses, rather than passing the provider's script through", () => {
+    const { warn, lines } = collectWarnings();
+    const settings = resolveSttSettings(
+      coerceSttFile({ provider: "codex", convert: "zh-Hant" }),
+      sttEnvSettings(NO_ENV),
+      warn,
+    );
+
+    expect(settings).toBeNull();
+    expect(lines.join("\n")).toContain('unknown conversion "zh-Hant"');
+  });
+});
+
 describe("stt settings — invalid shapes refuse loudly and stay off", () => {
   test("a non-http endpoint is refused, so a settings typo cannot become a local read", () => {
     const { warn, lines } = collectWarnings();

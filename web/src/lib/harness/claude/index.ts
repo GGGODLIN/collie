@@ -28,6 +28,7 @@ import {
   inputBoxTail,
 } from "./chrome";
 import { isPastePlaceholderOnly, pasteCarriesSend } from "./paste";
+import { stripWaitWhatBand } from "./waitwhat-band";
 
 /**
  * Claude's block pipeline: detect a tail dialog (preview / wizard / prompt-select), replacing it with
@@ -139,7 +140,7 @@ export function claudeBuildBlocks(lines: StyledLine[]): Block[] {
   if (inputBoxTail(lines) === "autocomplete") {
     const autoRegion = detectAutocompleteRegion(lines);
     if (autoRegion) {
-      const before = trimTrailingBlank(stripChrome(lines));
+      const before = trimTrailingBlank(stripWaitWhatBand(stripChrome(lines)));
       const blocks: Block[] = [];
       if (before.length > 0) blocks.push({ kind: "raw", lines: before });
       blocks.push({
@@ -151,7 +152,7 @@ export function claudeBuildBlocks(lines: StyledLine[]): Block[] {
     }
   }
 
-  return [{ kind: "raw", lines: stripChrome(lines) }];
+  return [{ kind: "raw", lines: stripWaitWhatBand(stripChrome(lines)) }];
 }
 
 export { extractStatusLines, extractAgentsFooter, extractInputDraft };

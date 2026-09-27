@@ -3,13 +3,14 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { homedir, hostname } from "node:os";
 import { join } from "node:path";
 
-import { classifyInstall, probeInstall } from "../cli/install-kind.ts";
+import { classifyInstall, probeInstall, updateRepoOf } from "../cli/install-kind.ts";
 import { realLinkFs } from "../cli/link.ts";
 import { packageCommand } from "../cli/package-command.ts";
 import { realExec, realFiles } from "../cli/sys.ts";
 import { ActivityLedger } from "./activity.ts";
 import { trackActivity } from "./activity-tracking.ts";
 import { CacheTracker } from "./cache/tracker.ts";
+import { DescriptionTracker } from "./description/tracker.ts";
 import { CacheWarden } from "./cache/warden.ts";
 import { CacheWatchStore } from "./cache/watch.ts";
 import { localWatchPane, peerWatchPane } from "./cache/watch-key.ts";
@@ -594,6 +595,9 @@ const paneCache =
   journals === null
     ? null
     : new CacheTracker(journals, { overrides: () => cacheRulesReader() }, () => Date.now());
+// What each pane is doing — the one description the herd row, the pane screen and the push body read
+// (bridge/description/tracker.ts). Same registry, same poll, same "off with the journal" rule.
+const paneDescription = journals === null ? null : new DescriptionTracker(journals, () => Date.now());
 
 // Which panes the operator asked to be warned about before their prompt cache goes cold, and the
 // deadlines already warned (bridge/cache/watch.ts). Loaded here beside the other two preference stores;
@@ -637,9 +641,9 @@ const crewVersion = collieVersionBare(rootDir);
 const updateStore = new UpdateStateStore(cfg);
 await updateStore.load();
 
-// The repo the release check + release links point at. Defaults to Collie's own; overridable for a
+// The repo the release check + release links point at. Defaults to this fork; overridable for another
 // fork (or a synthetic test target) via COLLIE_UPDATE_REPO.
-const updateRepo = process.env.COLLIE_UPDATE_REPO?.trim() || "AltanS/collie";
+const updateRepo = updateRepoOf({ COLLIE_UPDATE_REPO: process.env.COLLIE_UPDATE_REPO });
 // How this Collie is installed — the ONE shared classifier (`cli/install-kind.ts`), probed once at
 // startup because the answer cannot change under a running process (an update restarts the service).
 // The banner spells its commands from this: Herdr actions for a Herdr-managed checkout, the `collie`
@@ -1051,6 +1055,11 @@ const makeSession: SessionFactory = (name, socketPath, isPrimary) => {
     };
     engine.onUpdate((s) => void probeThenWarn(s.agents));
   }
+  // The description tracker rides the same poll, fire-and-forget; `refresh` never throws.
+  if (paneDescription !== null) {
+    const describer = paneDescription;
+    engine.onUpdate((s) => void describer.refresh(s.agents, { session: name }));
+  }
 
   // Background notifications on lifecycle transitions (foreground toasts are computed client-side by
   // diffing snapshots). Each session gets its own coordinator + notification slot: the primary keeps
@@ -1066,8 +1075,14 @@ const makeSession: SessionFactory = (name, socketPath, isPrimary) => {
   const sink = makeNotifySink(push, herdPushGate(crew.mode, snooze), herdTagFor(isPrimary, name), {
     session: isPrimary ? undefined : name,
   });
-  const notifications = new NotificationCoordinator(clock, sink, cfg.notifyDelayMs, (status) =>
-    notifyPrefs.isNotifiable(status),
+  const notifications = new NotificationCoordinator(
+    clock,
+    sink,
+    cfg.notifyDelayMs,
+    (status) => notifyPrefs.isNotifiable(status),
+    // Opt-in (COLLIE_NOTIFY_DESCRIPTION): the description can quote the newest prompt, and a push body
+    // lands on a lock screen. Off, the body stays the pane's place, as it always was.
+    cfg.notifyDescription ? (agent) => paneDescription?.describe(agent)?.now : () => undefined,
   );
   engine.onTransition((agent, from, to) => notifications.onTransition(agent, from, to));
   engine.onRemove((paneId) => notifications.onRemove(paneId));
@@ -1774,6 +1789,7 @@ const server = startServer({
   // Built above so the cache tracker probes through the same adapters this serves history from.
   journals: journals ?? undefined,
   cache: paneCache ?? undefined,
+  description: paneDescription ?? undefined,
   cacheWatch,
   crew,
   pairing,

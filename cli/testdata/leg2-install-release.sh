@@ -25,7 +25,7 @@ trap 'rm -rf "$WORK"' EXIT INT TERM
 cat > "$WORK/install.sh" <<'__COLLIE_PAYLOAD__'
 #__COLLIE_STDIN__
 __COLLIE_PAYLOAD__
-COLLIE_DIR="$DIR" COLLIE_UPDATE_REPO='AltanS/collie' COLLIE_TAG='v1.2.3' /bin/sh "$WORK/install.sh" 1>&2
+COLLIE_DIR="$DIR" COLLIE_UPDATE_REPO='GGGODLIN/collie' COLLIE_TAG='v1.2.3' /bin/sh "$WORK/install.sh" 1>&2
 ROOT="$DIR/current"
 [ -x "$ROOT/bin/collie" ] || { echo "error: the install left no binary at $ROOT/bin/collie" >&2; exit 25; }
 VERSION=$("$ROOT/bin/collie" version | head -n 1)

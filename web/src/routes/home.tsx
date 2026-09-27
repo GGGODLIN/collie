@@ -6,10 +6,12 @@ import { SessionSwitcher } from "@/components/session-switcher";
 import { ServerSwitcher } from "@/components/server-switcher";
 import { ReadOnlyBanner } from "@/components/read-only-banner";
 import { AgentList } from "@/components/agent-list";
+import { ThreadSidebar } from "@/components/agent-sidebar";
 import { LaunchStrip } from "@/components/launch-strip";
 import { SpaceOverview } from "@/components/space-overview";
 import { NewSpaceSheet, type WorktreeRepo } from "@/components/new-space-sheet";
 import { StatusArea } from "@/components/status-area";
+import { BottomSheet } from "@/components/ui/sheet";
 import { ToastViewport } from "@/components/ui/toast-viewport";
 import { BuildStamp } from "@/components/build-stamp";
 import { CrewFooterLink } from "@/components/crew-footer-link";
@@ -22,6 +24,7 @@ import { useWorkspaceChangeCounts } from "@/hooks/use-workspace-change-counts";
 import { useSpaceActions } from "@/hooks/use-spaces";
 import { useNav } from "@/hooks/use-nav";
 import { usePaneOpen } from "@/hooks/use-pane-open";
+import { useListApproval } from "@/hooks/use-list-approval";
 import { useScrollMemory } from "@/hooks/use-scroll-memory";
 import { useMuxCapability } from "@/lib/mux-capability";
 import { ambientHost, ambientPanes, paneScope, sessionsOnHost } from "@/lib/hosts";
@@ -33,7 +36,7 @@ import { spaceChangesPath, spacePath } from "@/lib/nav";
 import type { WorkspaceGroup } from "@/lib/pane-groups";
 import { scopeKey, type Scope } from "@/lib/scope";
 import { countBlocked, hasReady } from "@/lib/triage";
-import type { ServerSummary, SessionSummary } from "@/lib/types";
+import type { AgentView, ServerSummary, SessionSummary } from "@/lib/types";
 import { useRootData } from "@/lib/route-data";
 
 /**
@@ -103,6 +106,7 @@ export function HomeRoute() {
         .map((w) => ({ workspaceId: w.workspaceId, repoRoot: w.repoRoot!, label: w.label }))
     : [];
   const [newSpaceOpen, setNewSpaceOpen] = useState(false);
+  const [switcherAgents, setSwitcherAgents] = useState<AgentView[] | null>(null);
   useLocale();
   const { prefs, setSpacesOpen, setLaunchOpen, setIsolatedSpace, toggleHiddenSpace, setDashView } = useDashPrefs();
   const view: DashView = prefs.dashView;
@@ -129,6 +133,13 @@ export function HomeRoute() {
   // right pane name on the wrong terminal. Solo: every pane is untagged, so this is `data.scope`.
   // The tap glides the row into the pane header when the pane's read is in time (use-pane-open.ts).
   const paneOpen = usePaneOpen(data.scope, data.servers, data.sessions);
+  const approval = useListApproval(data, paneOpen);
+  const showSwitcher = () => setSwitcherAgents([...data.agents]);
+  const closeSwitcher = () => setSwitcherAgents(null);
+  const selectFromSwitcher = (pane: AgentView) => {
+    closeSwitcher();
+    paneOpen.open(pane);
+  };
   const drillInto = (id: string) => nav.down(spacePath(id, data.scope));
   // The space navigator shows the ADDRESSED machine's spaces — the loader's `ambientSpaces` has
   // already narrowed `data.workspaces`/`data.tabs` to the host `?h=` names (or the lead, absent one;
@@ -195,9 +206,9 @@ export function HomeRoute() {
             agents={data.agents}
             shellPanes={data.shellPanes}
             bridge={data.bridge}
-            onOpen={paneOpen.open}
+            onOpen={approval.open}
             glideKeyOf={paneOpen.glideKeyOf}
-            onPress={paneOpen.press}
+            onPress={approval.press}
             error={data.error}
             lastSeenAt={data.lastSeenAt}
             tabs={data.tabs}
@@ -205,6 +216,7 @@ export function HomeRoute() {
             isolated={prefs.isolatedSpace}
             hidden={prefs.hiddenSpaces}
             onIsolate={setIsolatedSpace}
+            {...(data.agents.length > 0 ? { onOpenSwitcher: showSwitcher } : {})}
             onToggleHidden={toggleHiddenSpace}
             needsYouOnly={view === "focus"}
             renderBody={
@@ -285,6 +297,22 @@ export function HomeRoute() {
       <ToastViewport className="bottom-[calc(3.5rem+1px)]">
         <StatusArea />
       </ToastViewport>
+
+      <BottomSheet
+        open={switcherAgents !== null}
+        onClose={closeSwitcher}
+        title={t("chat.switcher.title")}
+      >
+        <ThreadSidebar
+          agents={switcherAgents ?? []}
+          currentPaneKey=""
+          onSelect={selectFromSwitcher}
+          order="attention"
+          className="px-0 py-1"
+        />
+      </BottomSheet>
+
+      {approval.sheet}
 
       <NewSpaceSheet
         open={newSpaceOpen}

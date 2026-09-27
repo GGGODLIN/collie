@@ -2477,6 +2477,53 @@ describe("AgentChat — folding the tab and pane rows", () => {
   });
 });
 
+describe("AgentChat: pane switcher", () => {
+  it("shows the dashboard's attention order and holds the opened list across polls", async () => {
+    const user = userEvent.setup();
+    let poll = () => {};
+    function PolledPane() {
+      const [agents, setAgents] = useState(fixtureAgents);
+      const [shellPanes, setShellPanes] = useState(fixtureShellPanes);
+      poll = () => {
+        setAgents(agents.map((a) => ({ ...a, status: "working" as const })));
+        setShellPanes([]);
+      };
+      return (
+        <AgentChat
+          paneId={agents[0]!.paneId}
+          agent={agents[0]}
+          agents={agents}
+          shellPanes={shellPanes}
+          tabs={[]}
+          text={paneTextWithDraft("recent pane output")}
+          onBack={vi.fn()}
+          onSelect={vi.fn()}
+        />
+      );
+    }
+    const router = createMemoryRouter([{ path: "/", element: withHeaderHost(<PolledPane />) }]);
+    render(<RouterProvider router={router} />);
+
+    await user.click(screen.getByRole("button", { name: "Switch pane" }));
+    let sheet = screen.getByRole("dialog", { name: "Switch pane" });
+    expect(within(sheet).getByRole("heading", { name: /Needs you/i })).toBeInTheDocument();
+    expect(within(sheet).getByRole("heading", { name: /Working/i })).toBeInTheDocument();
+    expect(within(sheet).getByRole("heading", { name: /Shells/i })).toBeInTheDocument();
+    expect(within(sheet).queryByRole("heading", { name: /webapp/i })).toBeNull();
+
+    act(() => poll());
+    expect(within(sheet).getByRole("heading", { name: /Needs you/i })).toBeInTheDocument();
+    expect(within(sheet).getByRole("heading", { name: /Shells/i })).toBeInTheDocument();
+
+    await user.click(within(sheet).getByRole("button", { name: "Close" }));
+    await user.click(screen.getByRole("button", { name: "Switch pane" }));
+    sheet = screen.getByRole("dialog", { name: "Switch pane" });
+    expect(within(sheet).queryByRole("heading", { name: /Needs you/i })).toBeNull();
+    expect(within(sheet).queryByRole("heading", { name: /Shells/i })).toBeNull();
+    expect(within(sheet).getByRole("heading", { name: /Working/i })).toBeInTheDocument();
+  });
+});
+
 // The pane header's rocket is gone; the switcher sheet is one of its two remaining homes (the other
 // is the dashboard's own LaunchStrip, covered by launch-strip.test.tsx). Same launchers.toml rows,
 // declared here through GET /api/launchers — a session-scoped route (server.ts), never a field on
@@ -2593,32 +2640,43 @@ describe("AgentChat — full latest reply", () => {
     "bigger claim than saying this looks fine to me.",
   ].join(" ");
 
-  /** Serve one assistant turn as the pane's journal, and count the reads so a negative assertion can
-   *  wait for the fetch to have landed rather than racing it. */
-  function withJournalReply(text: string): () => number {
+  function withJournalReply(text: string, prompt?: string): () => number {
     let hits = 0;
     server.use(
       http.get(/\/api\/pane\/[^/]+\/history/, () => {
         hits += 1;
+        const entries = [
+          ...(prompt
+            ? [
+                {
+                  uuid: "prompt-1",
+                  ts: "2026-08-28T09:13:00.000Z",
+                  role: "user" as const,
+                  parts: [{ kind: "text" as const, text: prompt }],
+                },
+              ]
+            : []),
+          {
+            uuid: "reply-1",
+            ts: "2026-08-28T09:14:00.000Z",
+            role: "assistant" as const,
+            parts: [{ kind: "text" as const, text }],
+          },
+        ];
         return HttpResponse.json({
           paneId: "w1:p1",
           available: true,
-          entries: [
-            {
-              uuid: "reply-1",
-              ts: "2026-08-28T09:14:00.000Z",
-              role: "assistant",
-              parts: [{ kind: "text", text }],
-            },
-          ],
+          entries,
           hasMore: false,
-          total: 1,
+          total: entries.length,
           fileTruncated: false,
         });
       }),
     );
     return () => hits;
   }
+
+  const PROMPT = "Why is the release held?";
 
   const card = () => screen.queryByRole("button", { name: /full reply/i });
   const sessionAgent = () => ({ ...fixtureAgents[0]!, hasSession: true, readableLines: 51 });
@@ -2633,7 +2691,7 @@ describe("AgentChat — full latest reply", () => {
   const SCREEN = paneTextWithDraft(`${REPLY.slice(120)}\n\nBash(git log --oneline)\n  ${AFTER}`);
 
   it("shows the whole message, and takes the rows it covers out of the mirror", async () => {
-    withJournalReply(REPLY);
+    withJournalReply(REPLY, PROMPT);
     renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: SCREEN });
     await waitFor(() => expect(card()).toBeInTheDocument());
 
@@ -2647,7 +2705,7 @@ describe("AgentChat — full latest reply", () => {
 
   it("gives the terminal rows back when you collapse it", async () => {
     const user = userEvent.setup();
-    withJournalReply(REPLY);
+    withJournalReply(REPLY, PROMPT);
     renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: SCREEN });
     await waitFor(() => expect(card()).toBeInTheDocument());
 
@@ -2657,11 +2715,31 @@ describe("AgentChat — full latest reply", () => {
     expect(card()).toBeInTheDocument(); // and the header stays, so it can be reopened
   });
 
+  it("shows the prompt above its full reply and stops following the terminal tail", async () => {
+    withJournalReply(REPLY, PROMPT);
+    renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: SCREEN });
+    await waitFor(() => expect(card()).toBeInTheDocument());
+
+    expect(screen.getByText(PROMPT)).toBeInTheDocument();
+    expect(screen.getByText(/Short answer: approve-only/)).toBeInTheDocument();
+    expect(mirror()).not.toContain("bigger claim");
+    expect(mirror()).toContain(AFTER);
+    expect(screen.getByRole("button", { name: "Scroll to latest" })).toBeInTheDocument();
+  });
+
+  it("keeps the terminal mirror when history cannot supply the reply's prompt", async () => {
+    const hits = withJournalReply(REPLY);
+    renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: SCREEN });
+    await waitFor(() => expect(hits()).toBe(1));
+    await waitFor(() => expect(card()).not.toBeInTheDocument());
+    expect(mirror()).toContain("bigger claim");
+  });
+
   // Find searches the mirror and highlights only there, so a hidden row would be a match you can see
   // but cannot find. Opening find restores the whole mirror and stands the card down.
   it("hands the whole mirror back while the find bar is open", async () => {
     const user = userEvent.setup();
-    withJournalReply(REPLY);
+    withJournalReply(REPLY, PROMPT);
     renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: SCREEN });
     await waitFor(() => expect(card()).toBeInTheDocument());
 
@@ -2671,7 +2749,7 @@ describe("AgentChat — full latest reply", () => {
   });
 
   it("shows nothing when the journal's newest reply is not what the mirror is showing", async () => {
-    const hits = withJournalReply(REPLY);
+    const hits = withJournalReply(REPLY, PROMPT);
     renderChat({
       agent: sessionAgent(),
       agents: [sessionAgent()],
@@ -2681,12 +2759,13 @@ describe("AgentChat — full latest reply", () => {
     await waitFor(() => expect(card()).not.toBeInTheDocument());
   });
 
-  it("shows nothing when the mirror already holds the whole reply", async () => {
-    const hits = withJournalReply(REPLY);
-    renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: REPLY });
-    await waitFor(() => expect(hits()).toBe(1));
-    await waitFor(() => expect(card()).not.toBeInTheDocument());
-    expect(screen.getAllByText(/Short answer/).length).toBe(1); // the mirror's copy, and only it
+  it("wraps a short whole reply instead of leaving it in the terminal", async () => {
+    const short = "Short reply.";
+    withJournalReply(short, PROMPT);
+    renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: paneTextWithDraft(short) });
+    await waitFor(() => expect(card()).toBeInTheDocument());
+    expect(screen.getByText(short)).toBeInTheDocument();
+    expect(mirror()).not.toContain(short);
   });
 
   // The pref is the whole opt-out: off, the pane is exactly what it was before this existed — and it
@@ -2696,7 +2775,7 @@ describe("AgentChat — full latest reply", () => {
       "collie:display-prefs:v4",
       JSON.stringify({ wrap: true, fontSize: 12, expandClippedReply: false }),
     );
-    const hits = withJournalReply(REPLY);
+    const hits = withJournalReply(REPLY, PROMPT);
     renderChat({ agent: sessionAgent(), agents: [sessionAgent()], text: REPLY.slice(120) });
     await waitFor(() => expect(screen.getByText(/bigger claim/)).toBeInTheDocument());
     expect(hits()).toBe(0);
@@ -2705,7 +2784,7 @@ describe("AgentChat — full latest reply", () => {
   });
 
   it("reads no journal at all on a pane that has none", async () => {
-    const hits = withJournalReply(REPLY);
+    const hits = withJournalReply(REPLY, PROMPT);
     const shell = { ...fixtureAgents[0]!, kind: "shell" as const, readableLines: 51 };
     renderChat({ agent: shell, agents: [shell], text: REPLY.slice(120) });
     await waitFor(() => expect(screen.getByText(/bigger claim/)).toBeInTheDocument());
