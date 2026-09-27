@@ -3163,6 +3163,7 @@ export async function switchAccountPane(
   await settleTopology(herdr, engine);
   if (outcome.ok) return json({ ok: true } satisfies ActionResponse, ae);
   if (outcome.stage === "unconfirmed") return refuse("account.exit_unconfirmed", 200);
+  if (outcome.stage === "draft") return refuse("account.draft_present", 409);
   return refuse(outcome.stage === "exit" ? "account.exit_failed" : "account.launch_failed", 200, {
     reason: outcome.reason,
   });

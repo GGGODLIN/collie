@@ -71,20 +71,26 @@ describe("switchAccount", () => {
     expect(calls.slice(0, 2)).toEqual(["keys:ctrl+c", "text:/exit"]);
   });
 
-  test("a draft in the input row is cleared before /exit is typed", async () => {
+  test("the prompt an interrupt hands back is cleared before /exit is typed", async () => {
+    const { mux, calls } = fakeMux({ exitAfterPolls: 0, draftClearsAfter: 2 });
+    expect(await switchAccount(mux, plan(true), fakeClock())).toEqual({ ok: true });
+    expect(calls.slice(0, 3)).toEqual(["keys:ctrl+c", "keys:ctrl+c", "text:/exit"]);
+  });
+
+  test("an idle pane holding an unsent draft is refused, and nothing is sent to it", async () => {
     const { mux, calls } = fakeMux({ exitAfterPolls: 0, draftClearsAfter: 1 });
-    expect(await switchAccount(mux, plan(false), fakeClock())).toEqual({ ok: true });
-    expect(calls.slice(0, 2)).toEqual(["keys:ctrl+c", "text:/exit"]);
+    expect(await switchAccount(mux, plan(false), fakeClock())).toEqual({ ok: false, stage: "draft" });
+    expect(calls).toEqual([]);
   });
 
   test("an input row that never clears stops the switch before /exit", async () => {
     const { mux, calls } = fakeMux({ exitAfterPolls: 0, draftClearsAfter: null });
-    expect(await switchAccount(mux, plan(false), fakeClock())).toEqual({
+    expect(await switchAccount(mux, plan(true), fakeClock())).toEqual({
       ok: false,
       stage: "exit",
       reason: "Claude's input row did not clear",
     });
-    expect(calls).toEqual(["keys:ctrl+c", "keys:ctrl+c"]);
+    expect(calls).toEqual(["keys:ctrl+c", "keys:ctrl+c", "keys:ctrl+c"]);
   });
 
   test("an exit never confirmed starts nothing", async () => {

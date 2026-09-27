@@ -66,6 +66,7 @@ export const API_ERROR_CODES = [
   "account.no_transcript",
   "account.settings_pending",
   "account.exit_failed",
+  "account.draft_present",
   "account.exit_unconfirmed",
   "account.launch_failed",
   "retell.off",

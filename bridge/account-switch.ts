@@ -12,8 +12,8 @@ import type { MuxAdapter } from "./mux/types.ts";
 //   • ctrl+c on a non-empty input box clears it;
 //   • `/exit` then exits and prints `claude --resume <id>`, and Herdr drops the pane's agent;
 //   • `<account command> --resume <id>` restores the last turn's model, effort and 1M context.
-// `/exit` is typed only once the screen shows an EMPTY input row: otherwise a draft the operator
-// left there, or the prompt an interrupt handed back, would be submitted with `/exit` appended.
+// `/exit` is typed only once the screen shows an EMPTY input row: otherwise the prompt an interrupt
+// handed back would be submitted with `/exit` appended. An idle pane's draft is refused, not cleared.
 
 export interface SwitchPlan {
   readonly paneId: string;
@@ -29,6 +29,8 @@ export type SwitchOutcome =
   | { readonly ok: false; readonly stage: "exit"; readonly reason: string }
   /** The old process was never confirmed gone, so nothing was started. */
   | { readonly ok: false; readonly stage: "unconfirmed" }
+  /** An idle Claude's input row held text the operator never sent. Nothing was sent to the pane. */
+  | { readonly ok: false; readonly stage: "draft" }
   /** The old process is gone but the new line did not reach the pane. */
   | { readonly ok: false; readonly stage: "launch"; readonly reason: string };
 
@@ -136,6 +138,9 @@ export async function switchAccount(mux: SwitchMux, plan: SwitchPlan, clock: Swi
     const empty = read.ok ? inputRowEmpty(read.value.text) : null;
     if (empty === true) break;
     if (empty === null) return { ok: false, stage: "exit", reason: "Claude's input row is not on screen" };
+    // Idle, the text in the row is a draft the operator typed and never sent, and a ctrl+c would lose
+    // it for good. After an interrupt it is the prompt just handed back, already in the transcript.
+    if (!plan.interrupt) return { ok: false, stage: "draft" };
     if (attempt >= CLEAR_ATTEMPTS) return { ok: false, stage: "exit", reason: "Claude's input row did not clear" };
     const cleared = await keys(["ctrl+c"]);
     if (cleared !== null) return { ok: false, stage: "exit", reason: cleared };

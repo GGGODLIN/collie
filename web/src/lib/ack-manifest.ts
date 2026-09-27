@@ -90,7 +90,7 @@ export const ACK_MANIFEST = {
   },
   switchAccount: {
     channel: "status",
-    why: "The sheet closes on success and the restarted Claude only shows up on the next poll, so the phone has to say that the session resumed on the chosen account.",
+    why: "The sheet closes on success and the restarted Claude only shows up on the next poll, so the phone has to say the switch was sent; the bridge types the new line but does not wait to see Claude come back.",
   },
   retellPane: {
     channel: "inline",

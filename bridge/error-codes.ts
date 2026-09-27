@@ -103,6 +103,8 @@ export const ERROR_CODES = {
   "account.settings_pending": "model or effort changed since the last answer — send one message first",
   /** Keys meant to end Claude were refused before it was seen to exit. Nothing new was started. */
   "account.exit_failed": "{reason}",
+  /** An idle Claude's input box held unsent text; clearing it would lose it. Nothing was touched. */
+  "account.draft_present": "Claude's input box holds text you haven't sent — send or clear it first",
   /** The old process was never seen gone, so the new one was not typed. Check the pane. */
   "account.exit_unconfirmed": "Claude did not confirm it exited — nothing was started",
   /** The old Claude exited but the resume line did not reach the pane. The pane is at a shell. */
