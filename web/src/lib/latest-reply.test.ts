@@ -319,6 +319,15 @@ describe("locateReply — source spelled differently on screen", () => {
     expect(locateReply(painted.join("\n"), turn("assistant", source)).fit).toBe("clipped");
   });
 
+  it("never throws on an entity outside Unicode, and leaves it as written", () => {
+    const tail = "這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：&#x110000; 和 &#1114112; 都照原樣";
+    const painted = [`  ${tail}`];
+    for (const text of [`${lead}\n\n${tail}`]) {
+      expect(() => locateReply(painted.join("\n"), turn("assistant", text))).not.toThrow();
+      expect(locateReply(painted.join("\n"), turn("assistant", text)).fit).toBe("clipped");
+    }
+  });
+
   it("keeps code spans literal while it reduces the link beside them", () => {
     const source = `${lead}\n\n這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：分工寫在 [分工說明](file:///tmp/split.md)，路徑是 \`<repo>/wt\``;
     const painted = ["  這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：分工寫在 分工說明，路徑是 <repo>/wt"];
