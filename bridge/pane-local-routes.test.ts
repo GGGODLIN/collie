@@ -79,17 +79,17 @@ interface RouteBody {
 }
 const post = (body: RouteBody) =>
   new Request("http://127.0.0.1/api/pane/w1%3Ap1/x", { method: "POST", body: JSON.stringify(body) });
-const accounts = () => Promise.resolve([{ label: "Team-S", command: "cc -team-s" }]);
+const accounts = () => Promise.resolve([{ label: "Personal", command: "cc -personal" }]);
 
 describe("POST /api/pane/:id/switch-account", () => {
   test("a second request for the same pane is refused while the first runs", async () => {
     const { mux, typed } = exitingMux();
     const engine = engineWith(claudePane());
-    const first = switchAccountPane(mux, engine, cfg, "w1:p1", post({ account: "Team-S" }), audit, null, "s", accounts);
-    const second = await switchAccountPane(mux, engine, cfg, "w1:p1", post({ account: "Team-S" }), audit, null, "s", accounts);
+    const first = switchAccountPane(mux, engine, cfg, "w1:p1", post({ account: "Personal" }), audit, null, "s", accounts);
+    const second = await switchAccountPane(mux, engine, cfg, "w1:p1", post({ account: "Personal" }), audit, null, "s", accounts);
     expect(await second.json()).toMatchObject({ ok: false, code: "account.in_progress" });
     expect(await (await first).json()).toEqual({ ok: true });
-    expect(typed).toEqual(["/exit", `cc -team-s --resume ${SID}`]);
+    expect(typed).toEqual(["/exit", `cc -personal --resume ${SID}`]);
   });
 
   test("a working pane without the interrupt flag is refused and nothing is typed", async () => {
@@ -99,7 +99,7 @@ describe("POST /api/pane/:id/switch-account", () => {
       engineWith(claudePane({ status: "working" })),
       cfg,
       "w1:p1",
-      post({ account: "Team-S" }),
+      post({ account: "Personal" }),
       audit,
       null,
       "s",

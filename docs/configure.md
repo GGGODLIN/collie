@@ -328,8 +328,8 @@ A Claude pane can move to another of your accounts without losing its conversati
 ```toml
 # ~/.config/collie/accounts.toml
 [[accounts]]
-label = "Team-P"          # required; what the pane sheet shows
-command = "cc -team-p"    # required; the shell line that starts Claude on this account
+label = "Work"            # required; what the pane sheet shows
+command = "cc -work"      # required; the shell line that starts Claude on this account
 ```
 
 The pane sheet (⋮ in a pane) then offers **Switch account**, and a second list of your labels.

@@ -56,13 +56,13 @@ function fakeMux(opts: {
   return { mux, calls };
 }
 
-const plan = (interrupt: boolean) => ({ paneId: "w1:p1", sessionId: SID, command: "cc -team-s", interrupt });
+const plan = (interrupt: boolean) => ({ paneId: "w1:p1", sessionId: SID, command: "cc -personal", interrupt });
 
 describe("switchAccount", () => {
   test("an idle pane with an empty input row: /exit, wait for the exit, then resume", async () => {
     const { mux, calls } = fakeMux({ exitAfterPolls: 2 });
     expect(await switchAccount(mux, plan(false), fakeClock())).toEqual({ ok: true });
-    expect(calls).toEqual(["text:/exit", "keys:Enter", `text:cc -team-s --resume ${SID}`, "keys:Enter"]);
+    expect(calls).toEqual(["text:/exit", "keys:Enter", `text:cc -personal --resume ${SID}`, "keys:Enter"]);
   });
 
   test("a working pane is interrupted once, then /exit goes into the empty row", async () => {
@@ -132,15 +132,15 @@ describe("validateOperatorAccounts", () => {
     const rows = validateOperatorAccounts(
       {
         accounts: [
-          { label: "Team-P", command: "cc -team-p" },
-          { label: "Team-S", command: "cc -team-s\nrm -rf ~" },
+          { label: "Work", command: "cc -work" },
+          { label: "Personal", command: "cc -personal\nrm -rf ~" },
           { label: "", command: "cc" },
-          { label: "Team-P", command: "cc -team-p --x" },
+          { label: "Work", command: "cc -work --x" },
         ],
       },
       (m) => warnings.push(m),
     );
-    expect(rows).toEqual([{ label: "Team-P", command: "cc -team-p --x" }]);
+    expect(rows).toEqual([{ label: "Work", command: "cc -work --x" }]);
     expect(warnings).toHaveLength(3);
   });
 });

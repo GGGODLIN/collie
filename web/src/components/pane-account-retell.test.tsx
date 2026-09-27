@@ -56,30 +56,30 @@ beforeEach(() => {
 
 describe("switch account", () => {
   it("an idle Claude switches on the first tap of an account", async () => {
-    withAccounts(["Team-P", "Team-S"]);
+    withAccounts(["Work", "Personal"]);
     const bodies = captureSwitch();
     const user = userEvent.setup();
     const props = renderSheet(claude);
     await user.click(await screen.findByRole("button", { name: "Switch account" }));
-    await user.click(screen.getByRole("button", { name: "Team-S" }));
-    await waitFor(() => expect(bodies).toEqual([{ account: "Team-S", interrupt: false }]));
+    await user.click(screen.getByRole("button", { name: "Personal" }));
+    await waitFor(() => expect(bodies).toEqual([{ account: "Personal", interrupt: false }]));
     expect(props.onClose).toHaveBeenCalled();
   });
 
   it("a working Claude needs a second tap, and only then says it may interrupt", async () => {
-    withAccounts(["Team-S"]);
+    withAccounts(["Personal"]);
     const bodies = captureSwitch();
     const user = userEvent.setup();
     renderSheet({ ...claude, status: "working" });
     await user.click(await screen.findByRole("button", { name: "Switch account" }));
-    await user.click(screen.getByRole("button", { name: "Team-S" }));
+    await user.click(screen.getByRole("button", { name: "Personal" }));
     expect(bodies).toEqual([]);
-    await user.click(screen.getByRole("button", { name: /interrupt this turn and switch to Team-S/ }));
-    await waitFor(() => expect(bodies).toEqual([{ account: "Team-S", interrupt: true }]));
+    await user.click(screen.getByRole("button", { name: /interrupt this turn and switch to Personal/ }));
+    await waitFor(() => expect(bodies).toEqual([{ account: "Personal", interrupt: true }]));
   });
 
   it("a pane the bridge sees working arms the row, and the next tap interrupts", async () => {
-    withAccounts(["Team-S"]);
+    withAccounts(["Personal"]);
     const bodies: unknown[] = [];
     server.use(
       http.post("/api/pane/:id/switch-account", async ({ request }) => {
@@ -94,18 +94,18 @@ describe("switch account", () => {
     const user = userEvent.setup();
     renderSheet(claude);
     await user.click(await screen.findByRole("button", { name: "Switch account" }));
-    await user.click(screen.getByRole("button", { name: "Team-S" }));
-    await user.click(await screen.findByRole("button", { name: /interrupt this turn and switch to Team-S/ }));
+    await user.click(screen.getByRole("button", { name: "Personal" }));
+    await user.click(await screen.findByRole("button", { name: /interrupt this turn and switch to Personal/ }));
     await waitFor(() =>
       expect(bodies).toEqual([
-        { account: "Team-S", interrupt: false },
-        { account: "Team-S", interrupt: true },
+        { account: "Personal", interrupt: false },
+        { account: "Personal", interrupt: true },
       ]),
     );
   });
 
   it("is not offered for a pane with no session", async () => {
-    withAccounts(["Team-S"]);
+    withAccounts(["Personal"]);
     renderSheet({ ...claude, hasSession: false });
     await screen.findByRole("button", { name: "Rename" });
     // Let the config read land before asserting the row stays absent.

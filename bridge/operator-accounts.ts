@@ -16,7 +16,7 @@ import { createOperatorFileReader, diskIo, type OperatorFileIo } from "./operato
 /** One `[[accounts]]` row. */
 export interface Account {
   readonly label: string;
-  /** The shell line that starts Claude on this account, e.g. `cc -team-p`. Typed verbatim. */
+  /** The shell line that starts Claude on this account, e.g. `cc -work`. Typed verbatim. */
   readonly command: string;
 }
 
@@ -29,8 +29,8 @@ interface AccountsDocument {
  *
  * ```toml
  * [[accounts]]
- * label = "Team-P"         # required; what the phone shows and sends back
- * command = "cc -team-p"   # required; typed verbatim, then ` --resume <session id>`
+ * label = "Work"           # required; what the phone shows and sends back
+ * command = "cc -work"     # required; typed verbatim, then ` --resume <session id>`
  * ```
  *
  * A later row with the same label replaces the earlier one in place.
