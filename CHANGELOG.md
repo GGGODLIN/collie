@@ -30,6 +30,16 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+## [1.15.2] - 2026-09-27
+
+### Changed
+
+- **Built on upstream Collie 1.14.0.** AltanS/collie v1.14.0, commit 86074800, unchanged since 1.15.0. ([bb4b18ba](https://github.com/GGGODLIN/collie/commit/bb4b18ba))
+
+### Docs
+
+- **This fork's decision records are numbered from 9001.** Its five ADRs, 0070 to 0074, are now 9001 to 9005, so upstream's next ADRs can no longer take the same numbers; upstream's own 0070 (pins) keeps its number. ([a5147c06](https://github.com/GGGODLIN/collie/commit/a5147c06))
+
 ## [1.15.1] - 2026-09-27
 
 ### Changed
@@ -80,7 +90,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 - **A described row keeps its name on top.** On the dashboard and in the switcher the pane's name stays on line 1, the fixed thing a row is found by, and the description moves to the smaller line 2, where more of it fits. ([9e03542b](https://github.com/GGGODLIN/collie/commit/9e03542b))
 - **Tool permissions can be answered directly from pane lists.** Tapping a blocked row opens a bottom sheet with the terminal content and its existing approval choices; changed prompts close the sheet, while questions and unknown dialogs still open the pane. ([dbe4d3dc](https://github.com/GGGODLIN/collie/commit/dbe4d3dc))
 - **A Claude pane can switch account and keep its conversation.** Declare accounts in `accounts.toml`; the pane sheet's Switch account row ends Claude in the same pane, confirms it exited, and resumes the same session on the chosen account with its model, effort and context. A running turn is interrupted only after a second tap. An idle pane with unsent text in its input box is refused rather than cleared, and the phone says the switch was sent, since the bridge does not wait to see the new Claude start. ([3cccd84a](https://github.com/GGGODLIN/collie/commit/3cccd84a))
-- **The phone can retell a Claude session in plain words.** With `retell.toml` naming your cc-sidecar-waitwhat command, the pane sheet offers Plain (the last turn) and Lost (the whole session), shown in a reading sheet and sharing the sidecar's prompts and cache (ADR 0074). A sidecar that exits non-zero fails with its own stderr, output past 1 MiB is refused, a hung one is killed after a short grace, an answer is dropped when the pane moved to another conversation meanwhile, and the same pane id in two sessions no longer shares one lock. ([3cccd84a](https://github.com/GGGODLIN/collie/commit/3cccd84a))
+- **The phone can retell a Claude session in plain words.** With `retell.toml` naming your cc-sidecar-waitwhat command, the pane sheet offers Plain (the last turn) and Lost (the whole session), shown in a reading sheet and sharing the sidecar's prompts and cache (ADR 9005). A sidecar that exits non-zero fails with its own stderr, output past 1 MiB is refused, a hung one is killed after a short grace, an answer is dropped when the pane moved to another conversation meanwhile, and the same pane id in two sessions no longer shares one lock. ([3cccd84a](https://github.com/GGGODLIN/collie/commit/3cccd84a))
 
 ### Changed
 
@@ -90,7 +100,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 - **The dashboard summary now opens the pane switcher.** Tapping the status counts shows every agent pane in needs-you, unseen, recent, then working order; selecting a row opens that pane instead of scrolling the dashboard to its Space. ([2b242c8b](https://github.com/GGGODLIN/collie/commit/2b242c8b))
 - **Working panes now sit last in the pane switcher.** Needs-you and unseen work stays first, settled Recent panes follow, and active work moves to the bottom of the sheet. ([6270f823](https://github.com/GGGODLIN/collie/commit/6270f823))
 - **Each pane switcher section now lists the latest change first.** Inside Needs you, Ready, Recent and Working, the pane whose state changed most recently comes first, matching Herdr's priority panel; the sheet still holds its order while open. ([6b9d5cc8](https://github.com/GGGODLIN/collie/commit/6b9d5cc8))
-- **The in-pane switcher now matches the dashboard's attention groups.** Opening it by tap or pull fixes the pane and shell list until it closes, so polling cannot move a row under your thumb; Shells and Launch remain available (ADR 0073). ([2316492b](https://github.com/GGGODLIN/collie/commit/2316492b))
+- **The in-pane switcher now matches the dashboard's attention groups.** Opening it by tap or pull fixes the pane and shell list until it closes, so polling cannot move a row under your thumb; Shells and Launch remain available (ADR 9004). ([2316492b](https://github.com/GGGODLIN/collie/commit/2316492b))
 - **The pane mirror hides the wait-what band.** The `cc-mod-waitwhat` buttons and recap line above Claude's input box no longer show on the phone, where they cannot be tapped; the retell sheet and pane description cover them. Fork-only, see `FORK.md`. ([d5ecba9b](https://github.com/GGGODLIN/collie/commit/d5ecba9b))
 - **Updates now come from this fork's releases.** `collie update`, `collie doctor` and the in-app update banner read `GGGODLIN/collie` unless `COLLIE_UPDATE_REPO` names another repository, and `main` moves only when a release is cut. ([17498f53](https://github.com/GGGODLIN/collie/commit/17498f53))
 

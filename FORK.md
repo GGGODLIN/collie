@@ -56,12 +56,12 @@ Each entry says what it is, where it lives, and what it assumes.
   `--session-id <id> --json`, and read its JSON answer.
 - **Where.** [`bridge/retell.ts`](/bridge/retell.ts),
   [`web/src/components/retell-sheet.tsx`](/web/src/components/retell-sheet.tsx),
-  [ADR 0074](/.adr/0074-retell-is-a-one-shot-operator-child.md).
+  [ADR 9005](/.adr/9005-retell-is-a-one-shot-operator-child.md).
 - **Assumes.** The operator's own [cc-sidecar-waitwhat](https://github.com/GGGODLIN/cc-sidecar-waitwhat)
   (`ww`): its flags and its JSON shape are the contract. The account switch that landed in the same
   commit is general and is not part of this entry.
 - **To upstream.** Only with the argv and answer shape documented as Collie's own contract, and
-  ADR 0074's security exception accepted by the maintainer.
+  ADR 9005's security exception accepted by the maintainer.
 
 ### The live e2e suite in e2e-live (2026-09-25)
 
@@ -81,7 +81,7 @@ Each entry says what it is, where it lives, and what it assumes.
 - **Where.** [`web/src/lib/harness/claude/waitwhat-band.ts`](/web/src/lib/harness/claude/waitwhat-band.ts),
   applied after `stripChrome` in [`web/src/lib/harness/claude/index.ts`](/web/src/lib/harness/claude/index.ts).
 - **Assumes.** The operator runs that mod, whose labels are in Traditional Chinese. On the phone its
-  buttons are dead text; the retell sheet (ADR 0074) and the pane description replace them.
+  buttons are dead text; the retell sheet (ADR 9005) and the pane description replace them.
 - **To upstream.** It would need to become a general rule, for example an operator-declared list of
   band headers to hide, instead of one mod's labels written into the code.
 

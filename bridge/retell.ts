@@ -5,7 +5,7 @@ import { createOperatorFileReader, diskIo, type OperatorFileIo } from "./operato
 // cc-sidecar-waitwhat (`ww`) so the prompts, the turn selection and the answer cache stay the ones
 // the terminal and the in-Claude mod already share — Collie writes no prompt of its own.
 //
-// This is the second exception to "the bridge spawns no child for content" (ADR 0074): it exists
+// This is the second exception to "the bridge spawns no child for content" (ADR 9005): it exists
 // only while the operator's `retell.toml` names a command, and each request is ONE short-lived child
 // with a fixed argv — never a shell, never a daemon, never an argument the phone chose. The phone
 // names a pane and one of two modes; the bridge maps the pane to the session id the multiplexer

@@ -58,7 +58,7 @@ export const API_ERROR_CODES = [
   "launch.not_allowlisted",
   "launch.pane_unknown",
 
-  // Switch account / retell — POST /api/pane/:id/{switch-account,retell} (ADR 0074)
+  // Switch account / retell — POST /api/pane/:id/{switch-account,retell} (ADR 9005)
   "account.not_allowlisted",
   "account.not_claude",
   "account.confirm_interrupt",

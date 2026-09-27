@@ -60,7 +60,7 @@ let currentStt: SttCapability | null = null;
 // on purpose: both mean "nothing said otherwise", and lib/attachments.ts answers both with the
 // contract that shipped before attachments existed — 10 MB, images only.
 let currentUpload: UploadCapability | null = null;
-// The operator's `accounts.toml` labels and whether `retell.toml` names a command (ADR 0074). Empty
+// The operator's `accounts.toml` labels and whether `retell.toml` names a command (ADR 9005). Empty
 // and false until a read succeeds, which is also what a host that declared neither sends.
 let currentAccounts: readonly string[] = [];
 let currentRetell = false;

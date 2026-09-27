@@ -582,7 +582,7 @@ export function bridgeConfigBody(opts: {
   stt?: SttCapability;
   /** Labels of the operator's `accounts.toml` rows. Same omit-when-empty rule as `operatorCommands`. */
   accounts?: readonly string[];
-  /** Whether `retell.toml` names a command. Omitted when it does not (ADR 0074). */
+  /** Whether `retell.toml` names a command. Omitted when it does not (ADR 9005). */
   retell?: boolean;
   /**
    * What this host accepts as an attachment. Optional here for the reason `mux` is — the crew-mode
@@ -836,7 +836,7 @@ export function startServer(opts: {
   const operatorFonts = createOperatorFonts(cfg.themeFile);
   // Its sibling too, on the same contract: one reader, one mtime cache, launchers.toml off the hot path.
   const operatorLaunchers = createOperatorLaunchers(cfg.launchersFile);
-  // Two more on that contract: the switch-account allowlist and the retell command (ADR 0074).
+  // Two more on that contract: the switch-account allowlist and the retell command (ADR 9005).
   const operatorAccounts = createOperatorAccounts(cfg.accountsFile);
   const operatorRetell = createOperatorRetell(cfg.retellFile);
   // The sixth on that contract: the operator's own prompt-cache TTLs, cache-rules.toml off the hot path.
@@ -3202,7 +3202,7 @@ export async function switchAccountPane(
 const retellingPanes = new Set<string>();
 
 // Retell a Claude pane's last turn ("plain") or whole session ("lost") with the operator's own
-// sidecar (bridge/retell.ts, ADR 0074). Off unless `retell.toml` names a command.
+// sidecar (bridge/retell.ts, ADR 9005). Off unless `retell.toml` names a command.
 export async function retellPane(
   engine: StateEngine,
   paneId: string,

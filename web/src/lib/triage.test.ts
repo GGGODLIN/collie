@@ -116,7 +116,7 @@ describe("triage — bucketing", () => {
 
 describe("triage — ordering: the latest state change first, as Herdr's priority panel", () => {
   // Herdr's `agent_panel_sort = "priority"` orders by status, then the newest state change; the
-  // switcher mirrors it (ADR 0072). The sheet freezes its rows when it opens, so this never moves a
+  // switcher mirrors it (ADR 9003). The sheet freezes its rows when it opens, so this never moves a
   // row under a thumb.
   it("orders an attention section newest first", () => {
     const s = triage([

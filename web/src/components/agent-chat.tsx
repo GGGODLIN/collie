@@ -788,7 +788,7 @@ export function AgentChat({
   // loud. Hiding it is what leaves someone wondering whether Collie is broken.
   const sessionLog = useMuxCapability("agentSessionRef", scope);
   const historyAvailable = Boolean(agent?.hasSession) && sessionLog.capable;
-  // "Plain" / "lost" retellings (ADR 0074): the host's own sidecar reads this host's transcripts, so
+  // "Plain" / "lost" retellings (ADR 9005): the host's own sidecar reads this host's transcripts, so
   // only a local Claude pane with a session qualifies, and the route is a write because each one is
   // a paid model call.
   const retellEnabled = useRetellEnabled();

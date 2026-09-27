@@ -1007,7 +1007,7 @@ export type ActionResponse =
       detail?: ApiErrorDetail;
     };
 
-/** POST /api/pane/:id/retell — a plain or lost retelling of the pane's Claude session (ADR 0074). */
+/** POST /api/pane/:id/retell — a plain or lost retelling of the pane's Claude session (ADR 9005). */
 export type RetellResponse =
   | { ok: true; mode: "plain" | "lost"; label: string; answer: string; cached: boolean; source: string }
   | { ok: false; error: string; code?: ApiErrorCode; detail?: ApiErrorDetail };
@@ -1285,7 +1285,7 @@ export interface BridgeConfig {
    * Absent when the file declares none, so the phone draws no such row.
    */
   accounts?: string[];
-  /** Present when `retell.toml` names a command, so the phone draws "Plain" / "Lost" (ADR 0074). */
+  /** Present when `retell.toml` names a command, so the phone draws "Plain" / "Lost" (ADR 9005). */
   retell?: true;
   /**
    * What this collie accepts as an attachment. Mirrors `UploadCapability` in bridge/types.ts.

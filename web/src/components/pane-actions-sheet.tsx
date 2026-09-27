@@ -78,7 +78,7 @@ interface PaneActionsSheetProps {
    *  a device that never asked for zen sees a sheet byte-identical to today's. */
   onZen?: () => void;
   /** Ask for a plain (last turn) or lost (whole session) retelling of this pane's Claude session
-   *  (ADR 0074). Absence is the gate, as for find and history: the pane header passes it only when
+   *  (ADR 9005). Absence is the gate, as for find and history: the pane header passes it only when
    *  the host has a retell command, the pane is a local Claude with a session, and this device may
    *  write. */
   onRetell?: (mode: RetellMode) => void;

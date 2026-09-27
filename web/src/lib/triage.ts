@@ -3,7 +3,7 @@
 // summary line), kept in one place so no two surfaces can disagree about what needs you.
 //
 // It classifies every pane; the dashboard keeps place order (ADR 0063), while the two operator-opened
-// switchers arrange a frozen snapshot by bucket (ADR 0073).
+// switchers arrange a frozen snapshot by bucket (ADR 9004).
 //
 // It puts each pane in a BUCKET and orders by its latest state change (see {@link triage}).
 // The two timestamps the bridge keeps per pane (bridge/activity.ts) still decide one bucket:
@@ -132,7 +132,7 @@ function sectionMeta() {
  *
  * ── INSIDE A BUCKET, THE LATEST STATE CHANGE FIRST ───────────────────────────
  * Herdr's own `agent_panel_sort = "priority"` orders its panel this way (status, then the newest
- * state change), and the operator reads both lists side by side, so the phone matches it (ADR 0072).
+ * state change), and the operator reads both lists side by side, so the phone matches it (ADR 9003).
  * A pane with no `lastActiveAt` (an older bridge) sinks below the timed ones and otherwise keeps the
  * order it was sent. The switcher freezes its rows when it opens, so this does not move a row under
  * a thumb; place-ordered surfaces never call this for position (ADR 0063).

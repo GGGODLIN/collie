@@ -161,11 +161,11 @@ bar_label = "Status"
 On a Claude pane, matching rows appear first and the maintained reference commands remain searchable.
 An exact-name row replaces that reference row without lowering its dangerous classification. Other harnesses
 still display only matching rows. The narrowest scope wins, as documented in
-[ADR 0070](../.adr/0070-claude-operator-commands-join-the-reference-catalog.md).
+[ADR 9001](../.adr/9001-claude-operator-commands-join-the-reference-catalog.md).
 
 To verify, open a pane and tap **/**; your rows appear on the first screen. Tap one and Collie puts
 its command in the composer without sending it
-([ADR 0071](../.adr/0071-the-agent-palette-stages-never-sends.md)).
+([ADR 9002](../.adr/9002-the-agent-palette-stages-never-sends.md)).
 
 ### Putting a command on the actions row
 
@@ -369,7 +369,7 @@ in a reading sheet on the same screen.
 alike. Each request runs one child for at most 180 seconds.
 
 > **Note.** Without this file the rows do not appear. Where the model call goes is decided by your
-> `command`: `--source http` keeps it on the local proxy (ADR 0074).
+> `command`: `--source http` keeps it on the local proxy (ADR 9005).
 
 ## Your own typefaces
 

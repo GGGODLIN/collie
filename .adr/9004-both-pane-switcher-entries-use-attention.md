@@ -1,10 +1,10 @@
-# 0073 — Both pane switcher entries use attention
+# 9004 — Both pane switcher entries use attention
 
 - **Status:** Accepted
 - **Date:** 2026-09-25
 - **Shipped in:** pending
 - **Amends:** [0063](./0063-a-pane-keeps-its-place-when-its-state-changes.md) and
-  [0072](./0072-the-switcher-orders-a-section-by-its-latest-state-change.md), in scope: the
+  [9003](./9003-the-switcher-orders-a-section-by-its-latest-state-change.md), in scope: the
   in-pane switcher sheet
 - **Trail:** Operator discussion on 2026-09-25 ("對，我要統一") ·
   `web/src/components/agent-chat.tsx` · `web/src/routes/home.tsx` · `DESIGN.md` §2
@@ -33,5 +33,5 @@ and space view do not change their order.
   its Shells section. Closing and reopening refreshes the list.
 - The switcher may briefly show a pane that has since closed. Selection still uses the pane's own
   address; this snapshot promises a stable choice, not a fresh existence check.
-- The attention-section ordering from 0072 now applies to the in-pane sheet too, without changing
+- The attention-section ordering from 9003 now applies to the in-pane sheet too, without changing
   any place-ordered surface.

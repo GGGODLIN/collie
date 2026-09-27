@@ -1,4 +1,4 @@
-# 0074 — A retelling is one short-lived child the operator named, never a service or a prompt Collie owns
+# 9005 — A retelling is one short-lived child the operator named, never a service or a prompt Collie owns
 
 Status: **Accepted** (2026-09-26)
 
