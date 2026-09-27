@@ -407,13 +407,16 @@ describe("updateCheckout", () => {
    * answered AT THE UPSTREAM REF, never at the remote's default tip — that distinction is the whole
    * point of the gate (see below).
    */
+  const PINNED = "c0ffee1234";
   const linked = (branch: string, upstreamVersion: string, installed = "0.31.1") =>
     harness({
       installed,
       answers: [
         ...LINKED,
         [`${GIT} rev-parse --abbrev-ref --symbolic-full-name @{u}`, { stdout: `origin/${branch}\n` }],
-        [`${GIT} show origin/${branch}:herdr-plugin.toml`, { stdout: `version = "${upstreamVersion}"\n` }],
+        // The upstream ref is pinned to ONE commit, and both the gate and the move take that commit.
+        [`${GIT} rev-parse --verify origin/${branch}^{commit}`, { stdout: `${PINNED}\n` }],
+        [`${GIT} show ${PINNED}:herdr-plugin.toml`, { stdout: `version = "${upstreamVersion}"\n` }],
         // The remote's DEFAULT branch is a major ahead. Reading the gate off it would refuse a pull
         // that never leaves the major — so nothing may ever consult it.
         [`${GIT} show FETCH_HEAD:herdr-plugin.toml`, { stdout: 'version = "9.0.0"\n' }],
@@ -425,8 +428,8 @@ describe("updateCheckout", () => {
     expect(updateCheckout(h.deps).code).toBe(EXIT.OK);
     // Plain `fetch origin` (the configured refspec), so the remote-tracking ref the pull uses is the
     // one that advanced — `fetch origin HEAD` would only have moved FETCH_HEAD.
-    expect(gitRuns(h.exec)).toEqual([`${GIT} fetch origin`, `${GIT} pull --ff-only`]);
-    expect(h.io.stdout.join("\n")).toContain("git pull --ff-only");
+    expect(gitRuns(h.exec)).toEqual([`${GIT} fetch origin`, `${GIT} merge --ff-only ${PINNED}`]);
+    expect(h.io.stdout.join("\n")).toContain("git merge --ff-only");
   });
 
   test("the gate reads the BRANCH'S OWN upstream, not the remote's default tip", () => {
@@ -435,8 +438,8 @@ describe("updateCheckout", () => {
     // only ever fast-forwards within major 0.
     const h = linked("v0.x", "0.32.0");
     expect(updateCheckout(h.deps).code).toBe(EXIT.OK);
-    expect(gitRuns(h.exec)).toEqual([`${GIT} fetch origin`, `${GIT} pull --ff-only`]);
-    expect(h.exec.calls).toContain(`${GIT} show origin/v0.x:herdr-plugin.toml`);
+    expect(gitRuns(h.exec)).toEqual([`${GIT} fetch origin`, `${GIT} merge --ff-only ${PINNED}`]);
+    expect(h.exec.calls).toContain(`${GIT} rev-parse --verify origin/v0.x^{commit}`);
     expect(h.exec.calls.some((c) => c.includes("FETCH_HEAD:herdr-plugin.toml"))).toBe(false);
     expect(h.io.stdout.join("\n")).not.toContain("MAJOR");
   });
@@ -458,10 +461,10 @@ describe("updateCheckout", () => {
     expect(h.io.stdout.join("\n")).toContain("update-major --plugin herdr.collie-next");
   });
 
-  test("--major lets the same clone through, on its branch and with its ff-only pull", () => {
+  test("--major lets the same clone through, on its branch and with its ff-only move", () => {
     const h = linked("main", "1.0.0");
     expect(updateCheckout(h.deps, { crossMajor: true }).code).toBe(EXIT.OK);
-    expect(gitRuns(h.exec)).toEqual([`${GIT} fetch origin`, `${GIT} pull --ff-only`]);
+    expect(gitRuns(h.exec)).toEqual([`${GIT} fetch origin`, `${GIT} merge --ff-only ${PINNED}`]);
   });
 
   test("a branch with no upstream is left to git: no gate, and the pull reports its own refusal", () => {

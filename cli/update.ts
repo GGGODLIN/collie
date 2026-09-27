@@ -598,7 +598,7 @@ export function updateCheckout(
     : updateLinked(deps, git, installed, opts.crossMajor, toTag);
 }
 
-/** A linked clone keeps its branch and its `--ff-only` pull; the gate runs BEFORE the pull. */
+/** A linked clone keeps its branch and fast-forwards it; the gate runs BEFORE the move, on the same commit. */
 function updateLinked(
   deps: UpdateDeps,
   git: (args: readonly string[]) => number,
@@ -633,22 +633,33 @@ function updateLinked(
   // either — `git pull --ff-only` fails with its own "no tracking information" message, which says
   // more about the checkout than anything we could add. Let it speak; a pull that cannot happen
   // cannot cross a major.
-  if (ref !== "") {
-    const fetched = manifestVersionFrom(
-      deps.exec.capture("git", gitArgs(root, ["show", `${ref}:herdr-plugin.toml`])).stdout,
-    );
-    if (!crossMajor && majorVerdict(installed, fetched) === "crosses") {
-      deps.io.out(`refusing to update: ${installed} → ${fetched} (${ref}) crosses a MAJOR version.`);
-      deps.io.out("A major means you have to change something — so it is never taken by a routine update.");
-      deps.io.out(`Read its release notes, then consent to it with:  ${majorAction(deps.ctx.instance)}`);
-      deps.io.out("(nothing was pulled — this checkout is unchanged)");
-      return { code: EXIT.OK, moved: false, to: null, higher: null };
-    }
+  if (ref === "") {
+    deps.io.out("updating Collie (git pull --ff-only)…");
+    const code = git(["pull", "--ff-only"]);
+    return { code, moved: code === EXIT.OK && headNow() !== before, to: null, higher: null };
   }
-  deps.io.out("updating Collie (git pull --ff-only)…");
-  const code = git(["pull", "--ff-only"]);
-  // A `--ff-only` pull that finds nothing to take succeeds and moves no commit — the linked-clone
-  // spelling of "already current". Compare HEAD across the pull rather than parsing git's wording:
+  // The gate and the move take ONE commit, pinned here. `git pull` would fetch a second time, and a
+  // major published between that fetch and this one's gate would land unconsented.
+  const pinned = deps.exec.capture("git", gitArgs(root, ["rev-parse", "--verify", `${ref}^{commit}`]));
+  const target = pinned.found && pinned.code === 0 ? pinned.stdout.trim() : "";
+  if (target === "") {
+    deps.io.err(`error: could not resolve ${ref} after fetching — nothing was changed.`);
+    return { code: EXIT.FAIL, moved: false, to: null, higher: null };
+  }
+  const fetched = manifestVersionFrom(
+    deps.exec.capture("git", gitArgs(root, ["show", `${target}:herdr-plugin.toml`])).stdout,
+  );
+  if (!crossMajor && majorVerdict(installed, fetched) === "crosses") {
+    deps.io.out(`refusing to update: ${installed} → ${fetched} (${ref}) crosses a MAJOR version.`);
+    deps.io.out("A major means you have to change something — so it is never taken by a routine update.");
+    deps.io.out(`Read its release notes, then consent to it with:  ${majorAction(deps.ctx.instance)}`);
+    deps.io.out("(nothing was pulled — this checkout is unchanged)");
+    return { code: EXIT.OK, moved: false, to: null, higher: null };
+  }
+  deps.io.out("updating Collie (git merge --ff-only)…");
+  const code = git(["merge", "--ff-only", target]);
+  // A `--ff-only` merge onto a commit HEAD already holds succeeds and moves nothing — the linked-clone
+  // spelling of "already current". Compare HEAD across it rather than parsing git's wording:
   // "Already up to date." is a translated, version-dependent sentence, and the sha is neither.
   return { code, moved: code === EXIT.OK && headNow() !== before, to: null, higher: null };
 }
