@@ -22,8 +22,8 @@ What it adds over upstream is in [`CHANGELOG.md`](./CHANGELOG.md), from `1.14.0`
 changes that only make sense on the maintainer's own setup are in [`FORK.md`](./FORK.md), each with
 what it assumes; without those tools, they stay out of the way.
 
-`main` moves only when a release is cut, so what you install is always a release. Day-to-day work
-happens on `dev`, which is not tested for anyone else's use.
+`main` moves only when a release is cut or the docs change, so the code you install is always a
+release's. Day-to-day work happens on `dev`, which is not tested for anyone else's use.
 
 ### Your agents on the iPhone's Dynamic Island
 
