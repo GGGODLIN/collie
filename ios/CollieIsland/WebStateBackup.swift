@@ -16,7 +16,9 @@ enum WebStateBackup {
   static let restoredName = "collieRestored"
   static let wipeNotification = Notification.Name("CollieIslandDebugWipe")
   private static let service = "\(Bundle.main.bundleIdentifier ?? "collieisland").webstate"
-  private static let account = "localStorage"
+  // One backup per Collie origin: a build pointed at another Collie must not restore this one's
+  // pairing token into that site's page.
+  private static var account: String { "localStorage \(Config.collieOrigin ?? "none")" }
 
   static func load() -> [String: String] {
     let query: [String: Any] = [
@@ -115,7 +117,9 @@ final class WebStateBackupHandler: NSObject, WKScriptMessageHandler {
   private var last: [String: String]?
 
   func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-    guard message.frameInfo.securityOrigin.host == Config.collieURL.host,
+    let origin = message.frameInfo.securityOrigin
+    guard message.frameInfo.isMainFrame,
+      Config.isCollie(scheme: origin.protocol, host: origin.host, port: origin.port),
       let body = message.body as? [String: Any]
     else { return }
     if message.name == WebStateBackup.restoredName {

@@ -10,6 +10,9 @@ struct CollieIslandApp: App {
   // empty, which wiped Collie's pairing and settings (2026-09-27). So the web view is only built
   // once protected data is available and the app has been in the foreground.
   @State private var webReady = false
+  // Any app can open collieisland://debug-wipe, and iOS's own prompt only asks whether to open Collie,
+  // so the wipe waits for a confirmation that says what it destroys.
+  @State private var confirmWipe = false
 
   var body: some Scene {
     WindowGroup {
@@ -38,13 +41,22 @@ struct CollieIslandApp: App {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.protectedDataDidBecomeAvailableNotification)) { _ in
           if phase == .active { webReady = true }
         }
+        .alert("清除 app 裡的網頁資料？", isPresented: $confirmWipe) {
+          Button("清除", role: .destructive) {
+            DiagLog.write("debug-wipe confirmed")
+            NotificationCenter.default.post(name: WebStateBackup.wipeNotification, object: nil)
+          }
+          Button("取消", role: .cancel) { DiagLog.write("debug-wipe cancelled") }
+        } message: {
+          Text("這是測試備份用的連結。未送出的草稿會被刪掉，設定和配對會從 Keychain 還原。")
+        }
     }
   }
 
   private func open(_ link: URL) {
     if link.scheme == Deeplink.scheme && link.host == "debug-wipe" {
-      DiagLog.write("debug-wipe requested")
-      NotificationCenter.default.post(name: WebStateBackup.wipeNotification, object: nil)
+      DiagLog.write("debug-wipe requested; asking first")
+      confirmWipe = true
       return
     }
     var target = Config.collieURL

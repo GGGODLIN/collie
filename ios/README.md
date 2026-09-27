@@ -20,6 +20,8 @@ You need a Mac with Xcode, an iPhone on iOS 18 or newer, and a Collie the phone 
    ```
 
 2. Fill in its values: your Team ID, a bundle ID prefix of your own, and your Collie's address.
+   `ISLAND_SHOW_DETAIL = YES` also shows what the top pane is doing on the island and the lock
+   screen; that line can be your newest prompt word for word, so it is off by default.
 3. Connect the iPhone to the Mac with a cable and trust the Mac on the phone.
 4. Open `ios/CollieIsland.xcodeproj` in Xcode and sign in to your Apple ID under Settings → Accounts.
 5. Choose your iPhone as the run destination and press Run.
@@ -93,7 +95,8 @@ foreground. `RestartIslandIntent` is the exception and can restart it in the bac
   `xcrun devicectl device copy from --device <id> --domain-type appDataContainer --domain-identifier <your bundle ID> --source Documents/island.log --destination island.log`.
 - The Collie inside the app does not share storage with the home-screen PWA, so pair it once more.
   After that its settings and pairing are backed up to the Keychain and restored if the web storage
-  is ever emptied (`collieisland://debug-wipe` tests that). The web view is not created before the
+  is ever emptied (`collieisland://debug-wipe` tests that, after a confirmation, and deletes unsent
+drafts). The backup is kept per Collie address, so a build pointed at another Collie starts clean. The web view is not created before the
   phone's first unlock, because "Always" location lets iOS start the app earlier than that.
 - Web Push does not work inside the app; the PWA keeps delivering notifications.
 - The app's own text (the location prompt, the Control Center button) is in Traditional Chinese.

@@ -132,7 +132,7 @@ final class Monitor: ObservableObject {
       }
       if ms > 2000 { DiagLog.write("poll slow \(ms)ms") }
       guard let snap = try? JSONDecoder().decode(Snapshot.self, from: data) else { return nil }
-      return summarize(snap.agents)
+      return summarize(snap.agents, showDetail: Config.showDetail)
     } catch {
       let ms = Int(Date().timeIntervalSince(began) * 1000)
       DiagLog.write("poll failed in \(ms)ms: \((error as? URLError)?.code.rawValue ?? -1) \(error.localizedDescription)")

@@ -54,7 +54,7 @@ struct WebView: UIViewRepresentable {
       initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType,
       decisionHandler: @escaping (WKPermissionDecision) -> Void
     ) {
-      decisionHandler(origin.host == Config.collieURL.host ? .grant : .prompt)
+      decisionHandler(Config.isCollie(scheme: origin.protocol, host: origin.host, port: origin.port) ? .grant : .prompt)
     }
   }
 }

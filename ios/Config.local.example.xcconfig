@@ -12,6 +12,10 @@ BUNDLE_ID_PREFIX = com.yourname
 // printed. xcconfig reads `//` as a comment, so write the scheme as `https:/$()/`.
 COLLIE_URL = https:/$()/your-mac.your-tailnet.ts.net:8443
 
+// YES shows what the top pane is doing on the island and the lock screen. That line can be your
+// newest prompt word for word, readable without unlocking the phone, so it is off unless you say so.
+ISLAND_SHOW_DETAIL = NO
+
 // The rest is read only by scripts/resign.sh. The iPhone's CoreDevice identifier, from
 // `xcrun devicectl list devices`:
 ISLAND_DEVICE_ID =

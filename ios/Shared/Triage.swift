@@ -36,7 +36,9 @@ func bucket(of a: Agent) -> Bucket {
   return .recent
 }
 
-func summarize(_ agents: [Agent]) -> IslandAttributes.ContentState {
+/// `showDetail` puts the top pane's description (possibly its newest prompt, verbatim) on the island
+/// and the lock screen; off, only the counts and the pane's name are shown.
+func summarize(_ agents: [Agent], showDetail: Bool) -> IslandAttributes.ContentState {
   let tagged = agents.map { (agent: $0, bucket: bucket(of: $0)) }
   let count = { (b: Bucket) in tagged.filter { $0.bucket == b }.count }
   let top = tagged
@@ -50,7 +52,7 @@ func summarize(_ agents: [Agent]) -> IslandAttributes.ContentState {
     ready: count(.ready),
     working: count(.working),
     headline: title ?? "Collie",
-    detail: top?.agent.description?.now ?? "",
+    detail: showDetail ? (top?.agent.description?.now ?? "") : "",
     paneId: top?.agent.paneId,
     bucket: top?.bucket ?? .recent,
     offline: false)

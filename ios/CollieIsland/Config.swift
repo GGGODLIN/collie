@@ -13,6 +13,23 @@ enum Config {
   }()
   // A placeholder while COLLIE_URL is missing: nothing is fetched then, and the app says why.
   static let collieURL = configuredURL ?? URL(string: "about:blank")!
+  // ISLAND_SHOW_DETAIL: whether the island and lock screen show what the pane is doing, which can be
+  // the newest prompt word for word. Off unless the build says YES.
+  static let showDetail = (Bundle.main.object(forInfoDictionaryKey: "CollieShowDetail") as? String) == "YES"
+
+  /// The configured Collie as one origin, `scheme://host:port`, with the scheme's default port filled
+  /// in so an explicit `:443` and a bare https URL name the same place.
+  static var collieOrigin: String? {
+    guard let url = configuredURL, let scheme = url.scheme, let host = url.host else { return nil }
+    return "\(scheme)://\(host):\(url.port ?? (scheme == "https" ? 443 : 80))"
+  }
+
+  /// Whether a WebKit origin is exactly the configured Collie: scheme, host AND port. A host match
+  /// alone would trust another service on the same machine.
+  static func isCollie(scheme: String, host: String, port: Int) -> Bool {
+    let effective = port != 0 ? port : (scheme == "https" ? 443 : 80)
+    return collieOrigin == "\(scheme)://\(host):\(effective)"
+  }
   static let pollSeconds: UInt64 = 5
   // Failed polls in a row before the island admits it is showing stale numbers.
   static let offlineAfterFailures = 6

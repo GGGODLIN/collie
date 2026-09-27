@@ -10,6 +10,8 @@
 	<string>選「永遠」後，用捷徑或控制中心重開靈動島時也能在背景持續更新。只用粗略位置，不會記錄或上傳。</string>
 	<key>CollieURL</key>
 	<string>$(COLLIE_URL)</string>
+	<key>CollieShowDetail</key>
+	<string>$(ISLAND_SHOW_DETAIL)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
