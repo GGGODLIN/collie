@@ -751,12 +751,18 @@ This fork keeps two branches and its own version line; both override upstream's 
 
 ### Version numbers
 
-The fork's version is its own SemVer, independent of upstream's number. `2.14.0` was the one-time
-starting point (fork `1.14.0`, published earlier, stays as it is: based on upstream 1.13.3).
+The fork's version is its own SemVer, independent of upstream's number, continuing from fork
+`1.14.0` (based on upstream 1.13.3); `1.15.0` is the first release under this rule.
 
 - **Classify each release by what it asks of this fork's operators,** the upstream sync included:
-  a compatible fix is a patch (`2.14.1`), a compatible feature is a minor (`2.15.0`), a change the
-  operator must act on is a major (`3.0.0`). Take the *Versioning* recipe's axis rules as written.
+  a compatible fix is a patch (`1.15.1`), a compatible feature is a minor (`1.16.0`), a change the
+  operator must act on is a major (`2.0.0`). Take the *Versioning* recipe's axis rules as written.
+- **The same number can mean two releases.** Upstream will publish its own `1.15.0`; in docs, commit
+  messages and conversation, say "fork 1.15.0" or "upstream 1.15.0". No code compares this fork's
+  version with upstream's: crew skew is amber only, and features are keyed on the protocol version.
+- **The first fork major trips upstream's 2.0 clock.** `cli/program.test.ts` fails once the package
+  major reaches 2 until ADR 0038's `pack` names are gone; `bridge/removal-schedule.test.ts` lists
+  them. A fork 2.0.0 does that removal in the same release.
 - **Never copy upstream's number.** An upstream release is merged into `dev` and reaches operators
   in the next fork release, whose number follows the rule above. Only a strict `vX.Y.Z` is ever
   offered to a stable install (`SEMVER_TAG` in `bridge/update.ts`), so no suffix scheme exists here.
