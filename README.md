@@ -75,6 +75,7 @@ install the tool, and Collie runs the same without them.
 | --- | --- | --- |
 | A pane's description can use Claude's own recap, and the mirror hides the tool's button row | [cc-mod-waitwhat](https://github.com/GGGODLIN/cc-mod-waitwhat) | The description uses the waiting approval or your newest prompt |
 | *Plain* and *Lost* retell a Claude session in plain words | [cc-sidecar-waitwhat](https://github.com/GGGODLIN/cc-sidecar-waitwhat), named in `retell.toml` ([Configure](./docs/configure.md#retell-a-claude-session)) | The two rows are not offered |
+| Agents' state on the iPhone's Dynamic Island | The iPhone app in [`ios/`](./ios/README.md), built with your own Apple ID; it reads any Collie | Nothing changes; Collie does not know about it |
 
 The title bar reads COLLIE-GGGODLIN, so this build is told apart from an upstream install.
 

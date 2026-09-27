@@ -1,0 +1,16 @@
+// Copy this file to Config.local.xcconfig and fill in the four values. git ignores that copy.
+
+// Your Apple Team ID: Xcode → Settings → Accounts → your Apple ID → the team's ID (10 characters).
+// A free Apple ID works; its Personal Team signs the app for 7 days at a time.
+DEVELOPMENT_TEAM = ABCDE12345
+
+// Reverse-DNS prefix for the app's bundle IDs. The app becomes <prefix>.collieisland and the widget
+// <prefix>.collieisland.widget. It must be yours: an ID another team registered will not sign.
+BUNDLE_ID_PREFIX = com.yourname
+
+// Your Collie's address as the phone reaches it, usually the tailnet front door `collie start`
+// printed. xcconfig reads `//` as a comment, so write the scheme as `https:/$()/`.
+COLLIE_URL = https:/$()/your-mac.your-tailnet.ts.net:8443
+
+// Only scripts/resign.sh uses this: the iPhone's CoreDevice identifier, from `xcrun devicectl list devices`.
+ISLAND_DEVICE_ID =

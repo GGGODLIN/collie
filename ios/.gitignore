@@ -1,0 +1,10 @@
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+.DS_Store
+
+# Your own values; copy Config.local.example.xcconfig to create it.
+Config.local.xcconfig
+# The maintainer's own machine tooling (LAN diagnostics, a root helper, launchd jobs).
+private/
