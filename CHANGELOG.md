@@ -58,6 +58,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 - **A busy pane keeps its description.** When a tool-heavy turn pushes your newest prompt out of the journal tail, the bridge keeps the prompt it already read, or reads a wider window once, instead of dropping the pane's description.
 - **A reply that finishes while you watch now becomes its card.** The full-reply read waited for the whole screen to hold still, so a statusline that redraws every second kept it from ever firing after the pane opened; stillness is now judged without the input box and statusline.
 - **`collie config` lists the transcript conversion setting.** `COLLIE_STT_CONVERT` now has its row beside the other speech-to-text settings, so the schema check stays green and the setting shows up with its one allowed value, `zh-TW`.
+- **A reply that ends in a wrapped table still becomes its card.** Claude paints a wrapped table row line by line across its columns, so the screen read the row's cells in a different order than the journal and the card's identity check missed; the check now reads each wrapped row back in source order, found by counting the table's verticals so CJK cells count too.
 
 ## [1.13.3] - 2026-09-26
 
