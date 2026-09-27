@@ -13,14 +13,17 @@
 </p>
 
 > **Note.** This is [GGGODLIN's fork](https://github.com/GGGODLIN/collie) of
-> [AltanS/collie](https://github.com/AltanS/collie). It installs from source and tracks `main`; it
-> publishes no releases of its own. Everything below the fork section is upstream's README, unchanged.
+> [AltanS/collie](https://github.com/AltanS/collie). It installs from source and publishes its own
+> releases. Everything below the fork section is upstream's README, unchanged.
 
 ## This fork
 
-What it adds over upstream is listed under `## [Unreleased]` in [`CHANGELOG.md`](./CHANGELOG.md).
-The few changes that only make sense on the maintainer's own setup are in [`FORK.md`](./FORK.md),
-each with what it assumes; without those tools, they stay out of the way.
+What it adds over upstream is in [`CHANGELOG.md`](./CHANGELOG.md), from `1.14.0` on. The few
+changes that only make sense on the maintainer's own setup are in [`FORK.md`](./FORK.md), each with
+what it assumes; without those tools, they stay out of the way.
+
+`main` moves only when a release is cut, so what you install is always a release. Day-to-day work
+happens on `dev`, which is not tested for anyone else's use.
 
 ### Install from source
 
@@ -30,46 +33,44 @@ zellij). Have the multiplexer running first: `start` mirrors the one it finds ru
 when there is none.
 
 ```bash
-git clone https://github.com/GGGODLIN/collie.git ~/.local/share/collie &&
+git clone --single-branch https://github.com/GGGODLIN/collie.git ~/.local/share/collie &&
   cd ~/.local/share/collie && bash scripts/collie-ctl.sh build && bin/collie start
 ```
 
 Each step runs only if the one before it succeeded. If `~/.local/share/collie` already exists (an
 upstream install, say), the clone stops there and nothing is built over it; move it aside first.
+`--single-branch` fetches `main` alone, and later updates keep to it.
 
-Stay on `main`: the tags in this repository are upstream's older releases and carry none of the
-fork's changes. `start` and everything after it work as upstream documents them; see
+`start` and everything after it work as upstream documents them; see
 [`docs/install.md`](./docs/install.md), from *Then start it*.
 
 ### Update, and roll back
 
-Update with git, not with `collie update`. That verb and the in-app update banner follow upstream's
-releases, and `collie update` refuses a checkout whose `origin` is this fork.
-
-> **Caution.** Its refusal suggests setting `COLLIE_UPDATE_REPO` to the fork. Do not: the updater
-> would then force-checkout onto this repository's newest tag, an old upstream release, and leave
-> the fork's changes behind.
+`collie update` and the in-app update banner follow [this fork's
+releases](https://github.com/GGGODLIN/collie/releases). The update pulls `main`, rebuilds and
+restarts:
 
 ```bash
-cd ~/.local/share/collie && git rev-parse --short HEAD   # note it, in case you roll back
-cd ~/.local/share/collie && git pull --ff-only && bash scripts/collie-ctl.sh build && bin/collie restart
+cd ~/.local/share/collie && bin/collie update
 ```
 
-Each step runs only if the one before it succeeded, so a failed pull or build leaves the running
-Collie as it was. To go back to the build you noted, check it out, rebuild and restart:
+To go back to an earlier release, check out its tag, rebuild and restart:
 
 ```bash
-cd ~/.local/share/collie && git checkout <the-hash-you-noted> &&
+cd ~/.local/share/collie && git fetch --tags && git checkout v1.14.0 &&
   bash scripts/collie-ctl.sh build && bin/collie restart
 ```
 
-The checkout is then detached at that build. To return to the latest, switch back to `main`, pull
-and rebuild; checking out `main` alone changes the source, not the running Collie.
+The checkout is then detached at that release. To return to the latest, switch back to `main` and
+update; checking out `main` alone changes the source, not the running Collie.
 
 ```bash
-cd ~/.local/share/collie && git checkout main && git pull --ff-only &&
-  bash scripts/collie-ctl.sh build && bin/collie restart
+cd ~/.local/share/collie && git checkout main && bin/collie update
 ```
+
+> **Note.** An install made before 1.14.0 cannot pull the new `main`. Move
+> `~/.local/share/collie` aside and install again; settings, pairings and push subscriptions live
+> under `~/.config` and `~/.local/state`, not there.
 
 ### Optional companions
 

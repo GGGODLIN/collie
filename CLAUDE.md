@@ -734,6 +734,37 @@ point at the dev lane. Run it with `bash e2e-live/run.sh` (builds the world, run
 the world down). The world's agents are `ccp-free` Claudes, so a run spends only the free pool.
 Environment traps and trajectories live in `e2e-live/trajectories/`.
 
+## Fork branches and releases
+
+This fork keeps two branches, and the split overrides the personal-repo default of committing
+straight to `main`.
+
+- **`dev` takes every change.** Commit and push to `dev`, never to `main`. The operator's active
+  Collie runs a checkout of `dev`, so *Project mode*'s deploy step means rebuilding that checkout.
+- **`main` holds releases and nothing else.** It is upstream's history followed by one commit per
+  fork release, whose tree is exactly the tree of that release's commit on `dev`. `dev`'s own
+  history never reaches `main`: before 1.14.0 it carries material this fork does not publish.
+- **Version numbers are plain `x.y.z`, above both this fork's last release and upstream's newest.**
+  The updater offers only a strict `vX.Y.Z` to a stable install (`SEMVER_TAG` in `bridge/update.ts`),
+  so a tail like `-gg.1` would reach nobody.
+
+Cutting a release:
+
+1. On `dev`, make the ordinary `chore(release): x.y.z` commit (*Versioning* above), with each
+   CHANGELOG hash linked as `https://github.com/GGGODLIN/collie/commit/<hash>`.
+2. Build `main`'s commit from that tree. Add `-p <upstream commit>` when this release is the first
+   to carry an upstream merge, so GitHub does not count `main` as behind upstream.
+
+   ```bash
+   git commit-tree 'dev^{tree}' -p origin/main -m "chore(release): x.y.z"
+   ```
+
+3. Push that commit to `main` (`git push origin <sha>:main`) and wait for its CI run to pass.
+4. Tag that commit `vx.y.z` (annotated) and push the tag. Never push upstream's tags to `origin`.
+
+An upstream PR branches off `upstream/main` and takes its commits by cherry-pick; *Project mode*
+still decides when one may be opened.
+
 ## Personal changes go in FORK.md
 
 A change that only works on this operator's setup (their own mods, paths, labels or services) gets
