@@ -30,6 +30,10 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+### Docs
+
+- **The README shows the iPhone island and two fork features.** Screenshots of the Dynamic Island, its long-press view and the lock-screen card open the fork section, followed by the pane descriptions and approving from the list; all use made-up agents. The iPhone guide adds the one-time Live Activities prompt to its setup steps.
+
 ## [1.15.2] - 2026-09-27
 
 ### Changed
