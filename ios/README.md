@@ -67,8 +67,11 @@ bash ios/scripts/resign.sh --force
 ```
 
 Its log is `~/Library/Application Support/collie-island/resign.log`. To run it daily, point a
-launchd agent at it. Xcode reuses a still-valid profile, so the script moves this app's old profiles
-aside first; otherwise the expiry would not move.
+launchd agent at it: without `--force` it renews only once fewer than `ISLAND_RENEW_BELOW_DAYS` days
+remain (2 by default), so most runs leave the app alone. Xcode reuses a still-valid profile, so the
+script moves this app's old profiles aside first; otherwise the expiry would not move. With
+`ISLAND_RESTART_COREDEVICE = YES`, a failed install restarts this user's CoreDevice daemons and
+retries once; they serve every device the Mac talks to, so it is off by default.
 
 Reinstalling closes the app, and the island stays gone until it is restarted (next section).
 

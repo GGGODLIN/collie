@@ -12,9 +12,15 @@ setting() { sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*//p" "$ROOT/Config
 DEVICE="${COLLIE_ISLAND_DEVICE:-$(setting ISLAND_DEVICE_ID)}"
 TEAM="${COLLIE_ISLAND_TEAM:-$(setting DEVELOPMENT_TEAM)}"
 PREFIX="${COLLIE_ISLAND_BUNDLE_PREFIX:-$(setting BUNDLE_ID_PREFIX)}"
-# 7 = renew on every run. The user chose a nightly reinstall so a failure shows up the next
-# morning rather than days later; the island is gone from the run until the 08:00 shortcut.
-RENEW_BELOW_DAYS=7
+# Renew once fewer than this many days of the 7-day profile remain. Every renewal reinstalls, which
+# closes the app and takes the island down until it is restarted, so the default waits until the
+# profile is nearly spent. 7 renews on every run: a nightly reinstall that surfaces a failure the
+# next morning rather than days later.
+RENEW_BELOW_DAYS="${COLLIE_ISLAND_RENEW_BELOW_DAYS:-$(setting ISLAND_RENEW_BELOW_DAYS)}"
+RENEW_BELOW_DAYS="${RENEW_BELOW_DAYS:-2}"
+# Whether a failed install may restart this user's CoreDevice daemons and retry. They serve every
+# device this Mac talks to, not only this app, so it is off unless asked for.
+RESTART_COREDEVICE="${COLLIE_ISLAND_RESTART_COREDEVICE:-$(setting ISLAND_RESTART_COREDEVICE)}"
 APP="$ROOT/build/Build/Products/Debug-iphoneos/CollieIsland.app"
 
 mkdir -p "$STATE"
@@ -66,6 +72,7 @@ xcodebuild -project "$ROOT/CollieIsland.xcodeproj" -scheme CollieIsland -configu
 # daemons (launchd relaunches them on demand) fixed it on the spot, so retry once that way.
 install() { xcrun devicectl device install app --device "$DEVICE" "$APP" >"$STATE/last-install.log" 2>&1; }
 if ! install; then
+  [ "$RESTART_COREDEVICE" = "YES" ] || fail "install: iPhone unreachable? (see last-install.log)"
   log "install failed; restarting CoreDevice daemons and retrying"
   pkill -U "$(id -u)" -x CoreDeviceService; pkill -U "$(id -u)" -x remotepairingd
   install || fail "install: iPhone unreachable?"

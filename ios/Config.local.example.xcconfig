@@ -12,5 +12,12 @@ BUNDLE_ID_PREFIX = com.yourname
 // printed. xcconfig reads `//` as a comment, so write the scheme as `https:/$()/`.
 COLLIE_URL = https:/$()/your-mac.your-tailnet.ts.net:8443
 
-// Only scripts/resign.sh uses this: the iPhone's CoreDevice identifier, from `xcrun devicectl list devices`.
+// The rest is read only by scripts/resign.sh. The iPhone's CoreDevice identifier, from
+// `xcrun devicectl list devices`:
 ISLAND_DEVICE_ID =
+// Renew when fewer than this many days of the 7-day profile remain (7 = on every run). Each renewal
+// reinstalls the app, which takes the island down until it is restarted.
+ISLAND_RENEW_BELOW_DAYS = 2
+// YES lets a failed install restart this user's CoreDevice daemons and retry once. They serve every
+// device the Mac talks to, so leave it NO unless installs keep failing with "Could not allocate".
+ISLAND_RESTART_COREDEVICE = NO

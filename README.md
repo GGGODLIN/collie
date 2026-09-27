@@ -30,11 +30,12 @@ zellij). Have the multiplexer running first: `start` mirrors the one it finds ru
 when there is none.
 
 ```bash
-git clone https://github.com/GGGODLIN/collie.git ~/.local/share/collie
-cd ~/.local/share/collie
-bash scripts/collie-ctl.sh build
-bin/collie start
+git clone https://github.com/GGGODLIN/collie.git ~/.local/share/collie &&
+  cd ~/.local/share/collie && bash scripts/collie-ctl.sh build && bin/collie start
 ```
+
+Each step runs only if the one before it succeeded. If `~/.local/share/collie` already exists (an
+upstream install, say), the clone stops there and nothing is built over it; move it aside first.
 
 Stay on `main`: the tags in this repository are upstream's older releases and carry none of the
 fork's changes. `start` and everything after it work as upstream documents them; see
@@ -50,23 +51,24 @@ releases, and `collie update` refuses a checkout whose `origin` is this fork.
 > the fork's changes behind.
 
 ```bash
-cd ~/.local/share/collie
-git rev-parse --short HEAD          # note the build you are on, in case you roll back
-git pull --ff-only && bash scripts/collie-ctl.sh build && bin/collie restart
+cd ~/.local/share/collie && git rev-parse --short HEAD   # note it, in case you roll back
+cd ~/.local/share/collie && git pull --ff-only && bash scripts/collie-ctl.sh build && bin/collie restart
 ```
 
 Each step runs only if the one before it succeeded, so a failed pull or build leaves the running
 Collie as it was. To go back to the build you noted, check it out, rebuild and restart:
 
 ```bash
-git checkout <the-hash-you-noted> && bash scripts/collie-ctl.sh build && bin/collie restart
+cd ~/.local/share/collie && git checkout <the-hash-you-noted> &&
+  bash scripts/collie-ctl.sh build && bin/collie restart
 ```
 
 The checkout is then detached at that build. To return to the latest, switch back to `main`, pull
 and rebuild; checking out `main` alone changes the source, not the running Collie.
 
 ```bash
-git checkout main && git pull --ff-only && bash scripts/collie-ctl.sh build && bin/collie restart
+cd ~/.local/share/collie && git checkout main && git pull --ff-only &&
+  bash scripts/collie-ctl.sh build && bin/collie restart
 ```
 
 ### Optional companions
@@ -80,7 +82,8 @@ install the tool, and Collie runs the same without them.
 | *Plain* and *Lost* retell a Claude session in plain words | [cc-sidecar-waitwhat](https://github.com/GGGODLIN/cc-sidecar-waitwhat), named in `retell.toml` ([Configure](./docs/configure.md#retell-a-claude-session)) | The two rows are not offered |
 | Agents' state on the iPhone's Dynamic Island | The iPhone app in [`ios/`](./ios/README.md), built with your own Apple ID; it reads any Collie | Nothing changes; Collie does not know about it |
 
-The title bar reads COLLIE-GGGODLIN, so this build is told apart from an upstream install.
+The title bar reads COLLIE-GGGODLIN, so this build is told apart from an upstream install. A pane's
+description line is written in Traditional Chinese (`在等你批准`, `你：`) whatever the app's language.
 
 ---
 
