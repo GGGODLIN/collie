@@ -30,7 +30,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
-## [2.14.0] - 2026-09-27
+## [1.15.0] - 2026-09-27
 
 ### Added
 - **The canary opens real dialogs and sends to a busy agent.** `bun run canary --dialogs` asks Claude for a Bash command, a WebFetch, an AskUserQuestion and a plan, and Codex for a command and a file edit, then checks the card, the labels and the free-text lock with Collie's readers, presses the declining key where it was measured live and checks the file was not written. It also sends to each agent while Herdr says it is working. Run against the 1.13.1 readers, it fails on the Claude permission pointer on row 2, the amend note, WebFetch and the Codex patch approval. ([644edb03](https://github.com/GGGODLIN/collie/commit/644edb03))
@@ -47,7 +47,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 ### Changed
 
 - **Built on upstream Collie 1.14.0.** AltanS/collie v1.14.0, commit 86074800. ([bb4b18ba](https://github.com/GGGODLIN/collie/commit/bb4b18ba))
-- **This fork now numbers its own releases.** 2.14.0 follows fork 1.14.0 and asks nothing of you but consent: take it once with `collie update --major`, or the Herdr action `update-major`. From here the fork's version is its own SemVer and no longer matches upstream's number. ([412977c2](https://github.com/GGGODLIN/collie/commit/412977c2))
+- **This fork now numbers its own releases.** Each fork release is classified by what it asks of you, and the number no longer follows upstream's: upstream may publish a different 1.15.0. `collie update` takes this one as usual. ([412977c2](https://github.com/GGGODLIN/collie/commit/412977c2))
 
 ### Fixed
 - **Starting an update no longer shows the previous update as finished.** On a lead that had updated before, "Start update" showed "Update finished" at once, with the clock at 0:00 and the old versions on every row. The real update then showed as "started on another device", and this phone's own step never came. The bridge now sends the new update's id with its answer, and the phone stays on "Checking" until that update reports its first state. If none comes within three minutes, the phone gives the app back. The Updates card also stops showing the previous result, such as "Updated to 1.13.2.", while it waits. The update to this version still runs the old phone code, so it can show the old screen one last time. ([b657ddcb](https://github.com/GGGODLIN/collie/commit/b657ddcb))
