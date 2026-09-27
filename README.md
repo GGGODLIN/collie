@@ -52,18 +52,21 @@ releases, and `collie update` refuses a checkout whose `origin` is this fork.
 ```bash
 cd ~/.local/share/collie
 git rev-parse --short HEAD          # note the build you are on, in case you roll back
-git pull --ff-only
-bash scripts/collie-ctl.sh build
-bin/collie restart
+git pull --ff-only && bash scripts/collie-ctl.sh build && bin/collie restart
 ```
 
-To go back to the build you noted, check it out, rebuild and restart. `git checkout main` later
-returns you to the latest.
+Each step runs only if the one before it succeeded, so a failed pull or build leaves the running
+Collie as it was. To go back to the build you noted, check it out, rebuild and restart:
 
 ```bash
-git checkout <the-hash-you-noted>
-bash scripts/collie-ctl.sh build
-bin/collie restart
+git checkout <the-hash-you-noted> && bash scripts/collie-ctl.sh build && bin/collie restart
+```
+
+The checkout is then detached at that build. To return to the latest, switch back to `main`, pull
+and rebuild; checking out `main` alone changes the source, not the running Collie.
+
+```bash
+git checkout main && git pull --ff-only && bash scripts/collie-ctl.sh build && bin/collie restart
 ```
 
 ### Optional companions
@@ -167,6 +170,9 @@ device gating before running the service.
 > `serve` limits access to your private tailnet. Do not funnel Collie under any circumstances.
 
 ## Quickstart
+
+> **Note.** This section installs upstream Collie, without this fork's changes. To install the fork,
+> use [Install from source](#install-from-source) at the top.
 
 Run this on the host, not your phone. It requires `curl`, `tar`, and a sha256 utility. It needs no
 compiler toolchain and does not ask for `sudo`:
