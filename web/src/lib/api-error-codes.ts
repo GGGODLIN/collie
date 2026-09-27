@@ -72,6 +72,7 @@ export const API_ERROR_CODES = [
   "retell.off",
   "retell.not_claude",
   "retell.in_progress",
+  "retell.session_changed",
   "retell.failed",
 
   // Worktrees — /api/workspace/:id/worktree[s|/open|/remove] (ADR 0032)

@@ -808,6 +808,7 @@ export const zhTW: Dictionary = {
   "apiError.retell.off": "這台主機沒有設定重講",
   "apiError.retell.not_claude": "此窗格沒有執行 Claude session",
   "apiError.retell.in_progress": "這個窗格的重講正在產生中",
+  "apiError.retell.session_changed": "重講還在產生時，這個窗格已經換成另一段對話，請再要求一次",
   "apiError.retell.failed": "{reason}",
   "apiError.workspace.create_failed": "建立工作區失敗：{reason}",
   "apiError.upload.too_large": "檔案過大，上限為 {maxMb} MB。",

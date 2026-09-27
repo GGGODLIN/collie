@@ -832,6 +832,7 @@ export const ja: Dictionary = {
   "apiError.retell.off": "このホストでは言い直しが設定されていません",
   "apiError.retell.not_claude": "このペインでは Claude セッションが動いていません",
   "apiError.retell.in_progress": "このペインの言い直しはすでに作成中です",
+  "apiError.retell.session_changed": "要約の作成中にこのペインで別の会話が始まりました — もう一度依頼してください",
   "apiError.retell.failed": "{reason}",
   "apiError.workspace.create_failed": "スペースの作成に失敗しました: {reason}",
   "apiError.upload.too_large": "ファイルが大きすぎます。上限は {maxMb} MB です。",

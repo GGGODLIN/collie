@@ -115,6 +115,8 @@ export const ERROR_CODES = {
   "retell.not_claude": "this pane is not running a Claude session",
   /** The same pane and mode is already running; each one is a model call. */
   "retell.in_progress": "a retelling is already being written for this pane",
+  /** The pane moved to another Claude session while the retelling ran; the answer was dropped. */
+  "retell.session_changed": "this pane started another conversation while the retelling ran — ask again",
   /** The retell child failed; `{reason}` is its own words. */
   "retell.failed": "{reason}",
 

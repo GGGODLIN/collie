@@ -148,4 +148,34 @@ describe("POST /api/pane/:id/retell", () => {
     expect(await res.json()).toMatchObject({ ok: true, mode: "lost", answer: "a" });
     expect(seen).toEqual([["/bin/ww", "--session-id", SID, "--json"]]);
   });
+
+  const slowAnswer = (mode: string) => JSON.stringify({ ok: true, sessionId: SID, mode, label: "x", answer: "a", cached: false, source: "x" });
+
+  test("the same pane id in two sessions is two panes: both retell at once", async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => (release = r));
+    const spawn = () => ({ exited: gate.then(() => 0), stdout: gate.then(() => slowAnswer("plain")), kill: () => {} });
+    const config = async () => [{ command: ["/bin/ww"] }];
+    const first = retellPane(engineWith(claudePane()), "w1:p1", post({ mode: "plain" }), audit, null, "one", config, spawn);
+    const second = retellPane(engineWith(claudePane()), "w1:p1", post({ mode: "plain" }), audit, null, "two", config, spawn);
+    release();
+    expect(await (await second).json()).toMatchObject({ ok: true });
+    expect(await (await first).json()).toMatchObject({ ok: true });
+  });
+
+  test("a pane that started another conversation while the retelling ran gets no stale answer", async () => {
+    let pane = claudePane();
+    const stub: Partial<StateEngine> = {
+      current: () => ({ agents: [pane], shellPanes: [], workspaces: [], tabs: [], bridge: "connected" }),
+    };
+    // SAFETY: the retell route reaches only `current()`.
+    const engine = stub as StateEngine;
+    const spawn = () => {
+      // The operator ran /clear, and Claude reported a new session id for the same pane.
+      pane = claudePane({ agentSession: { kind: "id", value: "00000000-0000-0000-0000-000000000001" } });
+      return { exited: Promise.resolve(0), stdout: Promise.resolve(slowAnswer("plain")), kill: () => {} };
+    };
+    const res = await retellPane(engine, "w1:p1", post({ mode: "plain" }), audit, null, "s", async () => [{ command: ["/bin/ww"] }], spawn);
+    expect(await res.json()).toMatchObject({ ok: false, code: "retell.session_changed" });
+  });
 });

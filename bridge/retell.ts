@@ -118,19 +118,52 @@ export function parseRetellOutput(stdout: string): RetellResult {
 
 export interface RetellChild {
   readonly exited: Promise<number>;
+  /** Rejects when the child writes more than {@link RETELL_MAX_OUTPUT_BYTES}. */
   readonly stdout: Promise<string>;
-  kill(): void;
+  /** Where a sidecar says why it failed. Optional so a stand-in child need not supply one. */
+  readonly stderr?: Promise<string>;
+  /** No signal is the polite one; 9 is the one a hung child cannot ignore. */
+  kill(signal?: number): void;
 }
 
 export type RetellSpawn = (argv: readonly string[]) => RetellChild;
 
 /** A retelling of a long session measured at 44s through the local proxy; this bounds a hung one. */
 export const RETELL_TIMEOUT_MS = 180_000;
+/** How long a child asked to stop may take before it is killed outright. */
+export const RETELL_KILL_GRACE_MS = 2_000;
+/** A retelling is a few paragraphs; anything this large is not one, and is not held in memory. */
+export const RETELL_MAX_OUTPUT_BYTES = 1024 * 1024;
+/** How much of the child's own words a failure carries to the phone. */
+const RETELL_REASON_CHARS = 300;
+
+/** A stream read to its end, or rejected once it passes `max` bytes. */
+async function readCapped(stream: ReadableStream<Uint8Array>, max: number): Promise<string> {
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for await (const chunk of stream) {
+    size += chunk.byteLength;
+    if (size > max) throw new Error(`output over ${max} bytes`);
+    chunks.push(chunk);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
+}
 
 export const bunRetellSpawn: RetellSpawn = (argv) => {
-  const child = Bun.spawn([...argv], { stdin: "ignore", stdout: "pipe", stderr: "ignore" });
-  return { exited: child.exited, stdout: new Response(child.stdout).text(), kill: () => child.kill() };
+  const child = Bun.spawn([...argv], { stdin: "ignore", stdout: "pipe", stderr: "pipe" });
+  return {
+    exited: child.exited,
+    stdout: readCapped(child.stdout, RETELL_MAX_OUTPUT_BYTES),
+    stderr: readCapped(child.stderr, RETELL_MAX_OUTPUT_BYTES).catch(() => ""),
+    kill: (signal) => child.kill(signal),
+  };
 };
+
+/** The child's own reason, on one line and bounded: its stderr first, else what it printed. */
+function childReason(stderr: string, stdout: string): string {
+  const text = (stderr.trim() || stdout.trim()).replace(/\s+/g, " ");
+  return text.slice(0, RETELL_REASON_CHARS);
+}
 
 /** Run one child to its end or the timeout, whichever is first. */
 export async function runRetell(
@@ -138,6 +171,7 @@ export async function runRetell(
   argv: readonly string[],
   expect: { sessionId: string; mode: RetellMode },
   timeoutMs = RETELL_TIMEOUT_MS,
+  graceMs = RETELL_KILL_GRACE_MS,
 ): Promise<RetellResult> {
   let child: RetellChild;
   try {
@@ -149,13 +183,37 @@ export async function runRetell(
   const timedOut = new Promise<"timeout">((resolve) => {
     timer = setTimeout(() => resolve("timeout"), timeoutMs);
   });
-  const done = await Promise.race([Promise.all([child.exited, child.stdout]), timedOut]);
+  let done: [number, string, string] | "timeout";
+  try {
+    done = await Promise.race([Promise.all([child.exited, child.stdout, child.stderr ?? Promise.resolve("")]), timedOut]);
+  } catch (err) {
+    clearTimeout(timer);
+    child.kill(9);
+    return { ok: false, error: `unreadable retell output: ${err instanceof Error ? err.message : String(err)}` };
+  }
   clearTimeout(timer);
   if (done === "timeout") {
     child.kill();
+    // A kill is a request; wait a moment for the exit, then make it one it cannot refuse.
+    let grace: ReturnType<typeof setTimeout> | undefined;
+    const stopped = await Promise.race([
+      child.exited.then(() => true),
+      new Promise<boolean>((resolve) => {
+        grace = setTimeout(() => resolve(false), graceMs);
+      }),
+    ]);
+    clearTimeout(grace);
+    if (!stopped) child.kill(9);
     return { ok: false, error: `retell took longer than ${Math.round(timeoutMs / 1000)}s` };
   }
-  const result = parseRetellOutput(done[1]);
+  const [code, stdout, stderr] = done;
+  // A non-zero exit is a failure whatever it printed: a body that happens to parse is not an answer
+  // the sidecar stood behind.
+  if (code !== 0) {
+    const reason = childReason(stderr, stdout);
+    return { ok: false, error: reason === "" ? `retell exited with status ${code}` : `retell exited with status ${code}: ${reason}` };
+  }
+  const result = parseRetellOutput(stdout);
   // A child that answered for another session or mode is refused rather than shown: the sheet must
   // never present one conversation's retelling as another's.
   if (result.ok && (result.sessionId !== expect.sessionId || result.mode !== expect.mode)) {

@@ -812,6 +812,7 @@ export const zh: Dictionary = {
   "apiError.retell.off": "这台主机没有设置重讲",
   "apiError.retell.not_claude": "此窗格没有运行 Claude session",
   "apiError.retell.in_progress": "这个窗格的重讲正在生成中",
+  "apiError.retell.session_changed": "重讲还在生成时，这个窗格已经换成另一段对话，请再请求一次",
   "apiError.retell.failed": "{reason}",
   "apiError.workspace.create_failed": "创建工作区失败：{reason}",
   "apiError.upload.too_large": "文件过大，限制为 {maxMb} MB。",

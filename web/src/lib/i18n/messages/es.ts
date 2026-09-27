@@ -840,6 +840,7 @@ export const es: Dictionary = {
   "apiError.retell.off": "El resumen no está configurado en este host",
   "apiError.retell.not_claude": "Este panel no ejecuta una sesión de Claude",
   "apiError.retell.in_progress": "Ya se está escribiendo un resumen para este panel",
+  "apiError.retell.session_changed": "Este panel empezó otra conversación mientras se escribía el resumen — vuelve a pedirlo",
   "apiError.retell.failed": "{reason}",
   "apiError.workspace.create_failed": "Error al crear el espacio: {reason}",
   "apiError.upload.too_large": "El archivo es demasiado grande, el límite es {maxMb} MB.",

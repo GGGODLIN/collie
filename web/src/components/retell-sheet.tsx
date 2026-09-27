@@ -9,7 +9,7 @@ import { useLocale } from "@/hooks/use-locale";
 import * as api from "@/lib/api";
 import { describeApiError, describeThrownError } from "@/lib/api-error-message";
 import { t } from "@/lib/i18n";
-import type { Scope } from "@/lib/scope";
+import { paneScopeKey, type Scope } from "@/lib/scope";
 
 export type RetellMode = "plain" | "lost";
 
@@ -29,14 +29,18 @@ type RetellState =
 export function useRetell(paneId: string, scope?: Scope) {
   // Held with the pane it belongs to, so moving to another pane reads as closed without an effect,
   // and a reply that lands after the move is filed under the pane it was asked for.
-  const [held, setHeld] = useState<{ paneId: string; state: RetellState }>({ paneId, state: CLOSED });
+  // Keyed on the ADDRESS, not the pane id: the same id in another session or on another host is a
+  // different pane (use-latest-reply.ts keys the same way).
+  const address = paneScopeKey(scope, paneId);
+  const [held, setHeld] = useState<{ address: string; state: RetellState }>({ address, state: CLOSED });
   const ticket = useRef(0);
-  const state = held.paneId === paneId ? held.state : CLOSED;
+  const state = held.address === address ? held.state : CLOSED;
 
   async function start(mode: RetellMode, fresh = false) {
     const mine = ++ticket.current;
     const target = paneId;
-    setHeld({ paneId: target, state: { phase: "loading", mode } });
+    const at = address;
+    setHeld({ address: at, state: { phase: "loading", mode } });
     let next: RetellState;
     try {
       const res = await api.retellPane(target, mode, fresh, scope);
@@ -46,12 +50,12 @@ export function useRetell(paneId: string, scope?: Scope) {
     } catch (e) {
       next = { phase: "failed", mode, message: describeThrownError(e) };
     }
-    if (mine === ticket.current) setHeld({ paneId: target, state: next });
+    if (mine === ticket.current) setHeld({ address: at, state: next });
   }
 
   function close() {
     ticket.current += 1;
-    setHeld({ paneId, state: CLOSED });
+    setHeld({ address, state: CLOSED });
   }
 
   return { state, start, close };

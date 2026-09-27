@@ -870,6 +870,7 @@ export const en = {
   "apiError.retell.off": "Retell isn't set up on this host",
   "apiError.retell.not_claude": "This pane isn't running a Claude session",
   "apiError.retell.in_progress": "A retelling for this pane is already being written",
+  "apiError.retell.session_changed": "This pane started another conversation while the retelling ran — ask again",
   "apiError.retell.failed": "{reason}",
   "apiError.workspace.create_failed": "The space couldn't be created: {reason}",
   "apiError.upload.too_large": "That file is too large, {maxMb} MB is the limit.",

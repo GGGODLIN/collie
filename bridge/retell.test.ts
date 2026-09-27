@@ -65,16 +65,40 @@ describe("runRetell", () => {
     expect(result).toEqual({ ok: false, error: "retell answered for a different session" });
   });
 
-  test("a hung child is killed at the timeout", async () => {
-    let killed = false;
+  test("a hung child is asked to stop at the timeout, then killed when it does not", async () => {
+    const signals: (number | undefined)[] = [];
     const hung: RetellSpawn = () => ({
       exited: new Promise(() => {}),
       stdout: new Promise(() => {}),
-      kill: () => void (killed = true),
+      kill: (signal?: number) => void signals.push(signal),
     });
-    const result = await runRetell(hung, ["ww"], { sessionId: SID, mode: "plain" }, 5);
-    expect(result.ok).toBe(false);
-    expect(killed).toBe(true);
+    const result = await runRetell(hung, ["ww"], { sessionId: SID, mode: "plain" }, 5, 5);
+    expect(result).toEqual({ ok: false, error: "retell took longer than 0s" });
+    expect(signals).toEqual([undefined, 9]);
+  });
+
+  test("a child that exits non-zero is a failure with its own stderr, even with a valid answer", async () => {
+    const failing: RetellSpawn = () => ({
+      exited: Promise.resolve(2),
+      stdout: Promise.resolve(answer()),
+      stderr: Promise.resolve("usage: ww [-h]\nww: error: unrecognized arguments: --session-id\n"),
+      kill: () => {},
+    });
+    const result = await runRetell(failing, ["ww"], { sessionId: SID, mode: "plain" });
+    expect(result).toEqual({
+      ok: false,
+      error: "retell exited with status 2: usage: ww [-h] ww: error: unrecognized arguments: --session-id",
+    });
+  });
+
+  test("output the child could not finish handing over is a failure, not a partial answer", async () => {
+    const flooding: RetellSpawn = () => ({
+      exited: Promise.resolve(0),
+      stdout: Promise.reject(new Error("output over 1048576 bytes")),
+      kill: () => {},
+    });
+    const result = await runRetell(flooding, ["ww"], { sessionId: SID, mode: "plain" });
+    expect(result).toEqual({ ok: false, error: "unreadable retell output: output over 1048576 bytes" });
   });
 
   test("a spawn that throws is a failure with the program's name", async () => {

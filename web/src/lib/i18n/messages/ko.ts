@@ -826,6 +826,7 @@ export const ko: Dictionary = {
   "apiError.retell.off": "이 호스트에는 다시 설명이 설정되어 있지 않습니다",
   "apiError.retell.not_claude": "이 창에서는 Claude 세션이 실행되고 있지 않습니다",
   "apiError.retell.in_progress": "이 창의 다시 설명이 이미 작성 중입니다",
+  "apiError.retell.session_changed": "다시 들려주기를 만드는 동안 이 창에서 다른 대화가 시작됐습니다 — 다시 요청하세요",
   "apiError.retell.failed": "{reason}",
   "apiError.workspace.create_failed": "작업 공간을 생성하지 못했습니다: {reason}",
   "apiError.upload.too_large": "파일이 너무 큽니다. 제한은 {maxMb}MB입니다.",

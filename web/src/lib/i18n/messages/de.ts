@@ -843,6 +843,7 @@ export const de: Dictionary = {
   "apiError.retell.off": "Nacherzählen ist auf diesem Host nicht eingerichtet",
   "apiError.retell.not_claude": "In diesem Pane läuft keine Claude-Sitzung",
   "apiError.retell.in_progress": "Für dieses Pane wird bereits eine Nacherzählung geschrieben",
+  "apiError.retell.session_changed": "Dieses Pane hat während der Nacherzählung ein neues Gespräch begonnen — bitte erneut anfragen",
   "apiError.retell.failed": "{reason}",
   "apiError.workspace.create_failed": "Space konnte nicht erstellt werden: {reason}",
   "apiError.upload.too_large": "Die Datei ist zu groß, maximal sind {maxMb} MB erlaubt.",

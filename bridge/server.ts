@@ -3136,10 +3136,12 @@ export async function switchAccountPane(
   if (!claude) return refuse("account.not_claude", 409);
   const busy = claude.status === "working" || claude.status === "blocked";
   if (busy && fields.interrupt !== true) return refuse("account.confirm_interrupt", 409);
-  if (switchingPanes.has(paneId)) return refuse("account.in_progress", 409);
+  // Keyed by session AND pane: a pane id is unique only inside one multiplexer session.
+  const lock = `${session}\n${paneId}`;
+  if (switchingPanes.has(lock)) return refuse("account.in_progress", 409);
   // Claimed before the first await, so a second request arriving while the log is read is refused
   // rather than typing a second `/exit` into the same pane.
-  switchingPanes.add(paneId);
+  switchingPanes.add(lock);
   let outcome: Awaited<ReturnType<typeof switchAccount>>;
   try {
     const log = await claudeLogTail(cfg.journalRoots.claude, claude.sessionId);
@@ -3151,7 +3153,7 @@ export async function switchAccountPane(
       { sleep: defaultSleep, now: () => Date.now() },
     );
   } finally {
-    switchingPanes.delete(paneId);
+    switchingPanes.delete(lock);
   }
   audit.record({
     action: "pane.switch_account",
@@ -3203,7 +3205,7 @@ export async function retellPane(
   if (!config) return refuse("retell.off", 404);
   const claude = claudeSessionOf(engine, paneId);
   if (!claude) return refuse("retell.not_claude", 409);
-  const key = `${paneId}\n${mode}`;
+  const key = `${session}\n${paneId}\n${mode}`;
   if (retellingPanes.has(key)) return refuse("retell.in_progress", 409);
   retellingPanes.add(key);
   let result: Awaited<ReturnType<typeof runRetell>>;
@@ -3224,6 +3226,9 @@ export async function retellPane(
     detail: result.ok ? { mode, cached: result.cached, source: result.source } : { mode, failed: true },
   });
   if (!result.ok) return refuse("retell.failed", 200, { reason: result.error });
+  // The child answered for the session it was given; the pane may have moved to another one since
+  // (a /clear, a resume), and this answer is not a retelling of what is on screen now.
+  if (claudeSessionOf(engine, paneId)?.sessionId !== claude.sessionId) return refuse("retell.session_changed", 409);
   return json(
     {
       ok: true,
