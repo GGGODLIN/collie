@@ -59,6 +59,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 - **A reply that finishes while you watch now becomes its card.** The full-reply read waited for the whole screen to hold still, so a statusline that redraws every second kept it from ever firing after the pane opened; stillness is now judged without the input box and statusline.
 - **`collie config` lists the transcript conversion setting.** `COLLIE_STT_CONVERT` now has its row beside the other speech-to-text settings, so the schema check stays green and the setting shows up with its one allowed value, `zh-TW`.
 - **A reply that ends in a wrapped table still becomes its card.** Claude paints a wrapped table row line by line across its columns, so the screen read the row's cells in a different order than the journal and the card's identity check missed; the check now reads each wrapped row back in source order, found by counting the table's verticals so CJK cells count too.
+- **A reply that ends in Markdown links still becomes its card.** Claude paints a link as its label alone, so the target the journal holds was nowhere on screen and a tail probe that reached into it missed; the check now tries the reply with each link reduced to its label first, and the raw text second.
 
 ## [1.13.3] - 2026-09-26
 

@@ -257,6 +257,45 @@ describe("locateReply — a reply that ends in a wrapped table", () => {
   });
 });
 
+// A real Claude pane, 2026-09-27 (paths shortened): the reply's last table linked each row to a file.
+// Claude painted only the link text, so the URL the journal holds was nowhere on screen and a tail
+// probe that reached into it missed.
+describe("locateReply — a reply whose tail holds Markdown links", () => {
+  const source = [
+    "完整證據與未驗證範圍都在下表的連結裡，你可以逐項打開核對。這段是為了讓回覆夠長。",
+    "",
+    "| 選項 | 處置 | 來源 |",
+    "|---|---|---|",
+    "| **a．推薦** | 只修已重現的目錄解析、補回歸測試 | [解析重現與延輪日期](file:///tmp/review-evidence/2026-09-27.md) |",
+    "| b | 不修改，原樣延輪；保留已知缺陷 | [現行函式的失敗重現](file:///tmp/review-evidence/2026-09-27.md) |",
+    "",
+    "🔎 self-verify: COMPLIANT",
+  ].join("\n");
+  const painted = [
+    "  ┌─────────┬──────────────────────────────────┬────────────────────┐",
+    "  │  選項   │               處置               │        來源        │",
+    "  ├─────────┼──────────────────────────────────┼────────────────────┤",
+    "  │ a．推薦 │ 只修已重現的目錄解析、補回歸測試 │ 解析重現與延輪日期 │",
+    "  ├─────────┼──────────────────────────────────┼────────────────────┤",
+    "  │ b       │ 不修改，原樣延輪；保留已知缺陷   │ 現行函式的失敗重現 │",
+    "  └─────────┴──────────────────────────────────┴────────────────────┘",
+    "",
+    "  🔎 self-verify: COMPLIANT",
+  ];
+
+  it("finds the reply when only the link text was painted", () => {
+    const { fit, endLine } = locateReply(painted.join("\n"), turn("assistant", source));
+    expect(fit).toBe("clipped");
+    expect(endLine).toBe(painted.length - 1);
+  });
+
+  it("still finds it when the renderer printed the URL as well", () => {
+    const withUrls = painted.map((row) => row.replace("失敗重現 │", "失敗重現 (file:///tmp/review-evidence/2026-09-27.md) │"));
+    const tailOnly = "[現行函式的失敗重現](file:///tmp/review-evidence/2026-09-27.md) |\n\n🔎 self-verify: COMPLIANT";
+    expect(locateReply(withUrls.join("\n"), turn("assistant", `開頭不在畫面上的一段很長的前文。\n${tailOnly}`)).fit).toBe("clipped");
+  });
+});
+
 // A real Claude capture: one reply, the input box, and a statusline row under it.
 describe("settleText — what counts as the mirror holding still", () => {
   const screen = readFileSync(join(import.meta.dirname, "..", "fixtures", "panes", "claude--done.txt"), "utf8");

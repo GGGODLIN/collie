@@ -197,8 +197,8 @@ const elsewhere = (fit: ReplyFit): ReplyPlacement => ({ fit, endLine: -1 });
  * each row's cumulative folded length and finding the first that reaches the tail probe's end.
  */
 export function locateReply(mirrorText: string, entry: TranscriptEntry): ReplyPlacement {
-  const reply = fold(replyProse(entry));
-  if (reply === "" || proseTruncated(entry)) return elsewhere("off-screen");
+  const prose = replyProse(entry);
+  if (fold(prose) === "" || proseTruncated(entry)) return elsewhere("off-screen");
 
   const rows = sourceOrderRows(plain(mirrorText).split("\n"));
   // Folding each row and concatenating is the same string as folding the whole screen — the fold
@@ -210,17 +210,34 @@ export function locateReply(mirrorText: string, entry: TranscriptEntry): ReplyPl
     rowEnds.push(mirror.length);
   }
 
-  const probeLength = Math.min(PROBE_CHARS, reply.length);
-  const tail = reply.slice(-probeLength);
-  const at = mirror.indexOf(tail);
-  if (at === -1) return elsewhere("off-screen");
+  // Both spellings are this same reply, so either one found is still the identity check passing.
+  for (const reply of new Set([fold(linkTextOnly(prose)), fold(prose)])) {
+    const probeLength = Math.min(PROBE_CHARS, reply.length);
+    const tail = reply.slice(-probeLength);
+    const at = mirror.indexOf(tail);
+    if (at === -1) continue;
 
-  const end = at + tail.length;
-  const endLine = rowEnds.findIndex((rowEnd) => rowEnd >= end);
-  return {
-    fit: mirror.includes(reply.slice(0, probeLength)) ? "whole" : "clipped",
-    endLine: endLine === -1 ? rows.length - 1 : endLine,
-  };
+    const end = at + tail.length;
+    const endLine = rowEnds.findIndex((rowEnd) => rowEnd >= end);
+    return {
+      fit: mirror.includes(reply.slice(0, probeLength)) ? "whole" : "clipped",
+      endLine: endLine === -1 ? rows.length - 1 : endLine,
+    };
+  }
+  return elsewhere("off-screen");
+}
+
+// `[label](target)` and `![alt](target)`, with an optional `"title"`.
+const MARKDOWN_LINK = /!?\[([^\]]*)\]\(\s*<?[^)\s>]*>?(?:\s+"[^"]*")?\s*\)/g;
+
+/**
+ * The reply with every inline Markdown link reduced to its label. Claude paints a link as its label
+ * alone where the terminal takes hyperlinks (Herdr's grid, 2026-09-27), so the target the journal
+ * holds is nowhere on screen; a renderer that prints the target too is still matched by the raw
+ * spelling, which {@link locateReply} tries second.
+ */
+function linkTextOnly(prose: string): string {
+  return prose.replace(MARKDOWN_LINK, "$1");
 }
 
 /**
