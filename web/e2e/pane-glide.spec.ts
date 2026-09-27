@@ -1,6 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { en } from "@/lib/i18n/messages/en";
+import type { SnapshotResponse } from "@/lib/types";
+import { fixtureSnapshot } from "@/test/handlers";
 
 import { installApiStub } from "./fixtures/api";
 
@@ -405,6 +407,13 @@ async function rowOnScreen(page: Page): Promise<boolean> {
 
 test("a slow pane read opens the plain way, with the slide, and the screen never freezes", async ({ page }, testInfo) => {
   await instrument(page);
+  // Fork-only (FORK.md → *Updates come from this fork*): this fork's list approval probes a blocked
+  // row before it opens the pane, so the plain path is measured with the claude pane working.
+  const working: SnapshotResponse = structuredClone(fixtureSnapshot);
+  working.agents[0]!.status = "working";
+  await page.route("**/api/snapshot*", (route) =>
+    route.fulfill({ contentType: "application/json", body: JSON.stringify(working) }),
+  );
   // Registered after the stub, so it answers first: every pane read takes 500 ms.
   await page.route(/\/api\/pane\/[^/?]+(\?.*)?$/u, async (route) => {
     await new Promise((r) => setTimeout(r, 500));
