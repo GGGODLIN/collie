@@ -59,7 +59,10 @@ type TestApp = ReturnType<typeof setup>;
 
 async function tapBlocked() {
   const heading = await screen.findByRole("heading", { name: "webapp" });
-  const row = within(heading.closest("section")!).getAllByRole("button")[0]!;
+  // Skip the heading's own "+" (new tab, #290): it is a button in the same section.
+  const row = within(heading.closest("section")!)
+    .getAllByRole("button")
+    .find((b) => !(b.getAttribute("aria-label") ?? "").startsWith("New tab"))!;
   await userEvent.click(row);
 }
 

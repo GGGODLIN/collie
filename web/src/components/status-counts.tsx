@@ -106,6 +106,12 @@ export function StatusCounts({
  * unlabelled; otherwise the counts carry their words. A tap goes to the first urgent thing via
  * `onJump`; with no `onJump` the line is a disabled button that still reads at full ink, so the slot
  * and its box are the same in every state (DESIGN.md §2).
+ *
+ * `focusable` keeps a line with no `onJump` reachable by script: `aria-disabled` and `tabIndex={-1}`
+ * in place of `disabled`, so it stays out of the tab order and still announces itself unavailable,
+ * but focus can land on it. The dashboard asks for it once pins are in play, because focus goes to
+ * this line when an unpinned row leaves Focus's list (ADR 0070), and a disabled button cannot hold
+ * focus. The box is the same either way.
  */
 export function StatusSummaryLine({
   panes,
@@ -113,6 +119,8 @@ export function StatusSummaryLine({
   onJump,
   dialog = false,
   trailing,
+  id,
+  focusable = false,
   className,
 }: {
   panes: readonly AgentView[];
@@ -120,15 +128,21 @@ export function StatusSummaryLine({
   onJump?: (() => void) | undefined;
   dialog?: boolean;
   trailing?: ReactNode;
+  id?: string;
+  focusable?: boolean;
   className?: string;
 }) {
   useLocale();
+  const inert = onJump === undefined;
   return (
     <button
+      id={id}
       type="button"
       aria-haspopup={dialog ? "dialog" : undefined}
       onClick={onJump}
-      disabled={onJump === undefined}
+      disabled={inert && !focusable}
+      aria-disabled={inert && focusable ? true : undefined}
+      tabIndex={inert && focusable ? -1 : undefined}
       className={cn(
         "flex min-h-8 items-center gap-3 text-left text-xs font-medium text-foreground disabled:opacity-100",
         className,

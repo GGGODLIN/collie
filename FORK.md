@@ -95,7 +95,8 @@ Each entry says what it is, where it lives, and what it assumes.
   [`bridge/config-schema.ts`](/bridge/config-schema.ts); the test fixtures naming the default; the
   `if:` of `notify-website` and `refresh-packages` in
   [`.github/workflows/release.yml`](/.github/workflows/release.yml) and of `classify` in
-  [`.github/workflows/triage.yml`](/.github/workflows/triage.yml). The slow-read case in
+  [`.github/workflows/triage.yml`](/.github/workflows/triage.yml); CI also runs on pushes to `dev`
+  ([`.github/workflows/ci.yml`](/.github/workflows/ci.yml)). The slow-read case in
   [`web/e2e/pane-glide.spec.ts`](/web/e2e/pane-glide.spec.ts) sets the claude pane working, because
   a blocked row here opens the list approval first (`web/src/hooks/use-list-approval.tsx`).
 - **Assumes.** This fork cuts its own releases on `main` (CLAUDE.md → *Fork branches and

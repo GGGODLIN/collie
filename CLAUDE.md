@@ -736,31 +736,75 @@ Environment traps and trajectories live in `e2e-live/trajectories/`.
 
 ## Fork branches and releases
 
-This fork keeps two branches, and the split overrides the personal-repo default of committing
-straight to `main`.
+This fork keeps two branches and its own version line; both override upstream's defaults here.
 
 - **`dev` takes every change.** Commit and push to `dev`, never to `main`. The operator's active
   Collie runs a checkout of `dev`, so *Project mode*'s deploy step means rebuilding that checkout.
-- **`main` holds releases and nothing else.** It is upstream's history followed by one commit per
-  fork release, whose tree is exactly the tree of that release's commit on `dev`. `dev`'s own
-  history never reaches `main`: before 1.14.0 it carries material this fork does not publish.
-- **Version numbers are plain `x.y.z`, above both this fork's last release and upstream's newest.**
-  The updater offers only a strict `vX.Y.Z` to a stable install (`SEMVER_TAG` in `bridge/update.ts`),
-  so a tail like `-gg.1` would reach nobody.
+- **`main` holds releases and nothing else, and only moves forward.** It is upstream's history
+  followed by one commit per fork release, whose tree is exactly the tree of that release's commit
+  on `dev`; its first parent is always the previous `main`. Never rebuild or force-push a published
+  `main`: a clone following it updates with `--ff-only` and would be stranded. `dev`'s own history
+  never reaches `main`, since before 1.14.0 it carries material this fork does not publish.
+- **Pushing `main` is publishing.** A clone following `main` takes a commit the moment it lands,
+  before any tag or CI result. So a release commit reaches `main` only after CI passed on the `dev`
+  commit whose tree it copies.
 
-Cutting a release:
+### Version numbers
 
-1. On `dev`, make the ordinary `chore(release): x.y.z` commit (*Versioning* above), with each
-   CHANGELOG hash linked as `https://github.com/GGGODLIN/collie/commit/<hash>`.
-2. Build `main`'s commit from that tree. Add `-p <upstream commit>` when this release is the first
+The fork's version is its own SemVer, independent of upstream's number, continuing from fork
+`1.14.0` (based on upstream 1.13.3); `1.15.0` is the first release under this rule.
+
+- **Classify each release by what it asks of this fork's operators,** the upstream sync included:
+  a compatible fix is a patch (`1.15.1`), a compatible feature is a minor (`1.16.0`), a change the
+  operator must act on is a major (`2.0.0`). Take the *Versioning* recipe's axis rules as written.
+- **The same number can mean two releases.** Upstream will publish its own `1.15.0`; in docs, commit
+  messages and conversation, say "fork 1.15.0" or "upstream 1.15.0". No code compares this fork's
+  version with upstream's: crew skew is amber only, and features are keyed on the protocol version.
+- **The first fork major trips upstream's 2.0 clock.** `cli/program.test.ts` fails once the package
+  major reaches 2 until ADR 0038's `pack` names are gone; `bridge/removal-schedule.test.ts` lists
+  them. A fork 2.0.0 does that removal in the same release.
+- **Never copy upstream's number.** An upstream release is merged into `dev` and reaches operators
+  in the next fork release, whose number follows the rule above. Only a strict `vX.Y.Z` is ever
+  offered to a stable install (`SEMVER_TAG` in `bridge/update.ts`), so no suffix scheme exists here.
+- **One release takes one number.** Several merges and changes may ship together; a `dev` commit or
+  a merge never takes a number by itself. A published number is never reused or re-pointed.
+- **Every release names its upstream base,** as the first bullet under `### Changed`:
+  `- **Built on upstream Collie X.Y.Z.** AltanS/collie vX.Y.Z, commit <short sha>.` It names the
+  upstream release actually merged, not upstream's newest, and says so when only some of a
+  release's commits were taken or one was reverted.
+
+### Upstream's tags
+
+Upstream reuses numbers this fork has published (both have a `v1.14.0`), so its tags never share
+`refs/tags/` with this fork's.
+
+- Fetch them into their own namespace, and merge by that name or by sha, never by a bare tag name:
+
+  ```bash
+  git fetch upstream '+refs/tags/*:refs/tags/upstream/*' --no-tags
+  git merge upstream/v1.14.0
+  ```
+
+- Push exactly the release tag you cut (`git push origin vX.Y.Z`). Never `git push --tags` or
+  `--follow-tags`: both would send `upstream/*` tags to `origin`, where the updater would read them.
+
+### Cutting a release
+
+1. On `dev`, make the ordinary `chore(release): x.y.z` commit (*Versioning* above) with the
+   upstream-base bullet, each CHANGELOG hash linked as
+   `https://github.com/GGGODLIN/collie/commit/<hash>`, and push it.
+2. Wait for CI on that `dev` commit to pass.
+3. Build `main`'s commit from that tree. Add `-p <upstream commit>` when this release is the first
    to carry an upstream merge, so GitHub does not count `main` as behind upstream.
 
    ```bash
    git commit-tree 'dev^{tree}' -p origin/main -m "chore(release): x.y.z"
    ```
 
-3. Push that commit to `main` (`git push origin <sha>:main`) and wait for its CI run to pass.
-4. Tag that commit `vx.y.z` (annotated) and push the tag. Never push upstream's tags to `origin`.
+4. Check it before it is public: its tree equals the `dev` release commit's, its first parent is
+   `origin/main`, and `scripts/check-version.sh` reads the version you meant.
+5. Tag it (`git tag -a vX.Y.Z <sha>`), then push the commit and the tag together:
+   `git push --atomic origin <sha>:main vX.Y.Z`. The release workflow waits for CI on that commit.
 
 An upstream PR branches off `upstream/main` and takes its commits by cherry-pick; *Project mode*
 still decides when one may be opened.
