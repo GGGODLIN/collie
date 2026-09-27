@@ -30,6 +30,16 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+## [1.15.1] - 2026-09-27
+
+### Changed
+
+- **Built on upstream Collie 1.14.0.** AltanS/collie v1.14.0, commit 86074800, unchanged since 1.15.0. ([bb4b18ba](https://github.com/GGGODLIN/collie/commit/bb4b18ba))
+
+### Docs
+
+- **The iPhone guide shows how to keep the island running.** It adds a launchd template for the nightly re-sign and the Shortcuts automation that restarts the island every 8 hours. ([708228b4](https://github.com/GGGODLIN/collie/commit/708228b4))
+
 ## [1.15.0] - 2026-09-27
 
 ### Added
