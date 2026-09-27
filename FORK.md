@@ -84,3 +84,19 @@ Each entry says what it is, where it lives, and what it assumes.
   buttons are dead text; the retell sheet (ADR 0074) and the pane description replace them.
 - **To upstream.** It would need to become a general rule, for example an operator-declared list of
   band headers to hide, instead of one mod's labels written into the code.
+
+### Updates come from this fork (2026-09-27)
+
+- **What.** `collie update`, `collie doctor` and the in-app update banner take their releases from
+  `GGGODLIN/collie` unless `COLLIE_UPDATE_REPO` says otherwise, and the release and triage workflows
+  skip the jobs that need upstream's site token, AUR key and model key.
+- **Where.** `DEFAULT_UPDATE_REPO` in [`cli/install-kind.ts`](/cli/install-kind.ts), which
+  [`bridge/index.ts`](/bridge/index.ts) now reads too; the `update_repo` default in
+  [`bridge/config-schema.ts`](/bridge/config-schema.ts); the test fixtures naming the default; the
+  `if:` of `notify-website` and `refresh-packages` in
+  [`.github/workflows/release.yml`](/.github/workflows/release.yml) and of `classify` in
+  [`.github/workflows/triage.yml`](/.github/workflows/triage.yml).
+- **Assumes.** This fork cuts its own releases on `main` (CLAUDE.md → *Fork branches and
+  releases*).
+- **To upstream.** Leave it out. `bridge/index.ts` reading `updateRepoOf` instead of its own copy of
+  the default is general and could go on its own.

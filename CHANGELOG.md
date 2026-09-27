@@ -50,6 +50,7 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 - **Each pane switcher section now lists the latest change first.** Inside Needs you, Ready, Recent and Working, the pane whose state changed most recently comes first, matching Herdr's priority panel; the sheet still holds its order while open.
 - **The in-pane switcher now matches the dashboard's attention groups.** Opening it by tap or pull fixes the pane and shell list until it closes, so polling cannot move a row under your thumb; Shells and Launch remain available (ADR 0073).
 - **The pane mirror hides the wait-what band.** The `cc-mod-waitwhat` buttons and recap line above Claude's input box no longer show on the phone, where they cannot be tapped; the retell sheet and pane description cover them. Fork-only, see `FORK.md`.
+- **Updates now come from this fork's releases.** `collie update`, `collie doctor` and the in-app update banner read `GGGODLIN/collie` unless `COLLIE_UPDATE_REPO` names another repository, and `main` moves only when a release is cut.
 
 ### Fixed
 
