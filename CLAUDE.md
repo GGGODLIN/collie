@@ -740,14 +740,20 @@ This fork keeps two branches and its own version line; both override upstream's 
 
 - **`dev` takes every change.** Commit and push to `dev`, never to `main`. The operator's active
   Collie runs a checkout of `dev`, so *Project mode*'s deploy step means rebuilding that checkout.
-- **`main` holds releases and nothing else, and only moves forward.** It is upstream's history
-  followed by one commit per fork release, whose tree is exactly the tree of that release's commit
-  on `dev`; its first parent is always the previous `main`. Never rebuild or force-push a published
+- **`main` holds releases, plus docs-only commits between them, and only moves forward.** It is
+  upstream's history followed by one commit per fork release (or docs-only change, below), whose
+  tree is exactly the tree of a commit on `dev`; its first parent is always the previous `main`. Never rebuild or force-push a published
   `main`: a clone following it updates with `--ff-only` and would be stranded. `dev`'s own history
   never reaches `main`, since before 1.14.0 it carries material this fork does not publish.
 - **Pushing `main` is publishing.** A clone following `main` takes a commit the moment it lands,
   before any tag or CI result. So a release commit reaches `main` only after CI passed on the `dev`
   commit whose tree it copies.
+- **A docs-only change reaches `main` without a release.** When everything on `dev` since the last
+  release touches only `*.md` files and `assets/`, copy `dev`'s tree to `main` the same way
+  (`git commit-tree 'dev^{tree}' -p origin/main`, first parent `origin/main`), with a `docs:`
+  message, no tag and no version bump. A release would only show operators an update with nothing
+  in it; an untagged commit shows no update, because only a `vX.Y.Z` tag is offered. Its CHANGELOG
+  line stays under `## [Unreleased]` until the next release.
 
 ### Version numbers
 

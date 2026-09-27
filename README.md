@@ -22,8 +22,44 @@ What it adds over upstream is in [`CHANGELOG.md`](./CHANGELOG.md), from `1.14.0`
 changes that only make sense on the maintainer's own setup are in [`FORK.md`](./FORK.md), each with
 what it assumes; without those tools, they stay out of the way.
 
-`main` moves only when a release is cut, so what you install is always a release. Day-to-day work
-happens on `dev`, which is not tested for anyone else's use.
+`main` moves only when a release is cut or the docs change, so the code you install is always a
+release's. Day-to-day work happens on `dev`, which is not tested for anyone else's use.
+
+### Your agents on the iPhone's Dynamic Island
+
+The fork's main addition is an iPhone app, in [`ios/`](./ios/README.md), that puts your agents'
+state on the Dynamic Island and the lock screen, and opens Collie when you tap it. You build it with
+your own Apple ID; a free one is enough, and nothing goes through a push service or a third-party
+server.
+
+<table>
+  <tr>
+    <td align="center" width="62%">
+      <img src="assets/fork/island.png" alt="The Dynamic Island showing the Collie mark in red and the words 1 等你 (one waiting for you)" width="400"><br>
+      <sub><b>Island</b>: how many agents wait for you</sub><br><br>
+      <img src="assets/fork/island-expanded.png" alt="The expanded Dynamic Island: the pane 重構登入流程, the line 在等你批准 Bash · bun test, and the counts waiting, done and working" width="400"><br>
+      <sub><b>Long press</b>: the pane that needs you, what it waits on, and the counts</sub>
+    </td>
+    <td align="center" width="38%">
+      <img src="assets/fork/lock-screen.jpg" alt="The iPhone lock screen with the same Collie card under the clock" width="220"><br>
+      <sub><b>Lock screen</b>: the same card</sub>
+    </td>
+  </tr>
+</table>
+
+The screenshots use made-up agents. The second line, what the pane is doing, shows only with
+`ISLAND_SHOW_DETAIL = YES`, because it can be your newest prompt word for word; by default the
+island shows the pane's name and the counts.
+
+In Collie itself, each pane says in one line what its agent is doing, and a tool permission can be
+answered from the list without opening the pane:
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="assets/fork/pane-descriptions.png" alt="The dashboard with a line under each agent: 在等你批准 Bash · bun test under claude, 你：把登入流程改成 OAuth under codex" width="220"><br><sub><b>What each pane is doing</b></sub></td>
+    <td align="center" width="50%"><img src="assets/fork/approve-from-list.png" alt="A bottom sheet over the dashboard showing Claude's Bash permission prompt for bun test, with its Yes and No choices" width="220"><br><sub><b>Approve from the list</b></sub></td>
+  </tr>
+</table>
 
 ### Install from source
 

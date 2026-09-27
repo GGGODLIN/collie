@@ -3,6 +3,11 @@
 An iPhone app that opens your Collie and puts its agents' state on the Dynamic Island. Tap the
 island and it jumps to the pane that needs you most.
 
+<p align="center">
+  <img src="../assets/fork/island-expanded.png" alt="The expanded Dynamic Island: the pane 重構登入流程, the line 在等你批准 Bash · bun test, and the counts waiting, done and working" width="400">
+  <img src="../assets/fork/lock-screen.jpg" alt="The iPhone lock screen with the same Collie card under the clock" width="160">
+</p>
+
 It is built from source and signed with your own Apple ID. A free Apple ID is enough: no paid
 developer account, no APNs, no third-party server. It is not on the App Store and cannot be: it
 stays awake in the background through location updates, which App Review does not accept for this
@@ -28,6 +33,11 @@ You need a Mac with Xcode, an iPhone on iOS 18 or newer, and a Collie the phone 
 6. On the phone, trust your developer certificate (Settings → General → VPN & Device Management) and
    turn on Developer Mode.
 7. Open the app and allow location **Always**, so the island keeps updating in the background.
+8. Lock the phone and tap **Allow** when iOS asks whether to allow Live Activities from Collie.
+
+iOS asks that once, on the lock screen, the first time the app shows a Live Activity. Tapping
+Don't Allow turns off the island and the lock-screen card; turn Live Activities back on in the
+app's page in the Settings app, where it is listed as Collie.
 
 Every value lives in `Config.local.xcconfig`, which git ignores; `Config.xcconfig` only holds the
 defaults. An app built without a Collie address opens on a line saying so, and fetches nothing.
