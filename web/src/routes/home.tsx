@@ -1,5 +1,6 @@
 import { CircleDot, GitCompare, Rows3 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useRevalidator } from "react-router";
 
 import { RouteHeader, SettingsGear } from "@/components/app-header";
 import { SessionSwitcher } from "@/components/session-switcher";
@@ -7,6 +8,7 @@ import { ServerSwitcher } from "@/components/server-switcher";
 import { ReadOnlyBanner } from "@/components/read-only-banner";
 import { AgentList } from "@/components/agent-list";
 import { ThreadSidebar } from "@/components/agent-sidebar";
+import { PaneActionsSheet } from "@/components/pane-actions-sheet";
 import { LaunchStrip } from "@/components/launch-strip";
 import { SpaceOverview } from "@/components/space-overview";
 import { NewSpaceSheet, type WorktreeRepo } from "@/components/new-space-sheet";
@@ -27,7 +29,8 @@ import { usePaneOpen } from "@/hooks/use-pane-open";
 import { useListApproval } from "@/hooks/use-list-approval";
 import { useScrollMemory } from "@/hooks/use-scroll-memory";
 import { useMuxCapability } from "@/lib/mux-capability";
-import { ambientHost, ambientPanes, paneScope, sessionsOnHost } from "@/lib/hosts";
+import { ambientHost, ambientPanes, isMultiHost, paneRowKey, paneScope, sessionsOnHost } from "@/lib/hosts";
+import { setMachineHidden, useHiddenMachines } from "@/lib/hidden-machines";
 import type { ChangesLookup } from "@/lib/api";
 import type { DashView } from "@/lib/dash-view";
 import { t, tn } from "@/lib/i18n";
@@ -36,7 +39,9 @@ import { spaceChangesPath, spacePath } from "@/lib/nav";
 import type { WorkspaceGroup } from "@/lib/pane-groups";
 import { scopeKey, type Scope } from "@/lib/scope";
 import { countBlocked, hasReady } from "@/lib/triage";
-import type { AgentView, ServerSummary, SessionSummary } from "@/lib/types";
+import { usePairing } from "@/lib/pairing";
+import { usePins } from "@/lib/pins";
+import { isReadOnly, type AgentView, type ServerSummary, type SessionSummary } from "@/lib/types";
 import { useRootData } from "@/lib/route-data";
 
 /**
@@ -92,7 +97,7 @@ function ChangesTabBody({
 export function HomeRoute() {
   const data = useRootData();
   const nav = useNav();
-  const { newSpace, newWorktree, showWorktree, creatingSpace } = useSpaceActions();
+  const { newSpace, newWorktree, showWorktree, creatingSpace, newTab, creatingTab } = useSpaceActions();
 
   // Which repos a worktree could be branched from: one entry per repo, taken from the space that
   // shows the repo ITSELF (a worktree's own space would branch from the same repo, so listing both
@@ -162,6 +167,23 @@ export function HomeRoute() {
     [data.agents, data.shellPanes, data.scope, data.servers, data.sessions],
   );
 
+  // THE ROW HOLD (ADR 0070): a hold on a dashboard row opens that pane's own actions sheet, Pin to
+  // top / Unpin first, then the writes. The sheet writes with the PANE's scope, for the reason a tap
+  // opens with it (`paneScope`). A pin or unpin moves the row right here, so the answer is the row
+  // itself, scrolled into view and focused in its new place (`reveal`), not a toast.
+  const pins = usePins();
+  const [held, setHeld] = useState<AgentView | null>(null);
+  const [reveal, setReveal] = useState<{ rowKey: string } | null>(null);
+  const revalidator = useRevalidator();
+  const { refused: notPaired } = usePairing();
+  const readOnly = isReadOnly(data.device) || notPaired;
+  const herd = useMemo(() => [...data.agents, ...data.shellPanes], [data.agents, data.shellPanes]);
+  // THE MACHINE FILTER (issue #288): the machines this device leaves off the list, as stored. The
+  // list itself keeps the addressed machine and drops ids off the roster (lib/hidden-machines.ts). A
+  // solo snapshot reads nothing. The stand-in chip's tap is the second place it is written, beside
+  // the Machines sheet's switch.
+  const hiddenMachines = useHiddenMachines(isMultiHost(data.servers));
+
   // ScreenTransition remounts this whole route on every dashboard<->pane move (both directions), so
   // the scroller below is a fresh DOM node with scrollTop 0 each time — the document itself never
   // scrolls, so nothing else restores this. Keyed on the scope (host + session), so two herdr
@@ -213,11 +235,25 @@ export function HomeRoute() {
             lastSeenAt={data.lastSeenAt}
             tabs={data.tabs}
             servers={data.servers}
+            // Each workspace heading's "+" (M40/03): the list resolves each heading's own machine and
+            // session from these, the way a row's tap does, and sends the create there.
+            newTab={{
+              scope: data.scope,
+              sessions: data.sessions,
+              creating: creatingTab,
+              onNewTab: (workspaceId, at) => void newTab(workspaceId, at),
+            }}
             isolated={prefs.isolatedSpace}
             hidden={prefs.hiddenSpaces}
             onIsolate={setIsolatedSpace}
             {...(data.agents.length > 0 ? { onOpenSwitcher: showSwitcher } : {})}
             onToggleHidden={toggleHiddenSpace}
+            hiddenMachines={hiddenMachines}
+            addressedHost={data.scope.host}
+            onShowMachine={(host) => setMachineHidden(host, false, data.servers)}
+            pins={pins}
+            onHold={setHeld}
+            reveal={reveal}
             needsYouOnly={view === "focus"}
             renderBody={
               view === "changes"
@@ -308,11 +344,26 @@ export function HomeRoute() {
           currentPaneKey=""
           onSelect={selectFromSwitcher}
           order="attention"
+          pins={pins}
           className="px-0 py-1"
         />
       </BottomSheet>
 
       {approval.sheet}
+      {/* The pane menu a row's hold opens: the pane pill's sheet, with no read rows, so Pin to top
+          leads. Mounted at the route's root, a sibling of the other sheets, for the stacking reason
+          agent-chat.tsx gives for its own. */}
+      <PaneActionsSheet
+        open={held !== null}
+        onClose={() => setHeld(null)}
+        pane={held}
+        scope={held === null ? data.scope : paneScope(data.scope, held, data.servers, data.sessions)}
+        readOnly={readOnly}
+        onRenamed={() => revalidator.revalidate()}
+        onClosed={() => revalidator.revalidate()}
+        herd={herd}
+        onPinChange={(pane) => setReveal({ rowKey: paneRowKey(pane) })}
+      />
 
       <NewSpaceSheet
         open={newSpaceOpen}

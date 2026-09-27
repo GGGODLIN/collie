@@ -12,14 +12,14 @@ import {
 } from "lucide-react";
 import { useKeyboardOpen } from "@/hooks/use-keyboard";
 import { useSheetPull } from "@/hooks/use-sheet-pull";
-import { useSpaceActions } from "@/hooks/use-spaces";
+import { tabCreateKey, useSpaceActions } from "@/hooks/use-spaces";
 import { useNav } from "@/hooks/use-nav";
 import { useDashPrefs, openForCount } from "@/hooks/use-dash-prefs";
 import { useLaunchers } from "@/lib/launchers";
 import { buzz } from "@/lib/haptics";
 import { mirrorFont, useDisplayPrefs } from "@/hooks/use-display-prefs";
 import { useLatestReply } from "@/hooks/use-latest-reply";
-import { useMirrorImages } from "@/hooks/use-mirror-images";
+import { finishedTurnKey, useMirrorImages } from "@/hooks/use-mirror-images";
 import { useStableTerminalDraft } from "@/hooks/use-terminal-draft";
 import { useLocale } from "@/hooks/use-locale";
 import { isConnecting } from "@/lib/connection";
@@ -32,6 +32,7 @@ import { setStripsCollapsed, useStripsCollapsed } from "@/lib/strips-collapsed";
 import { ChatMessageList, type ChatMessageListHandle } from "@/components/ui/chat/chat-message-list";
 import { BottomSheet } from "@/components/ui/sheet";
 import { Collapse, CollapseSwap } from "@/components/ui/collapse";
+import { ImageCard } from "@/components/ui/image-card";
 import { RouteHeader } from "@/components/app-header";
 import { HeaderStatus } from "@/components/header-status";
 import { AnsiOutput } from "@/components/ansi-output";
@@ -82,6 +83,7 @@ import { panesOfTab } from "@/lib/pane-ordinal";
 import { useMuxCapability } from "@/lib/mux-capability";
 import { hasJournalAdapter, reportsSessionOnFirstPrompt } from "@/lib/journal-agents";
 import { paneRowKey, paneScope } from "@/lib/hosts";
+import { usePins } from "@/lib/pins";
 import { changesPath, historyPath, panePath, spacePath } from "@/lib/nav";
 import { isReadOnly, statusLabel } from "@/lib/types";
 import { usePairing } from "@/lib/pairing";
@@ -275,6 +277,10 @@ export function AgentChat({
     () => (agent === undefined ? [] : panesOfTab(agent, agents, shellPanes)),
     [agent, agents, shellPanes],
   );
+  // Every pane of the herd, for the pane menu's Pin to top row on both doors (lib/pins.ts reads it to
+  // tell a live pin from a dormant one), and this device's pins, for the switcher's Pinned section.
+  const herd = useMemo(() => [...agents, ...shellPanes], [agents, shellPanes]);
+  const pins = usePins();
   // This device may not type into agents: the backend rejects every write, so the composer drops to
   // read-only (and shows a banner). The mirror still polls (reading is fine). Either write gate puts
   // us here — the proxy-asserted allowlist, or a missing/rejected pairing credential — and the
@@ -858,17 +864,25 @@ export function AgentChat({
   );
 
   // Terminal graphics: the mirror tells us how many image placeholders it is showing, and only a
-  // count that GREW costs a journal read. The pane read carries no image field and the bridge does
-  // no journal work on the poll path — see hooks/use-mirror-images.ts for the whole cadence.
+  // count that GREW costs a journal read. An agent that draws pictures with no placeholder (pi,
+  // #292) costs one read per finished turn instead, for its newest turn's picture. The pane read
+  // carries no image field and the bridge does no journal work on the poll path — see
+  // hooks/use-mirror-images.ts for the whole cadence.
   const [imageClusterCount, setImageClusterCount] = useState(0);
   const mirrorImages = useMirrorImages({
     paneId,
     scope,
-    enabled: historyAvailable && imageClusterCount > 0,
+    enabled: historyAvailable,
     clusterCount: imageClusterCount,
+    finishedTurn: finishedTurnKey(agent),
   });
+  // A picture whose load failed stands down rather than show a broken-image glyph.
+  const [failedTurnImage, setFailedTurnImage] = useState<string | null>(null);
+  const turnImage = mirrorImages.turnImage !== failedTurnImage ? mirrorImages.turnImage : null;
   // Find owns the mirror; otherwise every verified latest exchange renders through the card.
   const visibleExchange = placement && placement.fit !== "off-screen" && !findOpen ? latestReply : null;
+  // Collapsing the card is a judgement about ONE message ("show me the raw rows instead"), so it is
+  // remembered by uuid: a new reply arrives expanded without an effect to reset anything.
   const [collapsedReply, setCollapsedReply] = useState<string | null>(null);
   const replyOpen = visibleExchange !== null && collapsedReply !== visibleExchange.reply.uuid;
   const hiddenMirrorLines = replyOpen && placement ? placement.endLine + 1 : 0;
@@ -1805,7 +1819,7 @@ export function AgentChat({
                     selected={agent.tabId}
                     onSelect={(id) => id && goToTab(id)}
                     onNewTab={newTab}
-                    creatingTab={creatingTab.has(agent.workspaceId)}
+                    creatingTab={creatingTab.has(tabCreateKey(agent.workspaceId, scope))}
                     allowAll={false}
                     scope={scope}
                     readOnly={readOnly}
@@ -1852,6 +1866,7 @@ export function AgentChat({
                     onRenamed={() => revalidator.revalidate()}
                     // Mirror closePane's success branch: closing the open pane returns Home, else revalidate.
                     onClosed={(id) => (id === paneId ? onBack() : revalidator.revalidate())}
+                    herd={herd}
                   />
                 )}
                 </div>
@@ -2042,9 +2057,28 @@ export function AgentChat({
                     nativeMirror={mirrorOverride}
                     blocks={blocks}
                     hideLeadingLines={hiddenMirrorLines}
-                    images={mirrorImages}
+                    images={mirrorImages.images}
                     onImageClusterCount={setImageClusterCount}
                   />
+                  {/* THE NEWEST TURN'S PICTURE, RIGHT AFTER THE MIRROR (M39, #292). pi draws a
+                      picture by direct placement, which leaves only blank rows on the grid, so
+                      there is no row to put it at; it comes from the journal instead. Placement
+                      was decided between three (2026-09-26, after a live pi run): A, the full-reply
+                      card's slot above the mirror, is the top of pi's scrollback (pi renders
+                      inline), so the card sat out of sight; C, at the reply's own rows, needs a
+                      text probe too fragile for a two-letter reply; B, here, is what the
+                      bottom-pinned view shows a few rows under the reply. A direct child of the
+                      scroller, so ChatMessageList re-pins when it appears or its picture loads,
+                      and only while the operator is following the tail. */}
+                  {turnImage && (
+                    <ImageCard
+                      src={turnImage}
+                      alt={t("mirror.imageAlt")}
+                      caption={t("mirror.turnImageCaption")}
+                      surface="page"
+                      onError={() => setFailedTurnImage(turnImage)}
+                    />
+                  )}
                 </>
               ) : (
                 <div className="py-16 text-center text-sm text-muted-foreground">
@@ -2323,6 +2357,9 @@ export function AgentChat({
             onSelect={switchToPane}
             tabs={tabs}
             servers={servers}
+            // This device's pins lead the sheet in a Pinned section (ADR 0070). The sheet itself
+            // stays switch-only: pinning is the pane menu's row, never a hold here.
+            pins={pins}
             // Shells fold on the same count rule Spaces uses: on a herd with dozens of bare shells
             // they'd otherwise bury the agents you opened this sheet to reach.
             shellsOpen={openForCount(dash.prefs.shellsOpen, (switcherPanes?.shellPanes ?? shellPanes).length)}
@@ -2407,6 +2444,9 @@ export function AgentChat({
           // unmounts in the same commit the settings sheet mounts.
           onSettings={() => setDrawer("paneSettings")}
           onRetell={retellAvailable ? (mode) => void retell.start(mode) : undefined}
+          // Pin to top / Unpin, the last read row (ADR 0070). No `onPinChange`: the Pinned group is
+          // on the dashboard and in the switcher, not on this screen, so the sheet says it in a toast.
+          herd={herd}
         />
         <RetellSheet retell={retell} />
         {/* This pane's own settings — one switch today, the prompt-cache warning (ADR 0042). Scoped to

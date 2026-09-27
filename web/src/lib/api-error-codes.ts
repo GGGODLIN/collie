@@ -74,6 +74,9 @@ export const API_ERROR_CODES = [
   "retell.in_progress",
   "retell.session_changed",
   "retell.failed",
+  // The new-space folder list — POST /api/folders/star (#289)
+  "folders.unknown",
+  "folders.favourites_full",
 
   // Worktrees — /api/workspace/:id/worktree[s|/open|/remove] (ADR 0032)
   "worktree.list_failed",

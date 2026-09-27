@@ -5,8 +5,10 @@ import { AgentIcon } from "@/components/agent-icon";
 import { PaneMeta } from "@/components/pane-meta";
 import { SectionHeader } from "@/components/section-header";
 import { StatusCounts, StatusSummaryLine } from "@/components/status-counts";
+import { pinnedRows, shownGroups } from "@/lib/dash-view";
 import { paneRowKey } from "@/lib/hosts";
 import { groupPanesByWorkspace } from "@/lib/pane-groups";
+import { pinMatcher, type Pin } from "@/lib/pins";
 import { paneName, panePlaceParts } from "@/lib/pane-name";
 import { shortenHome } from "@/lib/shorten-home";
 import { bucketOf, isAttention, triage, worstTriage, type TriageKey } from "@/lib/triage";
@@ -40,12 +42,18 @@ interface ThreadSidebarProps {
   shellsOpen?: boolean;
   onShellsOpenChange?: (open: boolean) => void;
   /**
+   * This device's pins (lib/pins.ts, ADR 0070). A Pinned section then leads, under the summary line,
+   * in the dashboard's place order, and each pinned pane leaves its workspace section or Shells, so
+   * it is listed once. Omit, or pass none, and the sheet renders as it did.
+   */
+  pins?: readonly Pin[];
+  /**
    * The operator's own launcher rows (`launchers.toml`). A trailing "Launch" section renders only
    * when this is non-empty AND `onLaunch` is given, since the caller (agent-chat) withholds `onLaunch` on
    * a read-only device, which is what keeps a write this device cannot make from being offered here.
    */
   launchers?: readonly Launcher[];
-  /** The bridge's own home dir, for shortening a pinned row's `cwd` with a leading `~`. */
+  /** The bridge's own home dir, for shortening a row's fixed `cwd` with a leading `~`. */
   launchersHome?: string;
   /** Fired with the row's command. The caller owns the write (useSpaceActions().launch). */
   onLaunch?: (command: string) => void;
@@ -70,10 +78,14 @@ interface ThreadSidebarProps {
 //
 // The two long tails still fold: 30-odd bare shells, and the Launch rows, using the dashboard's own
 // header primitive and remembering it.
+//
+// This device's pinned panes lead the sheet in a Pinned section (ADR 0070), in the dashboard's place
+// order, each listed once. The sheet stays switch-only: pinning lives in the pane menu.
 // A module-level empty list, not a `= []` default in the parameter list: a fresh array literal on
 // every render is a new reference, which defeats memoisation downstream for no benefit here.
 const NO_PANES: AgentView[] = [];
 const NO_LAUNCHERS: readonly Launcher[] = [];
+const NO_PINS: readonly Pin[] = [];
 
 /** The buckets that mean "a human is required here" — the same two the dashboard's line counts. */
 const URGENT: ReadonlySet<TriageKey> = new Set<TriageKey>(["needs", "ready"]);
@@ -93,6 +105,7 @@ export function ThreadSidebar({
   order = "place",
   shellsOpen = true,
   onShellsOpenChange,
+  pins = NO_PINS,
   launchers = NO_LAUNCHERS,
   launchersHome = "",
   onLaunch,
@@ -118,9 +131,21 @@ export function ThreadSidebar({
 
   // Place mode uses the dashboard's workspace grouping; attention mode uses the frozen buckets below.
   const groups = groupPanesByWorkspace(agents, [], { order: "fixed", tabs, servers });
+  // PINNED LEADS (ADR 0070): the dashboard's place order over agents AND shells (a shell sits after
+  // its tab's agents, as on the dashboard), so the two surfaces agree by construction. Each pinned
+  // pane then leaves its workspace section or Shells: listed once. A workspace section left with no
+  // rows is dropped, as on the dashboard; its heading would count panes listed elsewhere.
+  const isPinned = pinMatcher(pins);
+  const pinned =
+    pins.length === 0
+      ? NO_PANES
+      : pinnedRows(groupPanesByWorkspace(agents, shellPanes, { order: "fixed", tabs, servers }), isPinned);
+  const sections = shownGroups(groups, false, isPinned);
+  const shellRows = pins.length === 0 ? shellPanes : shellPanes.filter((p) => !isPinned(p));
   const urgent = agents.filter((a) => URGENT.has(bucketOf(a)));
-  // The first urgent row in DISPLAY order, not in the order the list arrived in.
-  const firstUrgent = groups.flatMap((g) => g.panes).find((a) => URGENT.has(bucketOf(a)));
+  // The first urgent row in DISPLAY order, not in the order the list arrived in: in Pinned when a
+  // pinned pane needs you.
+  const firstUrgent = [...pinned, ...sections.flatMap((s) => s.rows)].find((a) => URGENT.has(bucketOf(a)));
   const jumpTo = (pane: AgentView) => {
     const row = document.getElementById(rowDomId(pane));
     row?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -134,35 +159,54 @@ export function ThreadSidebar({
       )}
 
       {order === "attention" ? (
-        triage(agents)
-          .toSorted((a, b) => Number(a.key === "working") - Number(b.key === "working"))
-          .map((g) => {
-            const members = g.agents;
-            if (members.length === 0) return null;
-            return (
-              <Section
-                key={g.key}
-                id={`switch-${g.key}`}
-                label={g.label}
-                count={members.length}
-                dot={g.dot}
-                {...(g.accent !== undefined ? { accent: g.accent } : {})}
-              >
-                {members.map((a) => (
-                  <PaneRow
-                    key={paneRowKey(a)}
-                    id={rowDomId(a)}
-                    pane={a}
-                    active={paneRowKey(a) === currentPaneKey}
-                    onSelect={onSelect}
-                  />
-                ))}
-              </Section>
-            );
-          })
+        <>
+          {/* Pinned leads here too (ADR 0070): a pinned pane leaves its attention bucket, listed once. */}
+          {pinned.length > 0 && (
+            <Section id="switch-pinned" headingId="switch-pinned-heading" label={t("home.pinned.title")}>
+              {pinned.map((a) => (
+                <PaneRow
+                  key={paneRowKey(a)}
+                  id={rowDomId(a)}
+                  pane={a}
+                  active={paneRowKey(a) === currentPaneKey}
+                  onSelect={onSelect}
+                />
+              ))}
+            </Section>
+          )}
+          {triage(pins.length === 0 ? agents : agents.filter((a) => !isPinned(a)))
+            .toSorted((a, b) => Number(a.key === "working") - Number(b.key === "working"))
+            .map((g) => {
+              const members = g.agents;
+              if (members.length === 0) return null;
+              return (
+                <Section
+                  key={g.key}
+                  id={`switch-${g.key}`}
+                  label={g.label}
+                  count={members.length}
+                  dot={g.dot}
+                  {...(g.accent !== undefined ? { accent: g.accent } : {})}
+                >
+                  {members.map((a) => (
+                    <PaneRow
+                      key={paneRowKey(a)}
+                      id={rowDomId(a)}
+                      pane={a}
+                      active={paneRowKey(a) === currentPaneKey}
+                      onSelect={onSelect}
+                    />
+                  ))}
+                </Section>
+              );
+            })}
+        </>
       ) : (
         <>
           {agents.length > 0 && (
+            // ONE slot, always drawn while there are agents, so the groups below never shift when the
+            // first pane needs you or the last one is answered. The dashboard's own line, over the urgent
+            // panes alone: "Nothing needs you", or the counts with their words.
             <StatusSummaryLine
               panes={urgent}
               allClear={firstUrgent === undefined}
@@ -171,18 +215,32 @@ export function ThreadSidebar({
             />
           )}
 
-          {groups.map((g) => (
+          {/* The Pinned section, in the section voice Shells and Launch wear, with no dot and no count,
+              and it does not fold: a pin is the one thing this sheet was opened to reach. */}
+          {pinned.length > 0 && (
+            <Section id="switch-pinned" headingId="switch-pinned-heading" label={t("home.pinned.title")}>
+              {pinned.map((a) => (
+                <PaneRow
+                  key={paneRowKey(a)}
+                  id={rowDomId(a)}
+                  pane={a}
+                  active={paneRowKey(a) === currentPaneKey}
+                  onSelect={onSelect}
+                />
+              ))}
+            </Section>
+          )}
+
+          {sections.map(({ group: g, rows }) => (
             <Section
               key={g.key}
               id={`switch-ws-${g.key.replace(/[^A-Za-z0-9_-]/gu, "_")}`}
               label={g.label}
               tone="strong"
               dot={worstTriage(g.panes) === "needs" ? "bg-status-blocked" : undefined}
-              trailing={
-                <StatusCounts panes={g.panes} className="shrink-0 text-[11px] text-muted-foreground" />
-              }
+              trailing={<StatusCounts panes={g.panes} className="shrink-0 text-[11px] text-muted-foreground" />}
             >
-              {g.panes.map((a) => (
+              {rows.map((a) => (
                 <PaneRow
                   key={paneRowKey(a)}
                   id={rowDomId(a)}
@@ -196,15 +254,15 @@ export function ThreadSidebar({
         </>
       )}
 
-      {shellPanes.length > 0 && (
+      {shellRows.length > 0 && (
         <Section
           id="switch-shells"
           label={t("home.sidebar.shells")}
-          count={shellPanes.length}
+          count={shellRows.length}
           dot="bg-status-unknown"
           {...(onShellsOpenChange ? { open: shellsOpen, onToggle: onShellsOpenChange } : {})}
         >
-          {shellPanes.map((p) => (
+          {shellRows.map((p) => (
             <PaneRow
               key={paneRowKey(p)}
               pane={p}
@@ -241,9 +299,10 @@ export function ThreadSidebar({
 
 // Uses the dashboard's own header primitive so the fold affordance is identical in both places —
 // level 3 because the sheet's own title is the h2. Passing no `open`/`onToggle` renders a plain
-// pinned heading with nothing to press.
+// heading that does not fold, with nothing to press.
 function Section({
   id,
+  headingId,
   label,
   count,
   accent,
@@ -255,6 +314,8 @@ function Section({
   children,
 }: {
   id: string;
+  /** The heading's id. Given, the section takes its name from it (`aria-labelledby`). */
+  headingId?: string;
   label: string;
   count?: number;
   accent?: boolean;
@@ -269,12 +330,13 @@ function Section({
 }) {
   const foldable = open !== undefined && onToggle !== undefined;
   return (
-    <section className="flex flex-col gap-0.5">
+    <section className="flex flex-col gap-0.5" aria-labelledby={headingId}>
       <SectionHeader
         level={3}
         label={label}
         className="px-2"
         {...(accent !== undefined ? { accent } : {})}
+        {...(headingId !== undefined ? { id: headingId } : {})}
         {...(count !== undefined ? { count } : {})}
         {...(dot !== undefined ? { dot } : {})}
         {...(tone !== undefined ? { tone } : {})}
@@ -401,9 +463,9 @@ function LaunchRow({
   refusal: string | undefined;
   onLaunch: (command: string) => void;
 }) {
-  // Pinned → the folder, shortened under home; absent → "here" (opens beside this pane, wherever it
-  // is), which is the one thing the switcher can say that the dashboard's "here" cannot — there,
-  // home is already implied and this suffix is withheld instead (launch-strip.tsx).
+  // A fixed folder → that folder, shortened under home; absent → "here" (opens beside this pane,
+  // wherever it is), which is the one thing the switcher can say that the dashboard's "here"
+  // cannot — there, home is already implied and this suffix is withheld instead (launch-strip.tsx).
   const suffix = launcher.cwd !== undefined ? shortenHome(launcher.cwd, home) : t("chat.switcher.launch.here");
   const disabled = busy || refusal !== undefined;
   return (
