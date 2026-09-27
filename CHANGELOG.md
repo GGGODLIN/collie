@@ -30,9 +30,15 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+## [1.15.2] - 2026-09-27
+
+### Changed
+
+- **Built on upstream Collie 1.14.0.** AltanS/collie v1.14.0, commit 86074800, unchanged since 1.15.0. ([bb4b18ba](https://github.com/GGGODLIN/collie/commit/bb4b18ba))
+
 ### Docs
 
-- **This fork's decision records are numbered from 9001.** Its five ADRs, 0070 to 0074, are now 9001 to 9005, so upstream's next ADRs can no longer take the same numbers; upstream's own 0070 (pins) keeps its number.
+- **This fork's decision records are numbered from 9001.** Its five ADRs, 0070 to 0074, are now 9001 to 9005, so upstream's next ADRs can no longer take the same numbers; upstream's own 0070 (pins) keeps its number. ([a5147c06](https://github.com/GGGODLIN/collie/commit/a5147c06))
 
 ## [1.15.1] - 2026-09-27
 
