@@ -296,6 +296,36 @@ describe("locateReply — a reply whose tail holds Markdown links", () => {
   });
 });
 
+// More source that Claude does not paint as written. Each case pairs the journal's Markdown with the
+// rows Claude drew for it, and each would have missed with the raw text alone.
+describe("locateReply — source spelled differently on screen", () => {
+  const lead = "開頭已經捲出畫面的一段很長的前文，只是為了讓這則回覆被判定成 clipped。";
+
+  // A real Claude pane, 2026-09-27: the fence's info string is not painted.
+  it("a code block's language tag", () => {
+    const source = `${lead}\n\n- 沒變成卡片：證實這個 bug 存在，我照上面的計畫修。\n- 有變成卡片：代表 Claude 其實有畫出語言標記，這一項就不用修。\n\n\`\`\`bash\necho "這個區塊的語言標記是 bash"\n\`\`\``;
+    const painted = [
+      "  - 沒變成卡片：證實這個 bug 存在，我照上面的計畫修。",
+      "  - 有變成卡片：代表 Claude 其實有畫出語言標記，這一項就不用修。",
+      "",
+      '  echo "這個區塊的語言標記是 bash"',
+    ];
+    expect(locateReply(painted.join("\n"), turn("assistant", source))).toEqual({ fit: "clipped", endLine: 3 });
+  });
+
+  it("an HTML entity and a tag", () => {
+    const source = `${lead}\n\n前面再多墊一行夠長的文字，確保比對範圍不會伸進畫面外的前文。\n這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：A &amp; B<br>C`;
+    const painted = ["  前面再多墊一行夠長的文字，確保比對範圍不會伸進畫面外的前文。", "  這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：A & BC"];
+    expect(locateReply(painted.join("\n"), turn("assistant", source)).fit).toBe("clipped");
+  });
+
+  it("keeps code spans literal while it reduces the link beside them", () => {
+    const source = `${lead}\n\n這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：分工寫在 [分工說明](file:///tmp/split.md)，路徑是 \`<repo>/wt\``;
+    const painted = ["  這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：分工寫在 分工說明，路徑是 <repo>/wt"];
+    expect(locateReply(painted.join("\n"), turn("assistant", source)).fit).toBe("clipped");
+  });
+});
+
 // A real Claude capture: one reply, the input box, and a statusline row under it.
 describe("settleText — what counts as the mirror holding still", () => {
   const screen = readFileSync(join(import.meta.dirname, "..", "fixtures", "panes", "claude--done.txt"), "utf8");
