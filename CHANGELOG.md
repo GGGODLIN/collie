@@ -30,6 +30,10 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+### Changed
+
+- **The wait-what band drops its leftover host-picker rule.** The mirror no longer carries a matcher for a host-choice row the wait-what mod stopped drawing, so a band is read by its header and recap rows alone.
+
 ### Docs
 
 - **The README shows the iPhone island and two fork features.** Screenshots of the Dynamic Island, its long-press view and the lock-screen card open the fork section, followed by the pane descriptions and approving from the list; all use made-up agents. The iPhone guide adds the one-time Live Activities prompt to its setup steps.
