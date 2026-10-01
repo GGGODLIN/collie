@@ -30,9 +30,21 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+## [1.15.3] - 2026-10-01
+
+### Changed
+
+- **Built on upstream Collie 1.14.2.** AltanS/collie v1.14.2, commit 887a37db. ([823ae269](https://github.com/GGGODLIN/collie/commit/823ae269))
+- **The wait-what band drops its leftover host-picker rule.** The mirror no longer carries a matcher for a host-choice row the wait-what mod stopped drawing, so a band is read by its header and recap rows alone. ([d3473e56](https://github.com/GGGODLIN/collie/commit/d3473e56))
+
+### Fixed
+
+- **Grok 1.0.41 panes send from the phone again.** Grok 1.0.41 adds `Shift+Enter/Opt+Enter:newline` to the key-hint row under its input box while a draft is in it. Collie did not know a hint with two keys joined by `/`, so it lost the input box as soon as the phone typed the message: the send stopped with "Message didn't reach the input box", and the unread-dialog card covered the pane. Collie now reads that hint, and the `Alt` spelling a Linux Grok may print. Every other saved pane reads as before. Thanks @CorrectRoadH for the pane capture (#294). ([7c9f6497](https://github.com/GGGODLIN/collie/commit/7c9f6497))
+
 ### Docs
 
-- **The README shows the iPhone island and two fork features.** Screenshots of the Dynamic Island, its long-press view and the lock-screen card open the fork section, followed by the pane descriptions and approving from the list; all use made-up agents. The iPhone guide adds the one-time Live Activities prompt to its setup steps.
+- **The README shows the iPhone island and two fork features.** Screenshots of the Dynamic Island, its long-press view and the lock-screen card open the fork section, followed by the pane descriptions and approving from the list; all use made-up agents. The iPhone guide adds the one-time Live Activities prompt to its setup steps. ([be13562d](https://github.com/GGGODLIN/collie/commit/be13562d))
+- **A walkthrough for running Claude Code from your phone.** `docs/claude-code-on-your-phone.md` first keeps Claude Code alive in tmux, Herdr or zellij when SSH drops, and shows how to run several sessions at once. Then it takes one path end to end, from install to answering an agent from the Keys tray. `collie docs claude-code-on-your-phone` prints it. ([2bec9cbd](https://github.com/GGGODLIN/collie/commit/2bec9cbd))
 
 ## [1.15.2] - 2026-09-27
 

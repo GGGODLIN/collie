@@ -12,7 +12,6 @@
 import { isBlank, lineText, type StyledLine } from "../../blocks";
 
 const HEADER_RE = /^wait what \[ 白話 \] \[ 跟丟了 \](?: \[ 清除 \])?(?:\s+\[[-+]\])?$/;
-const HOST_CHOICE_RE = /^\[ Orca \] \[ Herdr \] \[ 取消 \]$/;
 
 function isBandRow(text: string): boolean {
   return (
@@ -20,8 +19,7 @@ function isBandRow(text: string): boolean {
     text.startsWith("recap · ") ||
     text.startsWith("── ") ||
     text.startsWith("退回原因：") ||
-    /^[╭│╰]/.test(text) ||
-    HOST_CHOICE_RE.test(text)
+    /^[╭│╰]/.test(text)
   );
 }
 

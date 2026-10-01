@@ -39,11 +39,6 @@ describe("stripWaitWhatBand", () => {
     expect(mirror(rows)).toEqual(["● Done."]);
   });
 
-  it("drops the host choice rows", () => {
-    const rows = ["● Done.", header, "── 白話 · 同時有 Orca 與 Herdr 身分，請選擇宿主（未選不執行）", "[ Orca ] [ Herdr ] [ 取消 ]", ...box];
-    expect(mirror(rows)).toEqual(["● Done."]);
-  });
-
   it("keeps a band holding a row the mod does not draw", () => {
     const rows = ["● Done.", header, "── 白話 · 失敗：a long error that", "wrapped onto a second row", ...box];
     expect(mirror(rows)).toContain("wrapped onto a second row");
