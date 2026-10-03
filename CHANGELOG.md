@@ -30,13 +30,26 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-10-03
+
+### Added
+
+- **Chat shows a session and what each tool call did.** Turn Chat on under Settings → Experiments and a pane draws the agent's own turns, replies and a card per step. A tool part carries a structured result beside its one-line summary, such as a path and a diff or a command's exit code. Terminal stays the default. ([28534cb4](https://github.com/GGGODLIN/collie/commit/28534cb4))
+- **Voice input can run a command already on the machine.** The `local-cli` provider runs a command such as `whisper-cli` once per recording, with the recording's path as its last argument, and takes the transcript from its stdout. Set it up with `collie stt setup --provider local-cli --command <path> --args <list>`. Collie runs it without a shell, as the bridge's user. ([28534cb4](https://github.com/GGGODLIN/collie/commit/28534cb4))
+- **Muse panes have History and Chat.** Collie reads Muse's own `session.jsonl` log, finds the newest session whose workspace is the pane's folder, and needs no Herdr hook, so a Muse pane no longer answers "no transcript". ([28534cb4](https://github.com/GGGODLIN/collie/commit/28534cb4))
+
 ### Changed
 
-- **Synced onto upstream Collie 1.16.0.** AltanS/collie v1.16.0, commit 320bb18. This fork stays 1.15.3. The notes under the upstream headings are that release, not a fork release.
+- **Built on upstream Collie 1.16.0.** AltanS/collie v1.16.0, commit 320bb18. ([28534cb4](https://github.com/GGGODLIN/collie/commit/28534cb4))
+- **Settings is four sections instead of one long column.** The page is an index now: Appearance, Device, Alerts and System. No setting is removed and none changes what it does. Back from a section returns to the index. ([28534cb4](https://github.com/GGGODLIN/collie/commit/28534cb4))
 
 ### Fixed
 
-- **An empty pane switcher can fill without crashing.** The switcher keeps the same hook order when the last pane closes or a pane appears while it stays open.
+- **An empty pane switcher can fill without crashing.** The switcher keeps the same hook order when the last pane closes or a pane appears while it stays open. ([ecff8852](https://github.com/GGGODLIN/collie/commit/ecff8852))
+
+### Docs
+
+- **Windows VM rehearsal remains unverified for fork 1.16.0.** Fork releases build an experimental Windows zip when the Windows payload job succeeds. Check the release assets before installing. Windows VM install/update/rollback rehearsal is waived for fork 1.16.0 and remains unverified. Windows stays experimental, and Windows CI is still required to be green.
 
 ## [1.15.3] - 2026-10-01
 

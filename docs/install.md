@@ -160,21 +160,23 @@ macOS has no package yet. [mise](#mise) works on a Mac, as does the `aarch64-dar
 
 ### Windows support (experimental)
 
-> **Experimental.** Today, a release carries the Windows zip when its Windows build succeeds. Until
-> the Windows build is a required part of the release, a release may ship without it. Then
-> `install.ps1` and `collie update` say so and install nothing. The pieces below were tested as
-> described. Phone access needs a front door that you set up yourself, and it has not been tested on
-> Windows. "Supported" means the maintainer owns the code and tests it; "experimental" means the
-> install path and the phone path are not yet proven against a real release, and it stays until the
-> conditions on the Windows page are all met.
+> **Experimental.** Today, fork releases build an experimental Windows zip when the Windows payload
+> job succeeds. Check the release assets before installing. Install only when the assets include
+> `collie-<version>-windows-x64.zip`. If they do not, `install.ps1` and `collie update` say so and
+> install nothing. Windows VM install/update/rollback rehearsal is waived for fork 1.16.0 and
+> remains unverified. Windows CI is still required to be green. Phone access needs a front door that
+> you set up yourself, and it has not been tested on Windows. "Supported" means the maintainer owns
+> the code and tests it; "experimental" means the install path and the phone path are not yet proven
+> against a real release, and it stays until the conditions on the Windows page are all met.
 > [Collie on Windows](windows.md) has the whole page.
 
 Save `scripts/install.ps1` from the repository, read it, and run it. It needs no Bun, Git or
 `bash`:
 
 ```powershell
+$env:COLLIE_UPDATE_REPO = "GGGODLIN/collie"
 Invoke-WebRequest -OutFile install.ps1 `
-  https://raw.githubusercontent.com/AltanS/collie/main/scripts/install.ps1
+  https://raw.githubusercontent.com/GGGODLIN/collie/main/scripts/install.ps1
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 

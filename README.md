@@ -309,19 +309,21 @@ isn't in the path at all, [`docs/deployment.md`](./docs/deployment.md) has the r
 
 Linux and macOS: nothing changes for you.
 
-**Today:** a release carries the Windows zip when its Windows build succeeds. Until the Windows
-build is a required part of the release, a release may ship without it. Then `install.ps1` and
-`collie update` say so and install nothing. The pieces below were tested as described. Phone
-access needs a front door that you set up yourself, and it has not been tested on Windows.
+**Today:** Fork releases build an experimental Windows zip when the Windows payload job succeeds.
+Check the release assets before installing. Install only when the assets include
+`collie-<version>-windows-x64.zip`. If they do not, `install.ps1` and `collie update` say so and
+install nothing. Windows VM install/update/rollback rehearsal is waived for fork 1.16.0 and
+remains unverified. Phone access needs a front door that you set up yourself, and it has not been
+tested on Windows.
 
 Windows 11 on x64 with Herdr is a supported host: the maintainer owns the code and tests it. It stays
 marked experimental, because the install path and the phone path are not yet proven against a real
 release. The conditions for dropping the word are on the Windows page. [**docs/windows.md**](./docs/windows.md) has the install, the update, and what is not
 tested. In short:
 
-- **Tested.** The `windows.yml` workflow runs the bridge, cli and scripts tests on every push, and
-  a Windows 11 VM rehearses an install, an update and a rollback before each release tag.
-  ([ADR 0075](./.adr/0075-windows-is-a-supported-host.md))
+- **Checks.** The `windows.yml` workflow runs the bridge, cli and scripts tests on pull requests
+  and pushes to `main`. The Windows 11 VM rehearsal is waived only for fork 1.16.0; its install,
+  update and rollback remain unverified. ([ADR 0075](./.adr/0075-windows-is-a-supported-host.md))
 - **Installed without a toolchain.** Each release builds `collie-<version>-windows-x64.zip`, and
   `scripts/install.ps1` installs it. The binary is unsigned, and Smart App Control can block it.
 - **Run by Task Scheduler.** `collie start`, `stop`, `restart`, `status` and `uninstall` work as they

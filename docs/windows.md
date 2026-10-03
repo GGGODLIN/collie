@@ -4,16 +4,19 @@ What Windows support covers, how to install and update Collie there, and what Wi
 you on. Read [Security](security.md) first: Collie exposes remote shell access to your machine
 by design.
 
-> **Experimental.** Read this first, because it is the truth about today. A release carries the
-> Windows zip when its Windows build succeeds. Until the Windows build is a required part of the
-> release, a release may ship without it. Then `install.ps1` and `collie update` say so and
-> install nothing. The parts below were tested as this page describes them. Phone access needs
-> a front door that you set up yourself, and it has not been tested on Windows.
+> **Experimental.** Read this first, because it is the truth about today. Fork releases build an
+> experimental Windows zip when the Windows payload job succeeds. Check the release assets before
+> installing. Use the install commands below only when the assets include
+> `collie-<version>-windows-x64.zip`. If they do not, `install.ps1` and `collie update` say so and
+> install nothing. Windows VM install/update/rollback rehearsal is waived for fork 1.16.0 and
+> remains unverified. Windows CI is still required to be green. Phone access needs a front door that
+> you set up yourself, and it has not been tested on Windows.
 
 Two words on this page have a fixed meaning:
 
-- **Supported** means the maintainer owns the Windows code and tests it: a CI run on every push,
-  and a rehearsal on a Windows 11 virtual machine before each release tag
+- **Supported** means the maintainer owns the Windows code and tests it: CI on pull requests and
+  pushes to `main`, and a Windows 11 VM rehearsal before each release tag. Fork 1.16.0 has a
+  one-release waiver for that rehearsal; its install, update and rollback remain unverified
   ([ADR 0075](../.adr/0075-windows-is-a-supported-host.md)).
 - **Experimental** means the install path and the phone path are not yet proven against a real
   release. The word leaves only when all of these are true together: a release carries the Windows
@@ -108,6 +111,7 @@ newest release that has one, checks its sha256 and stops on a mismatch. Until a 
 the zip, it stops as [described above](#collie-on-windows).
 
 ```powershell
+$env:COLLIE_UPDATE_REPO = "GGGODLIN/collie"
 irm https://colliepwa.dev/install.ps1 | iex
 ```
 
@@ -116,8 +120,9 @@ irm https://colliepwa.dev/install.ps1 | iex
 > rights.
 
 ```powershell
+$env:COLLIE_UPDATE_REPO = "GGGODLIN/collie"
 Invoke-WebRequest -OutFile install.ps1 `
-  https://raw.githubusercontent.com/AltanS/collie/main/scripts/install.ps1
+  https://raw.githubusercontent.com/GGGODLIN/collie/main/scripts/install.ps1
 notepad install.ps1
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
