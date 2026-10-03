@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import { hostFor } from "../bridge/host.ts";
 import { capture, context, fakeLinkFs } from "./fakes.ts";
 import { EXIT } from "./io.ts";
 import { type Exec, type Net, realExec, realFiles } from "./sys.ts";
@@ -73,7 +74,7 @@ function world(duringPull: (seed: string) => void) {
     files: realFiles,
     link: fakeLinkFs(),
     net,
-    platform: process.platform,
+    host: hostFor(process.platform),
     arch: process.arch,
     restart: () => Promise.resolve(EXIT.OK),
     now: () => 0,

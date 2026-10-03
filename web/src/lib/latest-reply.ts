@@ -138,6 +138,10 @@ function proseTruncated(entry: TranscriptEntry): boolean {
 function newestReplyIndex(entries: TranscriptEntry[]): number {
   for (let i = entries.length - 1; i >= 0; i--) {
     const entry = entries[i];
+    // A turn the agent rewound past is not the reply on screen, and the identity check downstream
+    // would reject it anyway; skipping it here means the walk keeps looking instead of stopping on a
+    // turn that can never pass.
+    if (entry?.abandoned === true) continue;
     if (entry && entry.role === "assistant" && replyProse(entry) !== "") return i;
   }
   return -1;
@@ -163,6 +167,7 @@ export function newestExchange(entries: TranscriptEntry[]): LatestExchange | nul
   if (at === -1) return null;
   for (let i = at - 1; i >= 0; i--) {
     const entry = entries[i];
+    if (entry?.abandoned === true) continue;
     if (entry && entry.role === "user" && replyProse(entry) !== "") {
       return { reply: entries[at]!, prompt: entry };
     }

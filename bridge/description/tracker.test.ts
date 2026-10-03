@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type { ProbeTail } from "../journal/cache-probe.ts";
+import type { RowReducer } from "../journal/reduce.ts";
 import { parseRecap } from "../journal/recap.ts";
 import type { AgentSessionRef, JournalAdapter, TranscriptEntry, TranscriptSource } from "../journal/types.ts";
 import type { AgentView } from "../types.ts";
@@ -56,8 +57,18 @@ function fakeJournal(agent = "claude") {
       return state.stat;
     },
     load: async () => ({ text: "", complete: true, size: 0, mtimeMs: 0 }),
+    // The description tracker reads the tail probe, not the live window. These exist because the
+    // journal seam now requires them of every source.
+    readSince: async () => ({ lines: [], cursor: "", reset: true, fromStart: true }),
   };
-  const adapter: JournalAdapter = { agent, source, parse: () => state.entries };
+  const adapter: JournalAdapter = {
+    agent,
+    source,
+    parse: () => state.entries,
+    reducer: (): RowReducer => {
+      throw new Error("the description tracker does not fold a live window");
+    },
+  };
   const tail = async (): Promise<ProbeTail | null> => {
     calls.tail++;
     return { path: "/logs/one.jsonl", lines: [], mtimeMs: 100 };

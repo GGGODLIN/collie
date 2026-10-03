@@ -29,6 +29,7 @@ import { usePaneOpen } from "@/hooks/use-pane-open";
 import { useListApproval } from "@/hooks/use-list-approval";
 import { useScrollMemory } from "@/hooks/use-scroll-memory";
 import { useMuxCapability } from "@/lib/mux-capability";
+import { isolateSpaces } from "@/lib/spaces";
 import { ambientHost, ambientPanes, isMultiHost, paneRowKey, paneScope, sessionsOnHost } from "@/lib/hosts";
 import { setMachineHidden, useHiddenMachines } from "@/lib/hidden-machines";
 import type { ChangesLookup } from "@/lib/api";
@@ -276,7 +277,7 @@ export function HomeRoute() {
             <>
               <LaunchStrip open={launchOpen} onOpenChange={setLaunchOpen} scope={data.scope} />
               <SpaceOverview
-                workspaces={data.workspaces}
+                workspaces={isolateSpaces(data.workspaces, prefs.isolatedSpace)}
                 agents={navPanes.agents}
                 shellPanes={navPanes.shellPanes}
                 host={navHost}

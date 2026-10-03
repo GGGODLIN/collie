@@ -20,7 +20,7 @@
 import { fetchPane, sendReply } from "./api";
 import { describeApiError, describeThrownError } from "./api-error-message";
 import { parseAnsi } from "./ansi";
-import { splitLines } from "./blocks";
+import { splitLines, type StyledLine } from "./blocks";
 import { t } from "./i18n";
 import { graphemeSegmenter } from "./env";
 import { adapterFor, type HarnessAdapter } from "./harness";
@@ -294,6 +294,8 @@ export async function sendGuardedReply(args: GuardedReplyArgs): Promise<ReplyOut
       const fresh = await fetchPane(args.paneId, args.requestedLines, args.scope);
       const lines = splitLines(parseAnsi(fresh.text));
       if (!adapter.composerReady?.(lines)) return { status: "blocked", error: noBoxMessage() };
+      const split = newlineRefusal(adapter, args.text, lines);
+      if (split !== null) return split;
       previousDraft = adapter.extractInputDraft(lines);
     } catch (e) {
       return { status: "error", error: message(e) };
@@ -314,6 +316,11 @@ export async function sendGuardedReply(args: GuardedReplyArgs): Promise<ReplyOut
       try {
         const fresh = await fetchPane(args.paneId, args.requestedLines, args.scope);
         const lines = splitLines(parseAnsi(fresh.text));
+        // A screen that changed under the send must not unlock a later chunk carrying a `\n` into
+        // an input that submits on it. The earlier chunks are already in the pane, so say so.
+        if (newlineRefusal(adapter, args.text, lines) !== null) {
+          return { status: "error", error: t("reply.refused.multilineMidway"), textDelivered: true };
+        }
         const draft = adapter.extractInputDraft(lines);
         if (draft !== previousDraft && adapter.composerReady?.(lines) && draftCarriesSend(delivered, draft) && carriesReplyTail(delivered, draft)) {
           verified = true;
@@ -367,7 +374,13 @@ export async function sendGuardedReply(args: GuardedReplyArgs): Promise<ReplyOut
     } catch {
       continue; // transient read failure — the bounded loop is the timeout
     }
-    if (draftCarriesSend(args.text, draft) && (chunks.length === 1 || (draft !== previousDraft && carriesReplyTail(args.text, draft)))) return submitOnly(args, verifiedPrompt);
+    // The tail check applies to single-chunk sends too, not just multi-chunk: the substring
+    // matcher above accepts a prefix of the echo, and binding that partial row makes the bridge's
+    // exact check refuse the submit (promptBinding not_found) while the text sits delivered in the
+    // box — three stalls in the 2026-09-27 audit trail. A complete echo is the final state, so once
+    // the tail is on screen the bound region is stable; token-collapsed sends still route to the
+    // adapter's second look below, which is its purpose.
+    if (draftCarriesSend(args.text, draft) && carriesReplyTail(args.text, draft) && (chunks.length === 1 || draft !== previousDraft)) return submitOnly(args, verifiedPrompt);
     // The adapter gets a second look, and only a second look: a harness can SWALLOW what we typed and
     // paint a token of its own instead (Claude collapses anything past its paste threshold into
     // `[Pasted text #N +M lines]`), so the box never holds our words and the match above structurally
@@ -411,6 +424,19 @@ function noBoxMessage(): string {
  *  help. */
 function noEchoMessage(): string {
   return t("reply.blocked.noEcho");
+}
+
+/**
+ * The refusal for a multi-line message on an input that SUBMITS on a raw newline, or null.
+ * `pane.send_text` types each `\n` as a keypress, so there the message would be answered at its first
+ * line break and the rest typed into whatever comes next. Asked of every read that clears the text to
+ * go out — the pre-flight, the re-check after the pre-clear sweep, the read before a chunked send —
+ * because each can land on a different input than the read before it. No override fixes this, so it
+ * is an `error`, not a `blocked` that would offer "type anyway": the caller keeps the draft.
+ */
+function newlineRefusal(adapter: HarnessAdapter, text: string, lines: StyledLine[]): ReplyOutcome | null {
+  if (!/[\r\n]/.test(text) || !adapter.newlineSubmits?.(lines)) return null;
+  return { status: "error", error: t("reply.refused.multiline") };
 }
 
 /**
@@ -475,6 +501,9 @@ async function preflight(adapter: HarnessAdapter, args: GuardedReplyArgs): Promi
     return blind({ status: "blocked", error: noBoxMessage() });
   }
 
+  const split = newlineRefusal(adapter, args.text, seen);
+  if (split !== null) return blind(split);
+
   // The region the read's `true` was true OF. Computed here, from the same parse `composerReady` just
   // answered about, so the caller cannot bind its keys to anything but the screen that authorised
   // them — and cannot forget to, since it arrives as the argument.
@@ -499,7 +528,8 @@ async function preflight(adapter: HarnessAdapter, args: GuardedReplyArgs): Promi
       // the reply instead. Still fail-open on a throw: the submit key is guarded downstream.
       try {
         const fresh = await fetchPane(args.paneId, args.requestedLines, args.scope);
-        if (composerReady(splitLines(parseAnsi(fresh.text)))) return null;
+        const lines = splitLines(parseAnsi(fresh.text));
+        if (composerReady(lines)) return newlineRefusal(adapter, args.text, lines);
       } catch {
         return null;
       }
