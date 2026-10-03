@@ -495,8 +495,12 @@ describe("the repository's CHANGELOG.md", () => {
 		for (const group of section.groups) expect(group.leads.length).toBeGreaterThan(0);
 	});
 
-	test("1.15.0 credits every contributor its wrapped bullets name", () => {
-		const handles = creditedHandles(parseSection(changelog, "1.15.0"));
+	test("upstream 1.15.0 credits every contributor its wrapped bullets name", () => {
+		// 同號的 fork release 不代表 upstream；只調整測試輸入的標題，保留真實條目。
+		const upstreamChangelog = changelog
+			.replace("## [1.15.0] -", "## Fork release [1.15.0] -")
+			.replace("## Upstream release [1.15.0] -", "## [1.15.0] -");
+		const handles = creditedHandles(parseSection(upstreamChangelog, "1.15.0"));
 		expect(handles.map((h) => h.toLowerCase()).toSorted()).toEqual(
 			[
 				"AndiWandHerd",

@@ -129,7 +129,7 @@ describe("release.yml: a Windows failure never stops a release", () => {
   test("the jobs after `release` read its result by name, so a failed Windows job does not skip them", () => {
     for (const name of ["notify-website", "refresh-packages"]) {
       expect(job(name).needs).toBe("release");
-      expect(job(name).if).toBe("${{ !cancelled() && needs.release.result == 'success' && !contains(github.ref_name, '-') }}");
+      expect(job(name).if).toBe("${{ github.repository == 'AltanS/collie' && !cancelled() && needs.release.result == 'success' && !contains(github.ref_name, '-') }}");
     }
   });
 });
