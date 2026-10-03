@@ -10,28 +10,8 @@ import {
   worstTriage,
   type TriageKey,
 } from "./triage";
-import type { AgentStatus, AgentView } from "./types";
-
-function agent(
-  paneId: string,
-  status: AgentStatus,
-  ts: { active?: number; seen?: number } = {},
-): AgentView {
-  return {
-    paneId,
-    workspaceId: "w0",
-    workspaceLabel: "proj",
-    workspaceNumber: 1,
-    tabId: "w0:t1",
-    agent: "claude",
-    status,
-    cwd: "/home/k/proj",
-    focused: false,
-    // Both optional: an absent key and an explicit `undefined` read the same to every consumer.
-    lastActiveAt: ts.active,
-    lastSeenAt: ts.seen,
-  };
-}
+import type { AgentStatus } from "./types";
+import { regressionAgent as agent, newestAttentionAgents } from "@/test/fork-regression-data";
 
 /** The section an agent landed in, by pane id. */
 function sectionOf(sections: ReturnType<typeof triage>, paneId: string): TriageKey | undefined {
@@ -119,11 +99,7 @@ describe("triage — ordering: the latest state change first, as Herdr's priorit
   // switcher mirrors it (ADR 9003). The sheet freezes its rows when it opens, so this never moves a
   // row under a thumb.
   it("orders an attention section newest first", () => {
-    const s = triage([
-      agent("old", "blocked", { active: 100, seen: 0 }),
-      agent("new", "blocked", { active: 900, seen: 0 }),
-      agent("mid", "blocked", { active: 500, seen: 0 }),
-    ]);
+    const s = triage(newestAttentionAgents);
     expect(ids(s, "needs")).toEqual(["new", "mid", "old"]);
   });
 

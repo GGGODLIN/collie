@@ -27,6 +27,7 @@ import { paneMirrorOverride, setPaneMirrorOverride } from "@/lib/mirror-invert";
 import { submitPromptOption } from "@/lib/prompt-action";
 import { submitWizardKeys } from "@/lib/wizard-action";
 import { fixtureAgents, fixtureShellPanes, fixtureTabs, paneTextWithDraft } from "@/test/handlers";
+import { fullReply as REPLY, fullReplyPrompt as PROMPT, fullReplyAfter as AFTER, fullReplyHistory } from "@/test/fork-supplement-data";
 import { CrewProvider } from "./crew-provider";
 import type { AgentStatus, AgentView, ServerSummary, TabView } from "@/lib/types";
 import { withHeaderHost } from "@/test/header-host";
@@ -2653,49 +2654,16 @@ describe("AgentChat: Launch section in the switcher", () => {
 // tail, and nothing appears when the journal's newest turn is not the message on screen (a streaming
 // reply, a stale read) — presenting an older reply as the current one is the failure that matters.
 describe("AgentChat — full latest reply", () => {
-  const REPLY = [
-    "Short answer: approve-only. The author knows when they want it to land; your job was the",
-    "approval. Enabling auto-merge makes you the actor for the merge itself, which is a materially",
-    "bigger claim than saying this looks fine to me.",
-  ].join(" ");
-
   function withJournalReply(text: string, prompt?: string): () => number {
     let hits = 0;
     server.use(
       http.get(/\/api\/pane\/[^/]+\/history/, () => {
         hits += 1;
-        const entries = [
-          ...(prompt
-            ? [
-                {
-                  uuid: "prompt-1",
-                  ts: "2026-08-28T09:13:00.000Z",
-                  role: "user" as const,
-                  parts: [{ kind: "text" as const, text: prompt }],
-                },
-              ]
-            : []),
-          {
-            uuid: "reply-1",
-            ts: "2026-08-28T09:14:00.000Z",
-            role: "assistant" as const,
-            parts: [{ kind: "text" as const, text }],
-          },
-        ];
-        return HttpResponse.json({
-          paneId: "w1:p1",
-          available: true,
-          entries,
-          hasMore: false,
-          total: entries.length,
-          fileTruncated: false,
-        });
+        return HttpResponse.json(fullReplyHistory(text, prompt));
       }),
     );
     return () => hits;
   }
-
-  const PROMPT = "Why is the release held?";
 
   const card = () => screen.queryByRole("button", { name: /full reply/i });
   const sessionAgent = () => ({ ...fixtureAgents[0]!, hasSession: true, readableLines: 51 });
@@ -2704,7 +2672,6 @@ describe("AgentChat — full latest reply", () => {
   const mirror = () => document.querySelector("pre")?.textContent ?? "";
 
   // A screen holding the END of the reply, then what the agent did next.
-  const AFTER = "abc1234 fix";
   // The input box rides along: a claude pane without one is the unread-dialog card's screen
   // since M34 (.adr/0053), and the card renders the whole pane itself.
   const SCREEN = paneTextWithDraft(`${REPLY.slice(120)}\n\nBash(git log --oneline)\n  ${AFTER}`);

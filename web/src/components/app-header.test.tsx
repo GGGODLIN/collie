@@ -5,6 +5,7 @@ import { createMemoryRouter, Outlet, RouterProvider, useLocation } from "react-r
 import type { ComponentProps, ReactElement } from "react";
 
 import { server } from "@/test/setup";
+import { namedHeaderConfig } from "@/test/fork-regression-data";
 import { collieMark, markIsLive, markPaper } from "@/test/collie-mark";
 import { __resetOperatorCommands } from "@/lib/operator-config";
 import { ROOT_ROUTE_ID } from "@/lib/loaders";
@@ -259,13 +260,7 @@ describe("the header — the stacked identity", () => {
 
   it("names whatever the bridge published, under the brand line", async () => {
     server.use(
-      http.get("/api/config", () =>
-        HttpResponse.json({
-          push: false,
-          vapidPublicKey: "",
-          mux: { name: "reference", capabilities: {}, unsupportedKeys: [], notes: {} },
-        }),
-      ),
+      http.get("/api/config", () => HttpResponse.json(namedHeaderConfig)),
     );
     renderHeader(<Header bridge="connected" error={false} wordmark rightTrail={<SettingsGear />} />);
     await waitFor(() => expect(screen.getByText("on reference")).toBeInTheDocument());

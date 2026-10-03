@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 
 import { server } from "@/test/setup";
+import { accountIdleLabels, accountWorkingLabels, accountsConfig, switchAccepted } from "@/test/fork-supplement-data";
 import { clearStatus } from "@/lib/status";
 import { __resetOperatorCommands } from "@/lib/operator-config";
 import type { AgentView } from "@/lib/types";
@@ -24,11 +25,9 @@ const claude: AgentView = {
   hasSession: true,
 };
 
-function withAccounts(accounts: string[]) {
+function withAccounts(accounts: readonly string[]) {
   server.use(
-    http.get("/api/config", () =>
-      HttpResponse.json({ push: false, vapidPublicKey: "", accounts }),
-    ),
+    http.get("/api/config", () => HttpResponse.json(accountsConfig(accounts))),
   );
 }
 
@@ -37,7 +36,7 @@ function captureSwitch() {
   server.use(
     http.post("/api/pane/:id/switch-account", async ({ request }) => {
       bodies.push(await request.json());
-      return HttpResponse.json({ ok: true });
+      return HttpResponse.json(switchAccepted);
     }),
   );
   return bodies;
@@ -56,7 +55,7 @@ beforeEach(() => {
 
 describe("switch account", () => {
   it("an idle Claude switches on the first tap of an account", async () => {
-    withAccounts(["Work", "Personal"]);
+    withAccounts(accountIdleLabels);
     const bodies = captureSwitch();
     const user = userEvent.setup();
     const props = renderSheet(claude);
@@ -67,7 +66,7 @@ describe("switch account", () => {
   });
 
   it("a working Claude needs a second tap, and only then says it may interrupt", async () => {
-    withAccounts(["Personal"]);
+    withAccounts(accountWorkingLabels);
     const bodies = captureSwitch();
     const user = userEvent.setup();
     renderSheet({ ...claude, status: "working" });

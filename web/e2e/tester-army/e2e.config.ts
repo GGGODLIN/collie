@@ -23,7 +23,7 @@ export default {
       },
     },
   }],
-  tests: ["agent-palette.e2e.ts"],
+  tests: ["*.e2e.ts"],
   workers: 1,
   retries: 0,
   timeout: 30_000,
