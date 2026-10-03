@@ -1113,7 +1113,7 @@ describe("preflight — a folder a package manager owns", () => {
       },
     });
     expect(byId(await preflight(h.deps), "upstream").verdict).not.toBe("red");
-    expect(asked).toEqual(["http://127.0.0.1:8899/repos/AltanS/collie/tags?per_page=100"]);
+    expect(asked).toEqual(["http://127.0.0.1:8899/repos/GGGODLIN/collie/tags?per_page=100"]);
 
     const wide = byId(await preflight(packaged({ env: { COLLIE_UPDATE_MIRROR: "http://10.0.0.5:8899" } }).deps), "upstream");
     expect(wide.verdict).toBe("red");

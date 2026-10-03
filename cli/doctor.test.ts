@@ -2196,7 +2196,8 @@ describe("POSIX parity (M43 spec 04)", () => {
   // `secrets-private` line is Windows-only: on a POSIX host it does not exist at all.
   test("the plain doctor output on a POSIX host is byte-identical to the one before spec 04", async () => {
     const out = `${await render()}---\n${await render(blocked())}`;
-    const golden = readFileSync(GOLDEN, "utf8");
+    // 此 fork 的更新來源不同，其餘 POSIX 輸出仍逐 byte 比對。
+    const golden = readFileSync(GOLDEN, "utf8").replaceAll("AltanS/collie", "GGGODLIN/collie");
     // Paths in the output are joined with the machine's own separator, so the byte comparison runs
     // where the golden was made (POSIX). Windows compares the check ids and statuses line by line.
     if (process.platform !== "win32") expect(out).toBe(golden);

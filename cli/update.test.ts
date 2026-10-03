@@ -1415,8 +1415,8 @@ describe("collie update on a binary install", () => {
     };
     expect(await cmdUpdate(h.deps)).toBe(EXIT.OK);
     expect(asked).toEqual([
-      "https://api.github.com/repos/AltanS/collie/tags?per_page=100",
-      "https://api.github.com/repos/AltanS/collie/tags?per_page=100&page=2",
+      "https://api.github.com/repos/GGGODLIN/collie/tags?per_page=100",
+      "https://api.github.com/repos/GGGODLIN/collie/tags?per_page=100&page=2",
     ]);
     // The stable one, as before: the newer rc is still a prerelease and is not taken.
     expect(h.files.ops).toContain(`mv ${INST}/.staging/x/${PAYLOAD} ${INST}/versions/${NEW}`);
@@ -1459,9 +1459,9 @@ describe("collie update on a binary install", () => {
     expect(await cmdUpdate(h.deps)).toBe(EXIT.OK);
     const base = "http://127.0.0.1:8899";
     expect(asked).toEqual([
-      `${base}/repos/AltanS/collie/tags?per_page=100`,
-      `${base}/AltanS/collie/releases/download/v${NEW}/collie-${NEW}.manifest.json`,
-      `${base}/AltanS/collie/releases/download/v${NEW}/${PAYLOAD}.tar.gz`,
+      `${base}/repos/GGGODLIN/collie/tags?per_page=100`,
+      `${base}/GGGODLIN/collie/releases/download/v${NEW}/collie-${NEW}.manifest.json`,
+      `${base}/GGGODLIN/collie/releases/download/v${NEW}/${PAYLOAD}.tar.gz`,
     ]);
     expect(h.io.stderr.join("\n")).toContain(`WARNING: COLLIE_UPDATE_MIRROR is set. This is a test seam: releases come from ${base}`);
   });
@@ -1495,9 +1495,9 @@ describe("collie update on a binary install", () => {
     const viaGithub = record(plain);
     expect(await cmdUpdate(plain.deps)).toBe(EXIT.OK);
     expect(viaGithub).toEqual([
-      { url: "https://api.github.com/repos/AltanS/collie/tags?per_page=100", opts: undefined },
-      { url: `https://github.com/AltanS/collie/releases/download/v${NEW}/collie-${NEW}.manifest.json`, opts: undefined },
-      { url: `https://github.com/AltanS/collie/releases/download/v${NEW}/${PAYLOAD}.tar.gz`, opts: undefined },
+      { url: "https://api.github.com/repos/GGGODLIN/collie/tags?per_page=100", opts: undefined },
+      { url: `https://github.com/GGGODLIN/collie/releases/download/v${NEW}/collie-${NEW}.manifest.json`, opts: undefined },
+      { url: `https://github.com/GGGODLIN/collie/releases/download/v${NEW}/${PAYLOAD}.tar.gz`, opts: undefined },
     ]);
   });
 
@@ -1611,7 +1611,7 @@ describe("collie update on a binary install", () => {
       },
     };
     expect(await cmdUpdate(h.deps)).toBe(EXIT.OK);
-    expect(fetched).toEqual([`https://github.com/AltanS/collie/releases/download/v${NEW}/${zip}`]);
+    expect(fetched).toEqual([`https://github.com/GGGODLIN/collie/releases/download/v${NEW}/${zip}`]);
     expect(h.exec.calls).toContain(`/Windows/System32/tar.exe -xf ${INST}/.staging/${zip} -C ${INST}/.staging/x`);
     expect(h.exec.calls.some((c) => c.startsWith("tar ") || c.startsWith("chmod "))).toBe(false);
     expect(h.files.ops).toContain(`mv ${INST}/.staging/x/${payload} ${INST}/versions/${NEW}`);
@@ -1840,7 +1840,7 @@ describe("collie update on a binary install", () => {
     const download = h.deps.net.download;
     h.deps.net = { ...h.deps.net, download: (url, dest) => (fetched.push(url), download(url, dest)) };
     expect(await cmdUpdate(h.deps)).toBe(EXIT.OK);
-    expect(fetched).toEqual([`https://github.com/AltanS/collie/releases/download/v${NEW}/${PAYLOAD}.tar.gz`]);
+    expect(fetched).toEqual([`https://github.com/GGGODLIN/collie/releases/download/v${NEW}/${PAYLOAD}.tar.gz`]);
   });
 
   test("Windows: a release with no `windows-x64` entry says so plainly and changes nothing", async () => {
