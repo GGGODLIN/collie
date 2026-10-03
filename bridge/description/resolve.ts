@@ -14,6 +14,7 @@
 // The fixed strings are Chinese on purpose: this fork's recap text is Chinese, and a push body is
 // exempt from i18n (CLAUDE.md § frontend data layer). Blocked costs no model call and no network.
 
+import { HOST } from "../host.ts";
 import type { AgentStatus } from "../types.ts";
 import type { TranscriptEntry } from "../journal/types.ts";
 
@@ -70,9 +71,12 @@ export function clipLine(text: string, max: number): string {
 export function toolTarget(tool: { name: string; summary: string }): string | undefined {
   const s = tool.summary.trim();
   if (s === "") return undefined;
-  if (s.startsWith("/") || s.startsWith("~/")) {
-    const base = s.split("/").findLast((seg) => seg !== "");
-    return base === undefined ? undefined : clipLine(base, TARGET_MAX);
+  // The summary is a path the agent wrote, in this host's spelling. `~/` is the one relative form
+  // that still means "take the last segment": the journal keeps the tilde rather than expanding it.
+  const home = s.startsWith("~/") || s.startsWith("~\\");
+  if (home || HOST.path.isAbsolute(s)) {
+    const base = HOST.path.basename(home ? s.slice(2) : s);
+    return base === "" ? undefined : clipLine(base, TARGET_MAX);
   }
   if (/bash|shell|exec|command/i.test(tool.name)) return clipLine(s.split("\n")[0] ?? s, TARGET_MAX);
   return undefined;

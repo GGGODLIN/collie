@@ -3,6 +3,7 @@ import type { SttSettings } from "./config.ts";
 import { createSttSettingsReader } from "./config.ts";
 import { createCodexSttProvider } from "./codex.ts";
 import { withConversion } from "./convert.ts";
+import { createLocalCliSttProvider } from "./local-cli.ts";
 import { createOpenAiSttProvider } from "./openai.ts";
 import type { SttProvider } from "./provider.ts";
 
@@ -13,7 +14,11 @@ import type { SttProvider } from "./provider.ts";
 /** Build the provider the settings name. Total over {@link SttSettings} by construction. */
 export function createSttProvider(settings: SttSettings): SttProvider {
   const provider =
-    settings.provider === "codex" ? createCodexSttProvider(settings) : createOpenAiSttProvider(settings);
+    settings.provider === "codex"
+      ? createCodexSttProvider(settings)
+      : settings.provider === "local-cli"
+        ? createLocalCliSttProvider(settings)
+        : createOpenAiSttProvider(settings);
   return settings.convert === undefined ? provider : withConversion(provider, settings.convert);
 }
 
