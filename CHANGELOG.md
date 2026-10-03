@@ -34,6 +34,10 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 - **Synced onto upstream Collie 1.16.0.** AltanS/collie v1.16.0, commit 320bb18. This fork stays 1.15.3. The notes under the upstream headings are that release, not a fork release.
 
+### Fixed
+
+- **An empty pane switcher can fill without crashing.** The switcher keeps the same hook order when the last pane closes or a pane appears while it stays open.
+
 ## [1.15.3] - 2026-10-01
 
 ### Changed

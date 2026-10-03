@@ -162,6 +162,22 @@ export function ThreadSidebar({
   className,
 }: ThreadSidebarProps) {
   useLocale();
+  // ── THE ORDER, AND WHY IT IS READ ONCE ───────────────────────────────────────
+  // ADR 0063 took status out of every list because a row that moves while its state changes is a row
+  // the thumb misses, and on THIS sheet a missed tap opens another terminal. Its closing clause
+  // leaves one door open: an order the operator asks for and watches. ADR 0071 walks through it.
+  //
+  // So activity order reads the clock ONCE, when the sheet opens, and draws from that reading until
+  // the operator taps the toggle. A pane that finishes a turn while the sheet is up repaints where
+  // it stands; it does not climb past the row a thumb is already reaching for. The sheet unmounts on
+  // close (ui/sheet.tsx returns null), so the next open is a fresh reading by construction, and the
+  // one thing that re-reads while it is open is the operator's own tap.
+  //
+  // The state-adjustment-on-a-changed-prop shape, not a `useMemo` with a lie in its deps: the reading
+  // must survive a poll and must NOT survive a tap, which is exactly one dependency.
+  const [frozen, setFrozen] = useState<FrozenOrder>(() => readOrder(order, agents, shellPanes));
+  if (frozen.order !== order) setFrozen(readOrder(order, agents, shellPanes));
+
   const showLaunch = launchers.length > 0 && onLaunch !== undefined;
   const noPanes = agents.length === 0 && shellPanes.length === 0;
 
@@ -188,22 +204,6 @@ export function ThreadSidebar({
       : pinnedRows(groupPanesByWorkspace(agents, shellPanes, { order: "fixed", tabs, servers }), isPinned);
   const sections = shownGroups(groups, false, isPinned);
   const shellRows = pins.length === 0 ? shellPanes : shellPanes.filter((p) => !isPinned(p));
-
-  // ── THE ORDER, AND WHY IT IS READ ONCE ───────────────────────────────────────
-  // ADR 0063 took status out of every list because a row that moves while its state changes is a row
-  // the thumb misses, and on THIS sheet a missed tap opens another terminal. Its closing clause
-  // leaves one door open: an order the operator asks for and watches. ADR 0071 walks through it.
-  //
-  // So activity order reads the clock ONCE, when the sheet opens, and draws from that reading until
-  // the operator taps the toggle. A pane that finishes a turn while the sheet is up repaints where
-  // it stands; it does not climb past the row a thumb is already reaching for. The sheet unmounts on
-  // close (ui/sheet.tsx returns null), so the next open is a fresh reading by construction, and the
-  // one thing that re-reads while it is open is the operator's own tap.
-  //
-  // The state-adjustment-on-a-changed-prop shape, not a `useMemo` with a lie in its deps: the reading
-  // must survive a poll and must NOT survive a tap, which is exactly one dependency.
-  const [frozen, setFrozen] = useState<FrozenOrder>(() => readOrder(order, agents, shellPanes));
-  if (frozen.order !== order) setFrozen(readOrder(order, agents, shellPanes));
 
   const pinnedShown = inRankOrder(pinned, frozen.ranks);
   // ONE LIST IN ACTIVITY ORDER: every workspace section and the Shells fold together, because "when

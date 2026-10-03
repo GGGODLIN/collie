@@ -25,6 +25,17 @@ describe("ThreadSidebar", () => {
     expect(screen.getByText("No agents running.")).toBeInTheDocument();
   });
 
+  it.each(["place", "attention"] as const)("updates an empty switcher in %s order without remounting", (order) => {
+    const props = { currentPaneKey: "", onSelect: vi.fn(), order };
+    const { rerender } = render(<ThreadSidebar {...props} agents={[]} />);
+
+    rerender(<ThreadSidebar {...props} agents={[idleAgent]} />);
+    expect(screen.getByRole("button", { name: /sandbox/ })).toBeInTheDocument();
+
+    rerender(<ThreadSidebar {...props} agents={[]} />);
+    expect(screen.getByText("No agents running.")).toBeInTheDocument();
+  });
+
   it("groups agents under their workspace, in the dashboard's order", () => {
     render(
       <ThreadSidebar agents={[idleAgent, ...fixtureAgents]} currentPaneKey="" onSelect={vi.fn()} />,
