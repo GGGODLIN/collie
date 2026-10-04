@@ -18,7 +18,7 @@
 | 2 | 主題裝置偏好；Zen 的啟用與切 pane 重設；缺 launcher 宣告時安靜缺席 | [configure.md](/docs/configure.md) 主題／Zen／Launch 段 | V4：前 44＋本批七案，獨立整套 51 passed；Theme 配色／Zen 換 pane 子項未驗 |
 | 3 | 帳號切換拒絕的 UI；retell 已配置的 UI／回應；launcher 列／請求與唯讀狀態 | [CHANGELOG.md](/CHANGELOG.md) account 項、[configure.md](/docs/configure.md) retell／Launch 段 | V4：前 51＋本批六案，獨立整套 57 passed；只有測試路由／定位校正，無產品修補 |
 | 4 | Full reply 表格形狀；Type 具名選擇與切 pane 解除；Typeface 偏好 | [CLAUDE.md](/CLAUDE.md) Full reply／具名選擇規則、[configure.md](/docs/configure.md) Typeface 段 | V4：前 57＋本批四案，獨立整套 61 passed；Type 入口／Typeface 文件預設衝突未拍板 |
-| 5 | Language 裝置偏好；Changes 深度偏好；Chat 實驗開關 | [configure.md](/docs/configure.md) Language／Changes／Experiments 段 | 排隊；只觀察設定，不冒充 backend／Chat 效果 |
+| 5 | Language 裝置偏好；Changes 深度偏好；Chat 實驗開關 | [configure.md](/docs/configure.md) Language／Changes／Experiments 段 | V4：前 61＋本批五案，改共同準備後獨立整套 66 passed；無產品修補 |
 | 6 | Changes 清單的既有 fixture 顯示；idle 暫停出現／隱藏與恢復 | [changes.md](/docs/changes.md)、[CLAUDE.md](/CLAUDE.md) idle 規則、[ADR0007](/.adr/0007-the-idle-lock-is-a-pause-not-a-gate.md) | 排隊；idle 使用已裝瀏覽器時鐘，不改系統時鐘或加 sleep |
 
 這些批次會順序執行；每批交獨立驗證後才接下批。具體 caseID、語義版本、原資料與需要的回歸範圍隨批次保存，不能把本表的排隊狀態當已執行。
@@ -66,5 +66,9 @@ main 依小於三行精確修正的例外，把單一 locator 改成已正向確
 第三批獨立整套 run `01a1050e-4eb4-7a49-a21a-75c218991485`：跑前 `e2e list` 57 案／八檔，raw report 的 selected／executed／passed 57，failed／flaky／skipped 各 0，每案一個 attempt，exit 0；raw report 在 `.e2e/collie-loop-b03-verifier/report.json`。main 直接解析 report，bad_results=[]，attempt_statuses=['passed']。Plain 的原理由在具名 dialog 內可見；唯讀的精確拒絕句與零 launch POST 保持。最新 web typecheck 與本批四個程式檔的 oxlint 都 exit 0，原兩 unit 的最近收據仍是 16 passed，不重跑未改動的單測。產品沒有改，也沒有重 build；整輪尚未結案，接第四批。
 
 第四批 worker run `01a10529-7d52-7ef2-bd16-b937b8d3320f`：本批 selected／executed／passed 四案，各一個 attempt、exit 0；raw report 在 `.e2e/441c4baf-4914-4f22-9f79-b221d7fa3600/report.json`，main 已直接解析。本批驗原 wrapped table 真 matcher 配對、結語只出現一次與尾列保留；具名 Type 的啟用／換 pane 解除且零 keys POST；三種 Typeface 選項與 grotesk 重載保存。修前 run `01a10528-11ef-7fff-8ce0-141c6b9f9da9` 是 Full reply 按鈕 accessible name 漏掉 from transcript，不是產品 bug。沒有產品修改或新 build。字型目前選中 Aldrich 是觀察，不代表已替衝突文件定案；long-press、short-wrap、hidden、真 journal 與字型實際排版未驗。獨立整套 run `01a1052f-832e-7107-88cd-8029b363d188`：跑前 list 九檔／61 案；raw report 的 selected／executed／passed 各 61，failed／flaky／skipped 各 0，每案一個 attempt，599 個 step 都通過，exit 0。報告在 `.e2e/collie-loop-b04-verifier/report.json`，main 直接解析 bad_results=[]、bad_steps=[]。原表格三份字面與抽取前相等，原 unit 期待保持；最近兩個 unit 38 passed，最新 web typecheck／四檔 lint exit 0。Typeface 的文件預設衝突仍未解除；接第五批，不把四案通過當整輪結案。
+
+第五批首 run `01a10540-2d15-78cb-a594-761861b9090b`（`.e2e/collie-loop-b05-r1/report.json`）：五案中 Changes 兩案、Chat 兩案通過，語言 reload 一案失敗。繁中切換後的「外觀／語言／終端機鏡像輸出不會被翻譯。」都已通過，reload 後同 URL 卻回到 Appearance／Language value=en；main 直接對 raw steps 與 failure screen 核實。共享 `pinLocale` 的 addInitScript 每次載入都寫 en，是 setup 覆寫，不是產品語言保存失效。
+
+main 只改 TesterArmy 的 `fixtures.ts` 兩行：去掉 pinLocale import、在空白 bootstrap 寫一次既有 locale key=en，再首次開產品。共有 Playwright helper、產品與期待、tour/API/origin/SW/proxy 不變。worker 只重跑語言案，新 run `01a10543-f4ca-7643-ad42-6e3aec413fee`（`.e2e/collie-loop-b05-r2/report.json`）selected 一案、一個 attempt、17 steps 都通過、exit 0，main 已直接解析；其餘未選的 skip 不是整套結果。最新真正 web typecheck 與準備檔／新 E2E 的局部 lint exit 0；前面誤用 runner 本地 tsconfig 的 Node 型別缺失保留為檢查入口限制，不修無關檔。沒有產品修改或新 build。共同準備改動影響舊案例，獨立整套 run `01a10548-4060-71bb-a1ed-a566363615e0`（`.e2e/collie-loop-b05-verifier/report.json`）在跑前 list 十檔／66 案後實跑：discovered／selected／executed／passed 各 66，failed／flaky／skipped 各 0，每案一個 attempt、697 steps 都通過、exit 0；main 已直接解析 bad_results=[]、bad_steps=[]。繁中 reload 後原第 89 行仍是 zh-TW，關掉 Changes 搜尋後深度四仍勾著／停用，再開保留；Chat 預設關、打開與 reload 保留，只驗 menu 的 Terminal view 列，不宣稱真 Chat 或 git 搜尋。準備 diff 恰是兩行，共有 api.ts 不變；不同入口的本地 tsconfig 缺失未修。接第六批，不把目前 66 passed 當整輪結案。
 
 上一小包的成功不冒充本輪所有候選已測；後續各批在這裡追加，不覆寫第一包歷史。
