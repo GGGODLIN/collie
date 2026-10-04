@@ -16,8 +16,8 @@
 | --- | --- | --- | --- |
 | 1 | 返回上一層／sheet 不增歷史；Keys 佇列離開二次確認與丟棄；儀表底欄分頁與 Focus（原名 Attention）只過濾 | [DESIGN.md §12](/DESIGN.md)、[ADR0067](/.adr/0067-back-goes-up-one-level.md)、[ADR0005](/.adr/0005-a-composed-key-queue-never-outlives-its-dock.md)、[ADR0066](/.adr/0066-the-dashboard-has-a-footer-panes-needs-you-changes.md) 及 [ADR0068](/.adr/0068-the-second-tab-is-focus-not-attention.md)／[ADR0070](/.adr/0070-a-pin-is-a-place-the-operator-chose.md) 修訂 | V4：原 32＋本批 12，獨立整套 44 passed；無產品修補 |
 | 2 | 主題裝置偏好；Zen 的啟用與切 pane 重設；缺 launcher 宣告時安靜缺席 | [configure.md](/docs/configure.md) 主題／Zen／Launch 段 | V4：前 44＋本批七案，獨立整套 51 passed；Theme 配色／Zen 換 pane 子項未驗 |
-| 3 | 帳號切換拒絕的 UI；retell 已配置的 UI／回應；launcher 列／請求與唯讀狀態 | [CHANGELOG.md](/CHANGELOG.md) account 項、[configure.md](/docs/configure.md) retell／Launch 段 | 排隊；API 錯誤／回應須有可重用原輸入，不能從 enum 猜 payload |
-| 4 | Full reply 表格形狀；Type 具名選擇與切 pane 解除；Typeface 偏好 | [CLAUDE.md](/CLAUDE.md) Full reply／具名選擇規則、[configure.md](/docs/configure.md) Typeface 段 | 排隊；Type 的打開方式差額與字型預設不自決 |
+| 3 | 帳號切換拒絕的 UI；retell 已配置的 UI／回應；launcher 列／請求與唯讀狀態 | [CHANGELOG.md](/CHANGELOG.md) account 項、[configure.md](/docs/configure.md) retell／Launch 段 | V4：前 51＋本批六案，獨立整套 57 passed；只有測試路由／定位校正，無產品修補 |
+| 4 | Full reply 表格形狀；Type 具名選擇與切 pane 解除；Typeface 偏好 | [CLAUDE.md](/CLAUDE.md) Full reply／具名選擇規則、[configure.md](/docs/configure.md) Typeface 段 | 排隊；Type 的打開方式差額保留，Typeface 沿原斷言 aldrich |
 | 5 | Language 裝置偏好；Changes 深度偏好；Chat 實驗開關 | [configure.md](/docs/configure.md) Language／Changes／Experiments 段 | 排隊；只觀察設定，不冒充 backend／Chat 效果 |
 | 6 | Changes 清單的既有 fixture 顯示；idle 暫停出現／隱藏與恢復 | [changes.md](/docs/changes.md)、[CLAUDE.md](/CLAUDE.md) idle 規則、[ADR0007](/.adr/0007-the-idle-lock-is-a-pause-not-a-gate.md) | 排隊；idle 使用已裝瀏覽器時鐘，不改系統時鐘或加 sleep |
 
@@ -29,7 +29,7 @@
 - Recent 方向：決策文字存在，尚未對回實際可操作入口，不從找不到舊檔名推論產品缺失。
 - Full reply 短回覆：沿原契約的來源差額保留，不用現行結果反填期待。
 - dashboard Shells：來源只明載 switcher 的 trailing 段，不把它變成另一個儀表流程；原 switcher 案仍保留。
-- Typeface 預設：單測來源與 CLAUDE 的預設名須對回；只測明載選項與選擇保留，不從舊單測的預設改產品。
+- Typeface 預設的疑似差額已查掉：原單測標題寫 Space Grotesk，但清空 storage 的真正斷言是 aldrich，與 CLAUDE 一致。舊標題不是行為證據，不把它當真人阻塞或修改產品的理由；第四批沿實際原輸入／期待。
 
 ## 回修與驗證契約
 
@@ -57,6 +57,12 @@ main 讀新測試後發現 Focus 順序案例只剩一個 eligible workspace，�
 
 型別修正前後用已裝 native esbuild 產生的 JavaScript 位元組相同，SHA-256 都是 `e3622cafc6d9dfaf67910d0bcdd88d0a19ccca6aaacb63cf133225f58332b6b7`；沒有改執行邏輯或重跑正確的 51 案，也沒有重 build／產品 patch。SDK 的 vcs.dirty=false 沒涵蓋當時未追蹤的新測試，身分另以實際 source／run／Git status 對回，不把該旗標當完整內容證明。
 
-接著按清單處理第三批，整輪尚未結案。
+第三批 worker 的 Run A/B/C 保留：首輪路由以未解碼 `%3A` 比 pane id 而落入 fixture 501，另有多個同文 status；修 fixture 匹配後，最終 run `01a10502-e8db-7671-b130-a4321a0a3531` 是 5 passed／1 failed。唯一剩餘失敗是把 Plain 的原故障正文當成 alert 的 accessible name；screen 已有該句、原 response JSON 與 Plain dialog 都過，不能當產品 bug。worker 同根因兩次修正後停手。
+
+main 依小於三行精確修正的例外，把單一 locator 改成已正向確認的 Plain dialog 內原文 exact text；原回應與 POST body 期待不變。Readonly 原先硬定文案出現兩次是目前畫面數量，不是人源；改成 status 的文本陣列包含字典精確拒絕句，保留沒有 launch POST，不用 first 或任意成功狀態。
+
+兩受影響案的 main 窄 run `01a1050a-20ef-7f8f-8cff-cebaaf2a9228` 真通過，各一個 attempt，exit 0；raw report 在 `.e2e/collie-loop-b03-main-locators/report.json`。原兩 unit 的輸入抽共用、期待值保持，worker 最近單測 16 passed。產品沒有改；只 UI 與請求，不證 terminal 草稿、sidecar、真開 pane或server allowlist。
+
+第三批獨立整套 run `01a1050e-4eb4-7a49-a21a-75c218991485`：跑前 `e2e list` 57 案／八檔，raw report 的 selected／executed／passed 57，failed／flaky／skipped 各 0，每案一個 attempt，exit 0；raw report 在 `.e2e/collie-loop-b03-verifier/report.json`。main 直接解析 report，bad_results=[]，attempt_statuses=['passed']。Plain 的原理由在具名 dialog 內可見；唯讀的精確拒絕句與零 launch POST 保持。最新 web typecheck 與本批四個程式檔的 oxlint 都 exit 0，原兩 unit 的最近收據仍是 16 passed，不重跑未改動的單測。產品沒有改，也沒有重 build；整輪尚未結案，接第四批。
 
 上一小包的成功不冒充本輪所有候選已測；後續各批在這裡追加，不覆寫第一包歷史。
