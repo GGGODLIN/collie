@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { coerceDashView, pinnedRows, shownGroups, stripEntries, type StripEntry } from "./dash-view";
 import { groupPanesByWorkspace } from "./pane-groups";
 import { currentPins, pinMatcher, setPinned } from "./pins";
+import { focusFilterOrderAgents as agents } from "../test/sweep-loop-navigation-data";
 import type { AgentView } from "./types";
 
 // Issue 270's filter, as the "Focus" tab draws it (ADR 0066, renamed by ADR 0068): it removes rows
@@ -23,17 +24,6 @@ function pane(id: string, ws: number, status: AgentView["status"], extra: Partia
   };
 }
 
-// ws1: a blocked pane between two quiet ones. ws2: nothing urgent. ws3: a ready-unseen pane, then a
-// blocked one, in that order.
-const agents: AgentView[] = [
-  pane("p1", 1, "working"),
-  pane("p2", 1, "blocked"),
-  pane("p3", 1, "idle"),
-  pane("p1", 2, "working"),
-  pane("p2", 2, "idle"),
-  pane("p1", 3, "done", { lastActiveAt: 20, lastSeenAt: 10 }),
-  pane("p2", 3, "blocked"),
-];
 const groups = groupPanesByWorkspace(agents, [], { order: "fixed" });
 
 describe("shownGroups", () => {

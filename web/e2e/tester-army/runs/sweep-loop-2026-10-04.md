@@ -1,0 +1,54 @@
+# Collie 網頁連續 sweep
+
+## 目標與界限
+
+使用者批准先列 Collie 網頁已知流程，再一批接一批自主測試、找錯、最小修補與獨立驗證。「測到底」是清單各項有結果，不保證產品零 bug；不是完成第一包就停止。
+
+本輪沿 `fix/e2e-sweep-web`，起點 `d3435b4edf18339cf311d8651667c49aeab5e84a`。原五個 TesterArmy 檔／32 案與期待保持；上一輪原始結果見 [第一包](/web/e2e/tester-army/runs/sweep-2026-10-04.md)。未改內容不為湊工作重跑。
+
+只用真前端與既有 API fixture。iOS、真 bridge／terminal、sidecar、真開 pane、git 副作用、上游合併排除。不 push、PR、合併、部署、release 或刪 branch；不新裝 skill／SDK／provider／MCP／hook。按固定 [e2e-sweep 原文](https://github.com/rav4nn/skills/blob/351062e71e948bcaad3ae654ef76c7ac06815957/skills/e2e-sweep/SKILL.md) 編排，沒有直接 invoke 原外部 skill。
+
+## 來源清單與批次
+
+以下是目前已定位來源的候選清單，不宣稱所有網頁可能分支都已枚舉。來源期待與原輸入都須在每批動手前對回；尚未實跑不能填 PASS。「原單測尚未抽成共用資料」不是阻塞，允許精確抽原輸入、保留原斷言。
+
+| 批次 | 流程 | 人寫來源 | 本輪狀態 |
+| --- | --- | --- | --- |
+| 1 | 返回上一層／sheet 不增歷史；Keys 佇列離開二次確認與丟棄；儀表底欄分頁與 Focus（原名 Attention）只過濾 | [DESIGN.md §12](/DESIGN.md)、[ADR0067](/.adr/0067-back-goes-up-one-level.md)、[ADR0005](/.adr/0005-a-composed-key-queue-never-outlives-its-dock.md)、[ADR0066](/.adr/0066-the-dashboard-has-a-footer-panes-needs-you-changes.md) 及 [ADR0068](/.adr/0068-the-second-tab-is-focus-not-attention.md)／[ADR0070](/.adr/0070-a-pin-is-a-place-the-operator-chose.md) 修訂 | V4：原 32＋本批 12，獨立整套 44 passed；無產品修補 |
+| 2 | 主題裝置偏好；Zen 的啟用與切 pane 重設；缺 launcher 宣告時安靜缺席 | [configure.md](/docs/configure.md) 主題／Zen／Launch 段 | 排隊；先核原資料 |
+| 3 | 帳號切換拒絕的 UI；retell 已配置的 UI／回應；launcher 列／請求與唯讀狀態 | [CHANGELOG.md](/CHANGELOG.md) account 項、[configure.md](/docs/configure.md) retell／Launch 段 | 排隊；API 錯誤／回應須有可重用原輸入，不能從 enum 猜 payload |
+| 4 | Full reply 表格形狀；Type 具名選擇與切 pane 解除；Typeface 偏好 | [CLAUDE.md](/CLAUDE.md) Full reply／具名選擇規則、[configure.md](/docs/configure.md) Typeface 段 | 排隊；Type 的打開方式差額與字型預設不自決 |
+| 5 | Language 裝置偏好；Changes 深度偏好；Chat 實驗開關 | [configure.md](/docs/configure.md) Language／Changes／Experiments 段 | 排隊；只觀察設定，不冒充 backend／Chat 效果 |
+| 6 | Changes 清單的既有 fixture 顯示；idle 暫停出現／隱藏與恢復 | [changes.md](/docs/changes.md)、[CLAUDE.md](/CLAUDE.md) idle 規則、[ADR0007](/.adr/0007-the-idle-lock-is-a-pause-not-a-gate.md) | 排隊；idle 使用已裝瀏覽器時鐘，不改系統時鐘或加 sleep |
+
+這些批次會順序執行；每批交獨立驗證後才接下批。具體 caseID、語義版本、原資料與需要的回歸範圍隨批次保存，不能把本表的排隊狀態當已執行。
+
+## 未拍板與不下游推論
+
+- Type 的入口：CLAUDE.md 寫長按 Send 開選單，現有 hook 註解要求不恢復長按、用具名 Type 控制。先只測雙方共同的具名選擇／切 pane 解除；不修成其中一方。
+- Recent 方向：決策文字存在，尚未對回實際可操作入口，不從找不到舊檔名推論產品缺失。
+- Full reply 短回覆：沿原契約的來源差額保留，不用現行結果反填期待。
+- dashboard Shells：來源只明載 switcher 的 trailing 段，不把它變成另一個儀表流程；原 switcher 案仍保留。
+- Typeface 預設：單測來源與 CLAUDE 的預設名須對回；只測明載選項與選擇保留，不從舊單測的預設改產品。
+
+## 回修與驗證契約
+
+每個產品 bug 必須有文件來源、真 `ASSERTION_FAILED` 的修前證據、最小修正與同期待修後通過。locator／setup／fixture 組裝錯不當產品 bug；沒有 bug 也如實保存結果。
+
+同一根因最多兩次修正；額度用盡列該項阻塞，其他不相依流程繼續。不改 expected、skip、timeout、retry 或 mock 真前端湊綠。缺資料須點名已查來源與缺欄位，不把未查當需要使用者準備。
+
+產品修改只在本批直接影響範圍；跨服務／API／安全設計的修法先回 main 核授權。新隔離 build 只放本輪輸出目錄，不改 active `web/dist`／binary。功能修補同 commit 需 CHANGELOG Unreleased 一條，不 bump 版本。
+
+worker 不下派 agent、不 Git 收尾。main 逐批對回原始 run／attempt／輸出／source，執行必要且不重複的獨立驗證；最後 task-verifier 核本輪清單與未驗界限，再 self-closeout 只收自有修改、留隔離分支。
+
+## 逐批結果
+
+第一批 worker 的單檔實跑已返回：run `01a104a9-dca7-7003-8dec-2a89d7c36eaa`，selected／executed／passed 11，各一個 attempt，exit 0；原 32 案因只選本批檔案沒有執行，不把它們算這輪 PASS。raw report 在 `.e2e/collie-loop-b01-1/report.json`。產品沒有修改，沿用原隔離 build。
+
+main 讀新測試後發現 Focus 順序案例只剩一個 eligible workspace，不能分辨「只過濾」與「過濾後重排」。已要求從原資料補一個可觀察多群組順序的案例；這是原驗收缺口補強，不算產品 bug。補強後新增 Focus 多群組／多列順序案例，從原 dash-view 單測抽共享輸入，原 expect 保持；本批現在 12 案。獨立 verifier 已實跑整個目前 suite：run `01a104b9-3aa3-7757-b09e-5bedf16af8ca`，selected／executed／passed 44（原 32＋本批 12），failed／flaky／skipped 各 0，每案一個 attempt，exit 0；最近 dash-view 單檔 unit 18 passed。main 已直接解析 raw report，bad_results=[]。
+
+原報告在 `.e2e/collie-loop-b01-verifier/report.json`。NAV/up 的 back step 通過且沒有 error，catch 未走；Keys trace 看到非空佇列與二次確認。Focus 的兩群／三列順序有實際 role/DOM 斷言，但最後 screencast 仍顯示切換前的 Panes，不能拿該圖宣稱畫面已確認，也不足以判假綠。保留這個影像缺口，不為取第二張圖重跑已正確的整批。
+
+產品沒有改動；目前 header 的 `git hash-object` 仍是 `8cacbcf030a21477e927cece8a7649bdc3317ec0`。這是 Git source blob，不是應該在 browser artifact 裡找到的字串；未因 metadata 搜錯位置重建產品。第一批沒有確認產品 bug，不需要回修。接著按清單處理第二批。
+
+上一小包的成功不冒充本輪所有候選已測；後續各批在這裡追加，不覆寫第一包歷史。
