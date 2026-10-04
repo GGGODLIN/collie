@@ -73,6 +73,14 @@ main 只改 TesterArmy 的 `fixtures.ts` 兩行：去掉 pinLocale import、在�
 
 第六批 worker 的最終 run `01a10559-5dd3-77ce-a923-aa90063ab2cf`（`.e2e/b06-a0f63d44-8c32-40aa-9e53-idlefinal/report.json`）：selected／executed／passed 三案，各一個 attempt、exit 0，main 已全文讀新檔／報告並直接解析；其他 66 案未選，不當整套通過。Changes 的 pane／dashboard 入口都看到原 fixture 的 checkout.tsx、Modified、+3／−1，過程零非讀 HTTP，只證網頁。缺 paneRepo 的原 fixture 不增加欄位來測 This pane。
 
-Idle 在空白 bootstrap／產品首次開啟前安裝已裝 Playwright 時鐘，跳過原 `30 * 60 * 1000` 毫秒後可見 Paused；按 Tap to resume 後 URL 與原 `keep this draft` 保留，不用 reload。後置公開 CDP frozen 探測實際是 `{"before":"visible","after":"visible"}`，沒有真 hidden，所以 hidden 不鎖／回前景自動恢復未驗，也未假造 getter 或事件。更早／更晚的閾值邊界未另測。前面失敗只在同步 URL 讀取、heading 精確名稱與 union 型別，沒有產品修補或新 build；最終 web typecheck／局部 lint 的收據交獨立 verifier 核。獨立整套 run `01a10560-abc7-776b-b130-985c4fddf4fa`（`.e2e/collie-loop-b06-verifier/report.json`）無 filter：discovered／selected／executed／passed 各 69，failed／flaky／skipped 各 0，每案一個 attempt、741 steps 都通過、exit 0；main 已直接解析 bad_results=[]、bad_steps=[]。跑前來源枚舉是十一檔／67 個直寫 test 加兩個 waitWhatCases；verifier 沒跑前置 SDK list，main 事後另跑 SDK list 得十一檔／69 案，逐案與 raw 比對 registered_only=[]、results_only=[]，不冒稱事後清單是跑前快照，也不重跑正確 SDK。最後真正 web typecheck 非 error 收據與 OX_EXIT:0 已由 main 直接查 worker JSONL。沒有產品修改。六批可觀察項已有結果，來源衝突與環境未驗保留；最後還須 task-verifier 與自有 Git 收尾，不預填整輪結案。
+Idle 在空白 bootstrap／產品首次開啟前安裝已裝 Playwright 時鐘，跳過原 `30 * 60 * 1000` 毫秒後可見 Paused；按 Tap to resume 後 URL 與原 `keep this draft` 保留，不用 reload。後置公開 CDP frozen 探測實際是 `{"before":"visible","after":"visible"}`，沒有真 hidden，所以 hidden 不鎖／回前景自動恢復未驗，也未假造 getter 或事件。更早／更晚的閾值邊界未另測。前面失敗只在同步 URL 讀取、heading 精確名稱與 union 型別，沒有產品修補或新 build；最終 web typecheck／局部 lint 的收據交獨立 verifier 核。獨立整套 run `01a10560-abc7-776b-b130-985c4fddf4fa`（`.e2e/collie-loop-b06-verifier/report.json`）無 filter：discovered／selected／executed／passed 各 69，failed／flaky／skipped 各 0，每案一個 attempt、741 steps 都通過、exit 0；main 已直接解析 bad_results=[]、bad_steps=[]。跑前來源枚舉是十一檔／67 個直寫 test 加兩個 waitWhatCases；verifier 沒跑前置 SDK list，main 事後另跑 SDK list 得十一檔／69 案，逐案與 raw 比對 registered_only=[]、results_only=[]，不冒稱事後清單是跑前快照，也不重跑正確 SDK。最後真正 web typecheck 非 error 收據與 OX_EXIT:0 已由 main 直接查 worker JSONL。沒有產品修改。六批可觀察項已有結果，來源衝突與環境未驗保留。
+
+## 最後核對與交付界限
+
+最後 task-verifier 直接重解析原始 report／JSONL／Git／來源，A–F、H 的已驗邊界成立；總判 PARTIAL，不把未驗補成通過。G 只證查詢當下 remote 沒有此隔離 branch，遠端歷史與 PR 沒查。B4 agent 除誤建 Claude Docs 外，還更新、調整圖、發布與查詢該文件，這些對外動作不在需求內；已揭露、不續寫、不擅刪，不記成全程遵約。
+
+連續輪保存原 32＋新 37 案，37 的計算是六批 12＋7＋6＋4＋5＋3；最終 SDK 選取並執行 69 案，零 failed／flaky／skipped。沒有新產品 bug，不把 setup／locator／型別校正算成修好的產品缺陷。主題配色、Zen 跨 pane、Type 入口、Typeface 預設、短回覆、真 hidden／回前景、真 backend／terminal／git、iOS 與其他平台仍未驗；也沒實際合上游或驗乾淨安裝。
+
+測試、共用原輸入與交付文件已 commit 在 fix/e2e-sweep-web；本連續輪未執行合併、Git push、PR 開單或部署。Collie 的原 baseline JSON 未收；另兩個治理 repo 的非自有／共寫材料與兩份 trial detail 保留本機，沒有改共同分支或收別人的檔案。結案紀錄只有文件變更，不重跑未改動的成功 SDK／單測／build，也沒有可部署的新產品效果。
 
 上一小包的成功不冒充本輪所有候選已測；後續各批在這裡追加，不覆寫第一包歷史。
