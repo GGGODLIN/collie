@@ -103,3 +103,18 @@ Each entry says what it is, where it lives, and what it assumes.
   releases*).
 - **To upstream.** Leave it out. `bridge/index.ts` reading `updateRepoOf` instead of its own copy of
   the default is general and could go on its own.
+
+### Windows VM rehearsal is permanently waived (2026-10-04)
+
+- **What.** Fork releases do not run `make win-rehearse`. The waiver is permanent and covers only
+  the Windows VM install, update and rollback rehearsal. Windows CI on the release commit must
+  still be green, and the Windows zip, build and asset checks stay as they are. Windows stays
+  experimental; the VM path stays unverified. `windows.yml` can be started by hand
+  (`workflow_dispatch`) so the same CI can run on a `dev` commit before a release. That is not a
+  check on every `dev` push, and this entry does not record that a dispatch was run.
+- **Where.** [`CLAUDE.md`](/CLAUDE.md) (*Versioning* step 7 points at *Fork branches and releases*
+  → *Windows VM rehearsal*), [`docs/windows.md`](/docs/windows.md), the same "today" lines in
+  [`README.md`](/README.md) and [`docs/install.md`](/docs/install.md), and `workflow_dispatch` in
+  [`.github/workflows/windows.yml`](/.github/workflows/windows.yml).
+- **Assumes.** This fork has no Windows VM, and the operator cannot configure one.
+- **To upstream.** Leave it out. Upstream's VM rehearsal requirement is unchanged.

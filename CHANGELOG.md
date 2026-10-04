@@ -38,6 +38,10 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 - **Optional regression tools no longer block normal source builds.** TesterArmy has its own dependency lock and typecheck; CI checks it separately while the app and original browser suite keep their existing dependencies.
 
+### Docs
+
+- **Fork releases permanently skip the Windows VM rehearsal.** This fork has no Windows VM, so install, update and rollback on a VM stay waived on every fork release and stay unverified. Windows CI on the release commit, the zip and the asset checks stay. Windows stays experimental. The fork 1.16.0 note under that release is the record of that one release, not the ongoing rule.
+
 ## [1.16.0] - 2026-10-03
 
 ### Added

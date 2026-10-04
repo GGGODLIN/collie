@@ -136,7 +136,10 @@ release. 1.14.2 was cut this way on 2026-09-28.
    installs, updates and rolls back a Windows build on the test VM, which no CI job can do. It
    resets the VM's disk and takes 13 to 16 minutes, and it ships the commits of `LOCAL`, so commit
    the release first. Read its table: a failed step holds the tag, and so does an unavailable VM.
-   The `windows.yml` run on the release commit must be green as well. If this release is the first
+   The `windows.yml` run on the release commit must be green as well. **Fork override:** this fork
+   never runs that VM rehearsal. The only rule for what is waived and what still holds is *Fork
+   branches and releases* → *Windows VM rehearsal*. [ADR 0075](./.adr/0075-windows-is-a-supported-host.md)
+   is not withdrawn. If this release is the first
    to carry the Windows zip, rewrite the "today" box in `docs/windows.md`, the README and
    `docs/install.md` in the release commit: they say no release carries the zip. Then tag and push
    (next paragraph).
@@ -839,7 +842,8 @@ Upstream reuses numbers this fork has published (both have a `v1.14.0`), so its 
 1. On `dev`, make the ordinary `chore(release): x.y.z` commit (*Versioning* above) with the
    upstream-base bullet, each CHANGELOG hash linked as
    `https://github.com/GGGODLIN/collie/commit/<hash>`, and push it.
-2. Wait for CI on that `dev` commit to pass.
+2. Wait for CI on that `dev` commit to pass. Windows CI does not run on a `dev` push; the one manual
+   run is *Windows VM rehearsal* below.
 3. Build `main`'s commit from that tree. Add `-p <upstream commit>` when this release is the first
    to carry an upstream merge, so GitHub does not count `main` as behind upstream.
 
@@ -854,6 +858,25 @@ Upstream reuses numbers this fork has published (both have a `v1.14.0`), so its 
 
 An upstream PR branches off `upstream/main` and takes its commits by cherry-pick; *Project mode*
 still decides when one may be opened.
+
+### Windows VM rehearsal
+
+This fork has no Windows VM, and the operator cannot configure one. The waiver is permanent and
+covers **only** the VM install, update and rollback rehearsal (`make win-rehearse` in *Versioning*
+step 7). It is not a waiver of Windows checks, and it does not make Windows verified.
+
+- Do not run `make win-rehearse` before a fork tag. Install, update and rollback on a Windows VM
+  stay unverified. Windows stays experimental.
+- The `windows.yml` run on the release commit must still be green. That workflow still runs on pull
+  requests and on pushes to `main`. It does not run on every push to `dev`. Before the release
+  commit is copied to `main`, start that same workflow once by hand on the `dev` commit
+  (`workflow_dispatch` in `.github/workflows/windows.yml`). Adding the entry does not record that a
+  dispatch was run.
+- The Windows zip, the build, and the asset rules in *Versioning* step 7 stay as written, including
+  `WINDOWS_ASSET_MANDATORY_FROM` and `COLLIE_WINDOWS_ASSET_OVERRIDE`. Do not drop the Windows job,
+  the zip, or those checks.
+- [ADR 0075](./.adr/0075-windows-is-a-supported-host.md) stays. Upstream's VM rehearsal requirement
+  is unchanged. This override is this fork only.
 
 ## Personal changes go in FORK.md
 
