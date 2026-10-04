@@ -19,7 +19,7 @@
 | 3 | 帳號切換拒絕的 UI；retell 已配置的 UI／回應；launcher 列／請求與唯讀狀態 | [CHANGELOG.md](/CHANGELOG.md) account 項、[configure.md](/docs/configure.md) retell／Launch 段 | V4：前 51＋本批六案，獨立整套 57 passed；只有測試路由／定位校正，無產品修補 |
 | 4 | Full reply 表格形狀；Type 具名選擇與切 pane 解除；Typeface 偏好 | [CLAUDE.md](/CLAUDE.md) Full reply／具名選擇規則、[configure.md](/docs/configure.md) Typeface 段 | V4：前 57＋本批四案，獨立整套 61 passed；Type 入口／Typeface 文件預設衝突未拍板 |
 | 5 | Language 裝置偏好；Changes 深度偏好；Chat 實驗開關 | [configure.md](/docs/configure.md) Language／Changes／Experiments 段 | V4：前 61＋本批五案，改共同準備後獨立整套 66 passed；無產品修補 |
-| 6 | Changes 清單的既有 fixture 顯示；idle 暫停出現／隱藏與恢復 | [changes.md](/docs/changes.md)、[CLAUDE.md](/CLAUDE.md) idle 規則、[ADR0007](/.adr/0007-the-idle-lock-is-a-pause-not-a-gate.md) | 排隊；idle 使用已裝瀏覽器時鐘，不改系統時鐘或加 sleep |
+| 6 | Changes 清單的既有 fixture 顯示；idle 暫停出現／隱藏與恢復 | [changes.md](/docs/changes.md)、[CLAUDE.md](/CLAUDE.md) idle 規則、[ADR0007](/.adr/0007-the-idle-lock-is-a-pause-not-a-gate.md) | V4：前 66＋本批三案，獨立整套 69 passed；真 hidden／回前景自動恢復未驗，不以 frozen 當 hidden |
 
 這些批次會順序執行；每批交獨立驗證後才接下批。具體 caseID、語義版本、原資料與需要的回歸範圍隨批次保存，不能把本表的排隊狀態當已執行。
 
@@ -70,5 +70,9 @@ main 依小於三行精確修正的例外，把單一 locator 改成已正向確
 第五批首 run `01a10540-2d15-78cb-a594-761861b9090b`（`.e2e/collie-loop-b05-r1/report.json`）：五案中 Changes 兩案、Chat 兩案通過，語言 reload 一案失敗。繁中切換後的「外觀／語言／終端機鏡像輸出不會被翻譯。」都已通過，reload 後同 URL 卻回到 Appearance／Language value=en；main 直接對 raw steps 與 failure screen 核實。共享 `pinLocale` 的 addInitScript 每次載入都寫 en，是 setup 覆寫，不是產品語言保存失效。
 
 main 只改 TesterArmy 的 `fixtures.ts` 兩行：去掉 pinLocale import、在空白 bootstrap 寫一次既有 locale key=en，再首次開產品。共有 Playwright helper、產品與期待、tour/API/origin/SW/proxy 不變。worker 只重跑語言案，新 run `01a10543-f4ca-7643-ad42-6e3aec413fee`（`.e2e/collie-loop-b05-r2/report.json`）selected 一案、一個 attempt、17 steps 都通過、exit 0，main 已直接解析；其餘未選的 skip 不是整套結果。最新真正 web typecheck 與準備檔／新 E2E 的局部 lint exit 0；前面誤用 runner 本地 tsconfig 的 Node 型別缺失保留為檢查入口限制，不修無關檔。沒有產品修改或新 build。共同準備改動影響舊案例，獨立整套 run `01a10548-4060-71bb-a1ed-a566363615e0`（`.e2e/collie-loop-b05-verifier/report.json`）在跑前 list 十檔／66 案後實跑：discovered／selected／executed／passed 各 66，failed／flaky／skipped 各 0，每案一個 attempt、697 steps 都通過、exit 0；main 已直接解析 bad_results=[]、bad_steps=[]。繁中 reload 後原第 89 行仍是 zh-TW，關掉 Changes 搜尋後深度四仍勾著／停用，再開保留；Chat 預設關、打開與 reload 保留，只驗 menu 的 Terminal view 列，不宣稱真 Chat 或 git 搜尋。準備 diff 恰是兩行，共有 api.ts 不變；不同入口的本地 tsconfig 缺失未修。接第六批，不把目前 66 passed 當整輪結案。
+
+第六批 worker 的最終 run `01a10559-5dd3-77ce-a923-aa90063ab2cf`（`.e2e/b06-a0f63d44-8c32-40aa-9e53-idlefinal/report.json`）：selected／executed／passed 三案，各一個 attempt、exit 0，main 已全文讀新檔／報告並直接解析；其他 66 案未選，不當整套通過。Changes 的 pane／dashboard 入口都看到原 fixture 的 checkout.tsx、Modified、+3／−1，過程零非讀 HTTP，只證網頁。缺 paneRepo 的原 fixture 不增加欄位來測 This pane。
+
+Idle 在空白 bootstrap／產品首次開啟前安裝已裝 Playwright 時鐘，跳過原 `30 * 60 * 1000` 毫秒後可見 Paused；按 Tap to resume 後 URL 與原 `keep this draft` 保留，不用 reload。後置公開 CDP frozen 探測實際是 `{"before":"visible","after":"visible"}`，沒有真 hidden，所以 hidden 不鎖／回前景自動恢復未驗，也未假造 getter 或事件。更早／更晚的閾值邊界未另測。前面失敗只在同步 URL 讀取、heading 精確名稱與 union 型別，沒有產品修補或新 build；最終 web typecheck／局部 lint 的收據交獨立 verifier 核。獨立整套 run `01a10560-abc7-776b-b130-985c4fddf4fa`（`.e2e/collie-loop-b06-verifier/report.json`）無 filter：discovered／selected／executed／passed 各 69，failed／flaky／skipped 各 0，每案一個 attempt、741 steps 都通過、exit 0；main 已直接解析 bad_results=[]、bad_steps=[]。跑前來源枚舉是十一檔／67 個直寫 test 加兩個 waitWhatCases；verifier 沒跑前置 SDK list，main 事後另跑 SDK list 得十一檔／69 案，逐案與 raw 比對 registered_only=[]、results_only=[]，不冒稱事後清單是跑前快照，也不重跑正確 SDK。最後真正 web typecheck 非 error 收據與 OX_EXIT:0 已由 main 直接查 worker JSONL。沒有產品修改。六批可觀察項已有結果，來源衝突與環境未驗保留；最後還須 task-verifier 與自有 Git 收尾，不預填整輪結案。
 
 上一小包的成功不冒充本輪所有候選已測；後續各批在這裡追加，不覆寫第一包歷史。

@@ -1,6 +1,6 @@
 # Collie 網頁補丁回歸測試
 
-這套使用 TesterArmy 保護 fork 的網頁補丁。案例預期取自 FORK.md、CHANGELOG.md 與 ADR，不是實跑後反填答案。原 Playwright suite、設定與依賴保留。`npm test` 執行本目錄所有已定案的 `.e2e.ts`；每案各自回報，不把失败標成預期失敗或跳過。
+這套使用 TesterArmy 保護 fork 的網頁補丁。案例預期取自 FORK.md、CHANGELOG.md 與 ADR，不是實跑後反填答案。原 Playwright suite、設定與依賴保留。`npm test` 執行本目錄註冊的 `.e2e.ts`；每案各自回報，不把失敗標成預期失敗或跳過。連續 sweep 的來源衝突另列於逐批紀錄，案例通過不代表已裁定那些衝突。
 
 - [本次行為契約](/web/e2e/tester-army/contract.md)
 - [來源與涵蓋表](/web/e2e/tester-army/coverage.md)
@@ -10,6 +10,7 @@
 - [首次實跑紀錄](/web/e2e/tester-army/runs/first-web-run.md)
 - [本次整批結果](/web/e2e/tester-army/runs/baseline-2026-10-04.md)、[建案失敗](/web/e2e/tester-army/runs/setup-failures.md)、[錯預期控制](/web/e2e/tester-army/runs/negative-control.md)
 - [另分支找錯與修補試跑](/web/e2e/tester-army/runs/sweep-2026-10-04.md)：新增六案與原 26 案獨立實跑通過；產品只修無 mux 時品牌不可見。這是一次有限試跑，不是原契約的期待改版。
+- [連續批次找錯紀錄](/web/e2e/tester-army/runs/sweep-loop-2026-10-04.md)：按人寫來源的候選流程逐批測、修、獨立驗證；各項通過與未驗分開記，不能當全產品零 bug 保證。
 - 後續結果保存於 runs/，原失敗與成功證據不覆寫。
 
 ## 測試邊界
@@ -17,6 +18,8 @@
 真 Chromium 載入 Collie 的正式網頁 build。命令選取、composer、reply-action 都用真產品；bridge、terminal 及其他 API 用 repo 既有 fixture。禁止任何請求離開隔離 loopback origin，Vite 的 API proxy 指向沒有 bridge 的 port 9，service worker 阻擋。
 
 精確斷言保護 palette 只填文字、bar 直接送、清單分類／排序／開啟時固定、wait-what 隱藏、description 顯示，以及核定的帳號切換／權限回答／Full reply 分支。不使用 agent.*、模型或 cache。依涵蓋表區分網頁觀察與 backend 未驗，不因 API stub 成功就宣稱 terminal 成功。
+
+Typeface 出廠值的來源仍有衝突：CLAUDE／原單測是 Aldrich，configure.md 寫 Space Grotesk。該案的 Aldrich 斷言只保存本輪觀察，不作未拍板的產品判斷標準。如果未來只在該斷言失敗，就先核來源，不直接改產品或 expected。三個字型選項與選擇保存仍有共同來源。
 
 ## 合併上游後重跑
 
