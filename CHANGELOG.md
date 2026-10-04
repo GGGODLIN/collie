@@ -30,17 +30,23 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+## [1.16.1] - 2026-10-04
+
+### Changed
+
+- **Built on upstream Collie 1.16.0.** AltanS/collie v1.16.0, commit 320bb18. ([28534cb4](https://github.com/GGGODLIN/collie/commit/28534cb4))
+
 ### Fixed
 
-- **The header brand stays readable when no multiplexer is named.** An empty "on <mux>" line no longer collapses the out-of-flow COLLIE-GGGODLIN eyebrow to zero width. A named multiplexer still sizes that block.
+- **The header brand stays readable when no multiplexer is named.** An empty "on <mux>" line no longer collapses the out-of-flow COLLIE-GGGODLIN eyebrow to zero width. A named multiplexer still sizes that block. ([d3435b4e](https://github.com/GGGODLIN/collie/commit/d3435b4e))
 
 ### Packaging
 
-- **Optional regression tools no longer block normal source builds.** TesterArmy has its own dependency lock and typecheck; CI checks it separately while the app and original browser suite keep their existing dependencies.
+- **Optional regression tools no longer block normal source builds.** TesterArmy has its own dependency lock and typecheck; CI checks it separately while the app and original browser suite keep their existing dependencies. ([6bc31097](https://github.com/GGGODLIN/collie/commit/6bc31097))
 
 ### Docs
 
-- **Fork releases permanently skip the Windows VM rehearsal.** This fork has no Windows VM, so install, update and rollback on a VM stay waived on every fork release and stay unverified. Windows CI on the release commit, the zip and the asset checks stay. Windows stays experimental. The fork 1.16.0 note under that release is the record of that one release, not the ongoing rule.
+- **Fork releases permanently skip the Windows VM rehearsal.** This fork has no Windows VM, so install, update and rollback on a VM stay waived on every fork release and stay unverified. Windows CI on the release commit, the zip and the asset checks stay. Windows stays experimental. The fork 1.16.0 note under that release is the record of that one release, not the ongoing rule. ([4bc68022](https://github.com/GGGODLIN/collie/commit/4bc68022))
 
 ## [1.16.0] - 2026-10-03
 
