@@ -1,0 +1,4 @@
+# This directory is its own install cwd, so bun does not read web/bunfig.toml.
+# Same cooldown as ../../bunfig.toml and ../../../bunfig.toml. --frozen-lockfile does not consult it.
+[install]
+minimumReleaseAge = 604800 # 7 days, in seconds

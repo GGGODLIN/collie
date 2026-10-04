@@ -34,6 +34,10 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 - **The header brand stays readable when no multiplexer is named.** An empty "on <mux>" line no longer collapses the out-of-flow COLLIE-GGGODLIN eyebrow to zero width. A named multiplexer still sizes that block.
 
+### Packaging
+
+- **Optional regression tools no longer block normal source builds.** TesterArmy has its own dependency lock and typecheck; CI checks it separately while the app and original browser suite keep their existing dependencies.
+
 ## [1.16.0] - 2026-10-03
 
 ### Added

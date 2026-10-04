@@ -1,5 +1,12 @@
 {
   "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // This directory's node_modules stops the automatic @types walk, and nothing here imports vite,
+    // which is what pulls Node types into the app project. Name the existing package instead of
+    // adding one. import.meta.dirname is declared by that package.
+    "typeRoots": ["../../node_modules/@types"],
+    "types": ["node"]
+  },
   "include": ["*.ts"],
   "exclude": []
 }

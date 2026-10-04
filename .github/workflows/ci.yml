@@ -45,6 +45,13 @@ jobs:
         run: cd web && bun install --frozen-lockfile
       - name: Typecheck (web)
         run: cd web && bun run typecheck
+      # The TesterArmy SDK is not installed by `collie build` or this web install. The app project
+      # excludes that directory so a missing SDK cannot fail it; this frozen install is what makes
+      # the SDK's own typecheck real.
+      - name: Install (tester-army)
+        run: cd web/e2e/tester-army && bun install --frozen-lockfile
+      - name: Typecheck (tester-army)
+        run: cd web && bunx tsc --noEmit -p e2e/tester-army/tsconfig.json
       - name: Test (web)
         run: cd web && bun run test
 

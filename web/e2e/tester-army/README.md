@@ -36,11 +36,13 @@ CLI 自動取可用 loopback port，啟停測試 server，輸出保存在 `.e2e/
 
 ## 依賴與本次本機限制
 
-本目錄的 package.json 釘 e2e 0.16.0、@e2e-dev/web 0.11.2、playwright 1.63.0，以及既有 SDK 樹已解析的 zod 4.6.5。版本來源是本輪已安裝套件的 package.json；新增直接宣告不代表另做安裝。試跑復用本 session 已審、已安裝的 SDK，沒有重新下載／安裝這兩個未滿七天的版本，沒有升級舊 suite。
+本目錄的 package.json 釘 e2e 0.16.0、@e2e-dev/web 0.11.2、playwright 1.63.0，以及既有 SDK 樹已解析的 zod 4.6.5。版本來源是本輪已安裝套件的 package.json。試跑復用本 session 已審、已安裝的 SDK，沒有重新下載／安裝這兩個未滿七天的版本，沒有升級舊 suite。
 
 本機忽略的 node_modules 暫時指向既有 Linux SDK 目錄；因此這次在 macOS 另以 ESBUILD_BINARY_PATH 指向已滿七天的原生 esbuild 0.28.2。該暫存位置記在本輪本機收據，不寫進可提交文件。重跑此依賴形態時要帶同一環境變數，不能假設跨平台的 node_modules 可直接使用。
 
-這輪沒有驗證乾淨 clone 的依賴安裝，沒有新 lockfile。全新安裝仍須遵守 repo 的七天限制，不能為了跑測試放寬；兩個 SDK 版本都在 2026-10-02 發布，2026-10-04 尚不能新裝。原 suite 的依賴安裝與 lockfiles 不變。
+型別分兩條。`cd web && bun run typecheck` 不含本目錄；app 與舊 Playwright 案例仍保留型別檢查。本目錄另用 web 的 tsc，型別根只指向 web 既有的 `@types`（含 `node:fs` 與 `import.meta.dirname`），不新增型別套件。CI 在 web install 之後才對本目錄 `bun install --frozen-lockfile`，再執行 `cd web && bunx tsc --noEmit -p e2e/tester-army/tsconfig.json`。普通 build 不安裝本目錄。
+
+`bun.lock` 鎖的是上述直接依賴與當時已審的 transitive 版本，給 CI 的 frozen install 用。這份 lock 沒有經過乾淨 clone 安裝驗證。全新安裝仍須遵守 repo 的七天限制，不能為了跑測試放寬；兩個 SDK 版本都在 2026-10-02 發布，2026-10-04 尚不能新裝。原 suite 的依賴安裝與 lockfiles 不變。
 
 ## 未驗證
 
