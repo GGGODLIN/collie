@@ -15,7 +15,7 @@
 | 批次 | 流程 | 人寫來源 | 本輪狀態 |
 | --- | --- | --- | --- |
 | 1 | 返回上一層／sheet 不增歷史；Keys 佇列離開二次確認與丟棄；儀表底欄分頁與 Focus（原名 Attention）只過濾 | [DESIGN.md §12](/DESIGN.md)、[ADR0067](/.adr/0067-back-goes-up-one-level.md)、[ADR0005](/.adr/0005-a-composed-key-queue-never-outlives-its-dock.md)、[ADR0066](/.adr/0066-the-dashboard-has-a-footer-panes-needs-you-changes.md) 及 [ADR0068](/.adr/0068-the-second-tab-is-focus-not-attention.md)／[ADR0070](/.adr/0070-a-pin-is-a-place-the-operator-chose.md) 修訂 | V4：原 32＋本批 12，獨立整套 44 passed；無產品修補 |
-| 2 | 主題裝置偏好；Zen 的啟用與切 pane 重設；缺 launcher 宣告時安靜缺席 | [configure.md](/docs/configure.md) 主題／Zen／Launch 段 | 排隊；先核原資料 |
+| 2 | 主題裝置偏好；Zen 的啟用與切 pane 重設；缺 launcher 宣告時安靜缺席 | [configure.md](/docs/configure.md) 主題／Zen／Launch 段 | V4：前 44＋本批七案，獨立整套 51 passed；Theme 配色／Zen 換 pane 子項未驗 |
 | 3 | 帳號切換拒絕的 UI；retell 已配置的 UI／回應；launcher 列／請求與唯讀狀態 | [CHANGELOG.md](/CHANGELOG.md) account 項、[configure.md](/docs/configure.md) retell／Launch 段 | 排隊；API 錯誤／回應須有可重用原輸入，不能從 enum 猜 payload |
 | 4 | Full reply 表格形狀；Type 具名選擇與切 pane 解除；Typeface 偏好 | [CLAUDE.md](/CLAUDE.md) Full reply／具名選擇規則、[configure.md](/docs/configure.md) Typeface 段 | 排隊；Type 的打開方式差額與字型預設不自決 |
 | 5 | Language 裝置偏好；Changes 深度偏好；Chat 實驗開關 | [configure.md](/docs/configure.md) Language／Changes／Experiments 段 | 排隊；只觀察設定，不冒充 backend／Chat 效果 |
@@ -49,6 +49,14 @@ main 讀新測試後發現 Focus 順序案例只剩一個 eligible workspace，�
 
 原報告在 `.e2e/collie-loop-b01-verifier/report.json`。NAV/up 的 back step 通過且沒有 error，catch 未走；Keys trace 看到非空佇列與二次確認。Focus 的兩群／三列順序有實際 role/DOM 斷言，但最後 screencast 仍顯示切換前的 Panes，不能拿該圖宣稱畫面已確認，也不足以判假綠。保留這個影像缺口，不為取第二張圖重跑已正確的整批。
 
-產品沒有改動；目前 header 的 `git hash-object` 仍是 `8cacbcf030a21477e927cece8a7649bdc3317ec0`。這是 Git source blob，不是應該在 browser artifact 裡找到的字串；未因 metadata 搜錯位置重建產品。第一批沒有確認產品 bug，不需要回修。接著按清單處理第二批。
+產品沒有改動；目前 header 的 `git hash-object` 仍是 `8cacbcf030a21477e927cece8a7649bdc3317ec0`。這是 Git source blob，不是應該在 browser artifact 裡找到的字串；未因 metadata 搜錯位置重建產品。第一批沒有確認產品 bug，不需要回修。
+
+第二批獨立整套 run `01a104de-c3fd-77d7-9524-86703e5cebee`：selected／executed／passed 51（前 44＋本批七案），failed／flaky／skipped 各 0，每案一個 attempt，exit 0；raw report 在 `.e2e/collie-loop-b02-verifier/report.json`，main 已直接解析，bad_results=[]。Theme 只驗選項與 Light 重載後仍選中；Zen 驗出廠缺席、啟用、鏡像保留／composer 隱藏、浮動鈕與 Escape 恢復、reload 清 active 且設定保留。配色／System resolved、Zen active 跨 pane 重設未驗，不能拿 51 passed 掩蓋。
+
+新檔原有 `ResponseWaiter.json(): Promise<unknown>` 被 oxlint no-unknown-returns 擋下。main 依已裝 SDK 出口改用 `@e2e-dev/web` 的 Browser，並用既有 LaunchersResponse 明確指定 json 泛型；整份 JSON 的原深度相等斷言保留。中途泛型推論造成 TS2339，指定具名回應後最新 web typecheck 通過；單檔 oxlint 通過。一次相對 binary 路徑找不到，改用既有絕對路徑執行，不新裝或跳過檢查。root typecheck 的獨立收據已通過，root 未受此型別調整影響。
+
+型別修正前後用已裝 native esbuild 產生的 JavaScript 位元組相同，SHA-256 都是 `e3622cafc6d9dfaf67910d0bcdd88d0a19ccca6aaacb63cf133225f58332b6b7`；沒有改執行邏輯或重跑正確的 51 案，也沒有重 build／產品 patch。SDK 的 vcs.dirty=false 沒涵蓋當時未追蹤的新測試，身分另以實際 source／run／Git status 對回，不把該旗標當完整內容證明。
+
+接著按清單處理第三批，整輪尚未結案。
 
 上一小包的成功不冒充本輪所有候選已測；後續各批在這裡追加，不覆寫第一包歷史。
