@@ -8,11 +8,11 @@
 
 | 補丁群組 | 人寫來源 | 已保存／建立中的網頁觀察 | 未驗或排除 |
 | --- | --- | --- | --- |
-| 品牌字 | [FORK.md](/FORK.md) L32–39 | title-dash/v3：已有具名 mux 的 dashboard 真可見 | 無 mux 的 v1/v2 失敗保留，沒修產品；pane 隱藏分支未另建案 |
+| 品牌字 | [FORK.md](/FORK.md) L32–39 | title-dash/v3：具名 mux 真可見；另分支 sweep 的 title-no-mux/v1：無 mux 修前隱藏、修後真可見 | 原 v1/v2 失敗保留；pane 隱藏分支未另建案 |
 | wait-what band | [FORK.md](/FORK.md) L76–86、[CHANGELOG.md](/CHANGELOG.md) L710 | idle／retelling 兩形狀；真網頁保留 Done、拿掉 band | 其他負例仍只有既有單測，不算本批 E2E |
-| Claude operator 合併 | [ADR 9001](/.adr/9001-claude-operator-commands-join-the-reference-catalog.md) | custom 先出現、reference 留下、同名只有一列、描述與參數正確 | 危險分類下限、非 Claude 替換、bar operator two-tap 未新增網頁案；不驗檔案重讀 |
+| Claude operator 合併 | [ADR 9001](/.adr/9001-claude-operator-commands-join-the-reference-catalog.md)、[ADR 0043](/.adr/0043-operator-bar-rows-replace-the-bar-not-the-palette.md) | custom 先出現、reference 留下、同名只有一列、描述與參數正確；sweep 另驗非 Claude 替換、bar 不改 palette、危險 bar 二次確認 | 危險分類下限其他分支未新增；不驗檔案重讀 |
 | palette 只填文字 | [ADR 9002](/.adr/9002-the-agent-palette-stages-never-sends.md) | 無參數、有參數尾空白、補參數、危險列零寫入；明確 Send 才 reply；bar Compact 直送 | 真 terminal 不在範圍 |
-| attention 清單 | [ADR 9003](/.adr/9003-the-switcher-orders-a-section-by-its-latest-state-change.md)、[ADR 9004](/.adr/9004-both-pane-switcher-entries-use-attention.md)、CHANGELOG L705–709 | 兩個 pane switcher 入口、段序、段內最新在前、開啟時固定與重開更新、dashboard 仍按位置、in-pane Shells 在後 | session switcher 的狀態點／排序未新增；平手／無 timestamp／關閉 pane 未新增；Recent 方向切換與 dashboard Shells 的來源差額待確認；Launch 無輸入 |
+| attention 清單 | [ADR 9003](/.adr/9003-the-switcher-orders-a-section-by-its-latest-state-change.md)、[ADR 9004](/.adr/9004-both-pane-switcher-entries-use-attention.md)、CHANGELOG L705–709 | 兩個 pane switcher 入口、段序、段內最新在前、開啟時固定與重開更新、dashboard 仍按位置、in-pane Shells 在後；sweep 另驗平手保持輸入次序、無 timestamp 沉後 | session switcher 狀態點／排序與關閉 pane 未新增；Recent 方向切換與 dashboard Shells 的來源差額待確認；Launch 無輸入 |
 | retell | [ADR 9005](/.adr/9005-retell-is-a-one-shot-operator-child.md) | 未設定時 Pane actions 沒有 Plain/Lost | 配置後正例未新增；sidecar、argv、timeout、session 檢查、大小限制不由 stub 驗 |
 | recap description | [FORK.md](/FORK.md) L41–51、CHANGELOG L693/L695–696/L717 | pane 的 goal/now/next；switcher name 在前、description 在後 | resolver、檔案優先序、忙碌時讀 journal 不由 stub 驗 |
 | fork 更新來源 | FORK.md L88–105、CHANGELOG L711 | 不偽造 URL 當 E2E | CLI／bridge／release 層；不在這批 web 測試 |
@@ -40,4 +40,4 @@
 
 本輪只驗 Chromium phone、en、loopback 的真網頁；iOS 按使用者明示跳過。tablet、Safari、LLM、cache、真 backend、上游合併均未驗。本表的未驗列是交付限制，不是 PASS 或 skip。
 
-沒有可部署的產品修改，故不部署 active Collie。不合上游、不開 release 或上游 PR。未來合併後重建當前 checkout，再用原期待重跑；不要從新版結果重寫期待。
+首次 baseline 沒有產品修改。另分支 sweep 只修 header，新增六案與原 26 案的結果見 [本包紀錄](/web/e2e/tester-army/runs/sweep-2026-10-04.md)；保留隔離，不合回 dev、push 或部署 active Collie。不合上游、不開 release 或上游 PR。未來合併後重建當前 checkout，再用原期待重跑；不要從新版結果重寫期待。

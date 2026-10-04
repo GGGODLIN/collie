@@ -373,6 +373,14 @@ export function AppHeaderHost({ bridge, error, children }: AppHeaderHostProps) {
                       is the only translated word here — the brand and the multiplexer's own name
                       are names, and names are not translated. */}
                   <span className="block min-h-6 truncate text-base">
+                    {/* The brand is out of flow, so an empty mux line is 0px wide and
+                        max-w-full clips the eyebrow to nothing. This floor exists only
+                        while the line is empty — a named mux still sizes the block —
+                        and it carries no text, so the brand stays one node. 12em is
+                        the brand's own 11px size, past Aldrich's "COLLIE-GGGODLIN". */}
+                    {mux === "" && (
+                      <span aria-hidden className="invisible inline-block min-w-[12em] text-[11px] leading-none" />
+                    )}
                     {mux !== "" && (
                       <>
                         {t("nav.mux.onPrefix")}{" "}

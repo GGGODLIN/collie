@@ -1,5 +1,6 @@
 import { commandsFor } from "./agent-commands";
 import { operatorDeploy, operatorClear, operatorUnscoped } from "@/test/fork-regression-data";
+import { ompForkIn as forkIn } from "@/test/sweep-data";
 
 describe("commandsFor", () => {
   it("returns the Claude catalog for 'claude'", () => {
@@ -154,14 +155,6 @@ describe("commandsFor", () => {
 // The operator's own rows (commands.toml → /api/config). Claude panes merge them ahead of the
 // maintained reference catalog; every other harness keeps the replacement rule from ADR 0018.
 describe("commandsFor with the operator's own rows", () => {
-  const forkIn = {
-    agent: "omp",
-    command: "/fork-in-herdr",
-    description: "Fork into a new herdr tab",
-    takesArg: false,
-    argHint: "",
-  };
-
   it("merges operator rows before shipped rows on Claude panes", () => {
     const deploy = operatorDeploy;
     const rows = commandsFor("claude", [deploy]);

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { __resetHarnessBar, setHarnessBarEnabled } from "@/lib/harness-bar-pref";
 import type { OperatorCommand } from "@/lib/types";
+import { operatorBarWipe } from "@/test/sweep-data";
 import { accentFor, HarnessBar } from "./harness-bar";
 
 /** jsdom normalises a hex colour to `rgb(...)`; compare through the same normaliser on both sides. */
@@ -159,7 +160,7 @@ describe("HarnessBar", () => {
 
   it("two-taps an operator row that names a shipped dangerous command", async () => {
     const onRun = took();
-    const mine = [op({ agent: "claude", command: "/clear", bar: true, barLabel: "Wipe" })];
+    const mine = [operatorBarWipe];
     render(<HarnessBar agent="claude" mine={mine} onRun={onRun} />);
     const button = screen.getByRole("button", { name: "Wipe" });
     await userEvent.click(button);

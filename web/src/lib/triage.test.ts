@@ -12,6 +12,7 @@ import {
 } from "./triage";
 import type { AgentStatus } from "./types";
 import { regressionAgent as agent, newestAttentionAgents } from "@/test/fork-regression-data";
+import { tiedRecentAgents, untimedBridgeAgents } from "@/test/sweep-data";
 
 /** The section an agent landed in, by pane id. */
 function sectionOf(sections: ReturnType<typeof triage>, paneId: string): TriageKey | undefined {
@@ -121,10 +122,7 @@ describe("triage — ordering: the latest state change first, as Herdr's priorit
   });
 
   it("keeps the sent order between panes whose state changed at the same moment", () => {
-    const s = triage([
-      agent("first", "idle", { active: 1, seen: 100 }),
-      agent("second", "idle", { active: 1, seen: 900 }),
-    ]);
+    const s = triage(tiedRecentAgents);
     expect(ids(s, "recent")).toEqual(["first", "second"]);
   });
 
@@ -156,13 +154,7 @@ describe("triage — ordering: the latest state change first, as Herdr's priorit
 });
 
 describe("triage — an older bridge that reports no timestamps", () => {
-  const herd = [
-    agent("b1", "blocked"),
-    agent("b2", "blocked"),
-    agent("w1", "working"),
-    agent("i1", "idle"),
-    agent("d1", "done"),
-  ];
+  const herd = untimedBridgeAgents;
 
   it("leaves Ready·unseen empty rather than guessing", () => {
     expect(ids(triage(herd), "ready")).toEqual([]);

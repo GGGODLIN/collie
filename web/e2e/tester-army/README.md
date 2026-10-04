@@ -9,6 +9,7 @@
 - [共用資料案例](/web/e2e/tester-army/contracts/data-backed-web.v1.md)、[補充案例](/web/e2e/tester-army/contracts/supplemental-web.v1.md)
 - [首次實跑紀錄](/web/e2e/tester-army/runs/first-web-run.md)
 - [本次整批結果](/web/e2e/tester-army/runs/baseline-2026-10-04.md)、[建案失敗](/web/e2e/tester-army/runs/setup-failures.md)、[錯預期控制](/web/e2e/tester-army/runs/negative-control.md)
+- [另分支找錯與修補試跑](/web/e2e/tester-army/runs/sweep-2026-10-04.md)：新增六案與原 26 案獨立實跑通過；產品只修無 mux 時品牌不可見。這是一次有限試跑，不是原契約的期待改版。
 - 後續結果保存於 runs/，原失敗與成功證據不覆寫。
 
 ## 測試邊界
@@ -40,4 +41,4 @@ CLI 自動取可用 loopback port，啟停測試 server，輸出保存在 `.e2e/
 
 ## 未驗證
 
-涵蓋表的剩餘分支、真 bridge／Herdr terminal、原生 iOS、tablet、Safari、LLM、cache replay，以及實際合併上游後的回歸結果都未驗證。故意錯 expected 的負向控制已另跑，不能把它算正常案例通過或產品失效測試。這套提供可重跑的前端保護，不代表 fork 每個分支都已覆蓋。測試修改沒有可部署的產品效果，所以不重建或部署 active Collie。
+涵蓋表的剩餘分支、真 bridge／Herdr terminal、原生 iOS、tablet、Safari、LLM、cache replay，以及實際合併上游後的回歸結果都未驗證。故意錯 expected 的負向控制已另跑，不能把它算正常案例通過或產品失效測試。這套提供可重跑的前端保護，不代表 fork 每個分支都已覆蓋。首次 baseline 只有測試修改，沒有可部署的產品效果。另分支 sweep 有 header 修補，但本次隔離試跑明示不部署 active Collie。
