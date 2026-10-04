@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 
 import { server } from "@/test/setup";
+import { accountIdleLabels, accountWorkingLabels, accountsConfig, switchAccepted } from "@/test/fork-supplement-data";
+import { retellFailedReason, retellLostDone, retellPlainFailed } from "@/test/sweep-loop-actions-data";
 import { clearStatus } from "@/lib/status";
 import { __resetOperatorCommands } from "@/lib/operator-config";
 import type { AgentView } from "@/lib/types";
@@ -24,11 +26,9 @@ const claude: AgentView = {
   hasSession: true,
 };
 
-function withAccounts(accounts: string[]) {
+function withAccounts(accounts: readonly string[]) {
   server.use(
-    http.get("/api/config", () =>
-      HttpResponse.json({ push: false, vapidPublicKey: "", accounts }),
-    ),
+    http.get("/api/config", () => HttpResponse.json(accountsConfig(accounts))),
   );
 }
 
@@ -37,7 +37,7 @@ function captureSwitch() {
   server.use(
     http.post("/api/pane/:id/switch-account", async ({ request }) => {
       bodies.push(await request.json());
-      return HttpResponse.json({ ok: true });
+      return HttpResponse.json(switchAccepted);
     }),
   );
   return bodies;
@@ -56,7 +56,7 @@ beforeEach(() => {
 
 describe("switch account", () => {
   it("an idle Claude switches on the first tap of an account", async () => {
-    withAccounts(["Work", "Personal"]);
+    withAccounts(accountIdleLabels);
     const bodies = captureSwitch();
     const user = userEvent.setup();
     const props = renderSheet(claude);
@@ -67,7 +67,7 @@ describe("switch account", () => {
   });
 
   it("a working Claude needs a second tap, and only then says it may interrupt", async () => {
-    withAccounts(["Personal"]);
+    withAccounts(accountWorkingLabels);
     const bodies = captureSwitch();
     const user = userEvent.setup();
     renderSheet({ ...claude, status: "working" });
@@ -153,7 +153,7 @@ describe("retell", () => {
   it("a finished retelling shows its answer", async () => {
     server.use(
       http.post("/api/pane/:id/retell", () =>
-        HttpResponse.json({ ok: true, mode: "lost", label: "跟丟了", answer: "整段", cached: true, source: "x" }),
+        HttpResponse.json(retellLostDone),
       ),
     );
     const { result } = renderHook(() => useRetell("w1:p1"));
@@ -164,14 +164,11 @@ describe("retell", () => {
   // Configured but broken: retell.toml names a command this host does not have. The bridge's own
   // reason must reach the sheet, never a bare "failed" (CLAUDE.md, Project mode).
   it("a command that cannot start shows the bridge's reason", async () => {
-    const reason = "could not start /nope/ww: Error: ENOENT";
     server.use(
-      http.post("/api/pane/:id/retell", () =>
-        HttpResponse.json({ ok: false, error: reason, code: "retell.failed", detail: { reason } }),
-      ),
+      http.post("/api/pane/:id/retell", () => HttpResponse.json(retellPlainFailed)),
     );
     const { result } = renderHook(() => useRetell("w1:p1"));
     await act(() => result.current.start("plain"));
-    expect(result.current.state).toEqual({ phase: "failed", mode: "plain", message: reason });
+    expect(result.current.state).toEqual({ phase: "failed", mode: "plain", message: retellFailedReason });
   });
 });

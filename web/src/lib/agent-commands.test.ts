@@ -1,4 +1,6 @@
 import { commandsFor } from "./agent-commands";
+import { operatorDeploy, operatorClear, operatorUnscoped } from "@/test/fork-regression-data";
+import { ompForkIn as forkIn } from "@/test/sweep-data";
 
 describe("commandsFor", () => {
   it("returns the Claude catalog for 'claude'", () => {
@@ -153,22 +155,8 @@ describe("commandsFor", () => {
 // The operator's own rows (commands.toml → /api/config). Claude panes merge them ahead of the
 // maintained reference catalog; every other harness keeps the replacement rule from ADR 0018.
 describe("commandsFor with the operator's own rows", () => {
-  const forkIn = {
-    agent: "omp",
-    command: "/fork-in-herdr",
-    description: "Fork into a new herdr tab",
-    takesArg: false,
-    argHint: "",
-  };
-
   it("merges operator rows before shipped rows on Claude panes", () => {
-    const deploy = {
-      agent: "claude",
-      command: "/deploy",
-      description: "Deploy staging",
-      takesArg: false,
-      argHint: "",
-    };
+    const deploy = operatorDeploy;
     const rows = commandsFor("claude", [deploy]);
     expect(rows[0]).toMatchObject({
       command: "/deploy",
@@ -180,14 +168,7 @@ describe("commandsFor with the operator's own rows", () => {
   });
 
   it("lets a Claude row replace a shipped name without lowering its confirmation", () => {
-    const override = {
-      agent: "claude",
-      command: "/clear",
-      description: "Clear after saving notes",
-      takesArg: true,
-      argHint: "[note]",
-      confirm: false,
-    };
+    const override = operatorClear;
     const rows = commandsFor("claude", [override]);
     const clear = rows.filter((row) => row.command === "/clear");
     expect(clear).toHaveLength(1);
@@ -226,7 +207,7 @@ describe("commandsFor with the operator's own rows", () => {
   });
 
   it("gives an agent with no catalog a palette when an unscoped extra applies", () => {
-    const unscoped = { command: "/deploy", description: "Ship it", takesArg: false, argHint: "" };
+    const unscoped = operatorUnscoped;
     expect(commandsFor("gemini")).toEqual([]);
     expect(commandsFor("gemini", [unscoped]).map((c) => c.command)).toEqual(["/deploy"]);
     // Including a pane with no detected agent at all, where the button would otherwise never show.

@@ -1,4 +1,4 @@
-import type { Page, Route } from "@playwright/test";
+import type { Disposable } from "@playwright/test";
 
 import type { Locale } from "@/lib/i18n/locale";
 import { TOUR_STORAGE_KEY, TOUR_VERSION } from "@/lib/tour";
@@ -36,7 +36,18 @@ const LOCALE_STORAGE_KEY = "collie:locale:v1";
  *  other, never with the real build stamp. */
 const STUB_VERSION = "0.0.0-e2e";
 
-function fulfillJson<T>(route: Route, body: T, status = 200): Promise<void> {
+// Full Page/Route types couple this shared fixture to one Playwright version.
+interface FixtureRoute {
+  request(): { method(): string; url(): string; postDataJSON(): ReplyBody | CreateSpaceBody | StarFolderBody | null };
+  fulfill(options: { status: number; contentType: string; body: string }): Promise<void>;
+}
+
+interface FixturePage {
+  route(url: string | ((url: URL) => boolean), handler: (route: FixtureRoute) => Promise<void>): Promise<Disposable>;
+  addInitScript(script: (args: string[]) => void, args: string[]): Promise<Disposable>;
+}
+
+function fulfillJson<T>(route: FixtureRoute, body: T, status = 200): Promise<void> {
   return route.fulfill({
     status,
     contentType: "application/json",
@@ -107,7 +118,7 @@ class FolderWorld {
  * unmatched path is a loud 501 rather than a silent fall-through to the static server, which would
  * hand the app `index.html` for a JSON fetch and fail somewhere far away from the cause.
  */
-async function answer(route: Route, path: string, folders: FolderWorld): Promise<void> {
+async function answer(route: FixtureRoute, path: string, folders: FolderWorld): Promise<void> {
   const method = route.request().method();
 
   if (path === "/api/snapshot") return fulfillJson(route, fixtureSnapshot);
@@ -251,7 +262,7 @@ export interface ApiStubOptions {
  *
  * Call it before the first `page.goto`.
  */
-export async function installApiStub(page: Page, options: ApiStubOptions = {}): Promise<void> {
+export async function installApiStub(page: FixturePage, options: ApiStubOptions = {}): Promise<void> {
   if (options.tour !== "fresh") await seedTourSeen(page);
   const folders = new FolderWorld();
   await page.route("**/api/**", async (route) => {
@@ -264,7 +275,7 @@ export async function installApiStub(page: Page, options: ApiStubOptions = {}): 
  * the version both come from `src/lib/tour.ts` — neither is re-typed here, so a bumped
  * `TOUR_VERSION` seeds the new number without this file changing.
  */
-export async function seedTourSeen(page: Page): Promise<void> {
+export async function seedTourSeen(page: FixturePage): Promise<void> {
   await page.addInitScript(
     ([key, value]) => {
       window.localStorage.setItem(key, value);
@@ -285,7 +296,7 @@ export async function seedTourSeen(page: Page): Promise<void> {
  * The roster is what the crew chrome is gated on (`components/crew-provider.tsx:118`, `isMultiHost`),
  * so this is also what makes the footer line and the Settings row exist at all.
  */
-export async function installCrewWorld(page: Page): Promise<void> {
+export async function installCrewWorld(page: FixturePage): Promise<void> {
   await page.route(
     (url) => url.pathname === "/api/snapshot",
     (route) => fulfillJson(route, fixtureCrewSnapshot),
@@ -318,7 +329,7 @@ export function fill(template: string, vars: Readonly<Record<string, string | nu
  * path in this app; the storage key is the only mechanism, and it has to be written before the
  * bundle's first script runs, which is what `addInitScript` is for.
  */
-export async function pinLocale(page: Page, locale: Locale): Promise<void> {
+export async function pinLocale(page: FixturePage, locale: Locale): Promise<void> {
   await page.addInitScript(
     ([key, value]) => {
       window.localStorage.setItem(key, value);

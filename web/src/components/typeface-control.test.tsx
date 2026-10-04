@@ -3,6 +3,12 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { TypefaceControl } from "@/components/typeface-control";
+import {
+  shippedTypefaceOptionLabels,
+  typefaceDefaultValue,
+  typefaceGroteskStore,
+  typefaceGroteskValue,
+} from "@/test/sweep-loop-reply-data";
 import { __resetDesign, designPrefs } from "@/lib/design";
 import { __resetOperatorCommands } from "@/lib/operator-config";
 import type { BridgeConfig } from "@/lib/types";
@@ -40,11 +46,9 @@ describe("TypefaceControl", () => {
 
     const select = await screen.findByLabelText("Family");
     expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual([
-      "System default",
-      "Space Grotesk",
-      "Aldrich",
+      ...shippedTypefaceOptionLabels,
     ]);
-    expect(select).toHaveValue("aldrich");
+    expect(select).toHaveValue(typefaceDefaultValue);
     // The default wears no class — that is what keeps JavaScript off the first-paint path for a
     // device that never opens this card.
     expect(document.documentElement.className).toBe("");
@@ -55,10 +59,10 @@ describe("TypefaceControl", () => {
     const user = userEvent.setup();
     render(<TypefaceControl />);
 
-    await user.selectOptions(await screen.findByLabelText("Family"), "grotesk");
+    await user.selectOptions(await screen.findByLabelText("Family"), typefaceGroteskValue);
 
     expect(document.documentElement).toHaveClass("font-grotesk");
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}")).toEqual({ font: "grotesk" });
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}")).toEqual({ ...typefaceGroteskStore });
   });
 
   it("swapping back to the default takes the class off again", async () => {

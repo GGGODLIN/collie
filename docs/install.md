@@ -163,8 +163,9 @@ macOS has no package yet. [mise](#mise) works on a Mac, as does the `aarch64-dar
 > **Experimental.** Today, fork releases build an experimental Windows zip when the Windows payload
 > job succeeds. Check the release assets before installing. Install only when the assets include
 > `collie-<version>-windows-x64.zip`. If they do not, `install.ps1` and `collie update` say so and
-> install nothing. Windows VM install/update/rollback rehearsal is waived for fork 1.16.0 and
-> remains unverified. Windows CI is still required to be green. Phone access needs a front door that
+> install nothing. This fork permanently waives only the Windows VM install, update and rollback
+> rehearsal, and that path remains unverified. Windows CI on the release commit is still required
+> to be green. Phone access needs a front door that
 > you set up yourself, and it has not been tested on Windows. "Supported" means the maintainer owns
 > the code and tests it; "experimental" means the install path and the phone path are not yet proven
 > against a real release, and it stays until the conditions on the Windows page are all met.

@@ -312,8 +312,8 @@ Linux and macOS: nothing changes for you.
 **Today:** Fork releases build an experimental Windows zip when the Windows payload job succeeds.
 Check the release assets before installing. Install only when the assets include
 `collie-<version>-windows-x64.zip`. If they do not, `install.ps1` and `collie update` say so and
-install nothing. Windows VM install/update/rollback rehearsal is waived for fork 1.16.0 and
-remains unverified. Phone access needs a front door that you set up yourself, and it has not been
+install nothing. This fork permanently waives only the Windows VM install, update and rollback
+rehearsal, and that path remains unverified. Phone access needs a front door that you set up yourself, and it has not been
 tested on Windows.
 
 Windows 11 on x64 with Herdr is a supported host: the maintainer owns the code and tests it. It stays
@@ -322,7 +322,7 @@ release. The conditions for dropping the word are on the Windows page. [**docs/w
 tested. In short:
 
 - **Checks.** The `windows.yml` workflow runs the bridge, cli and scripts tests on pull requests
-  and pushes to `main`. The Windows 11 VM rehearsal is waived only for fork 1.16.0; its install,
+  and pushes to `main`. This fork permanently waives only the Windows 11 VM rehearsal; install,
   update and rollback remain unverified. ([ADR 0075](./.adr/0075-windows-is-a-supported-host.md))
 - **Installed without a toolchain.** Each release builds `collie-<version>-windows-x64.zip`, and
   `scripts/install.ps1` installs it. The binary is unsigned, and Smart App Control can block it.

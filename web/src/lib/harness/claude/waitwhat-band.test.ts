@@ -5,7 +5,7 @@ import { lineText, splitLines, type StyledLine } from "../../blocks";
 import { claudeBuildBlocks } from "./index";
 import { stripWaitWhatBand } from "./waitwhat-band";
 
-const rule = "─".repeat(60);
+import { waitWhatBox as box, waitWhatHeader as header, waitWhatIdleRows, waitWhatRecapRows } from "@/test/fork-regression-data";
 const buffer = (rows: string[]): StyledLine[] => splitLines(parseAnsi(rows.join("\n")));
 const texts = (lines: StyledLine[]): string[] => lines.map((l) => lineText(l));
 const mirror = (rows: string[]): string[] => {
@@ -14,28 +14,13 @@ const mirror = (rows: string[]): string[] => {
   return texts(blocks[0]!.lines);
 };
 
-// Shape read off a live Herdr pane on 2026-09-26: band header, blank, then the input box.
-const box = ["", rule, "❯ ", rule, "   ◆ Opus 5.5 (high)  ⎇ main"];
-const header = "wait what [ 白話 ] [ 跟丟了 ]                                     [-]";
-
 describe("stripWaitWhatBand", () => {
   it("drops the idle band above the input box", () => {
-    expect(mirror(["● Done.", "", header, ...box])).toEqual(["● Done."]);
+    expect(mirror(waitWhatIdleRows)).toEqual(["● Done."]);
   });
 
   it("drops the recap line and a finished retelling with it", () => {
-    const rows = [
-      "● Done.",
-      "",
-      "wait what [ 白話 ] [ 跟丟了 ] [ 清除 ]",
-      "recap · 藏 band → 跑測試",
-      "── 白話 · 往回 1 turn  (送出 201 字 → http:gemini · 6.5s)",
-      "   退回原因：timeout",
-      "╭────────────╮",
-      "│ 重講內容   │",
-      "╰────────────╯",
-      ...box,
-    ];
+    const rows = waitWhatRecapRows;
     expect(mirror(rows)).toEqual(["● Done."]);
   });
 

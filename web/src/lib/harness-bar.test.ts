@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { commandsFor } from "@/lib/agent-commands";
 import { barFor, BAR_AGENTS, CAPTURE_SOURCED } from "@/lib/harness-bar";
 import type { OperatorCommand } from "@/lib/types";
+import { operatorBarStatus } from "@/test/sweep-data";
 
 // The bar's two invariants, as tests rather than as sentences in a spec. A phrase does not fail a
 // build; these do.
@@ -123,7 +124,7 @@ describe("evidence", () => {
 
 describe("the operator's bar rows", () => {
   it("replace the shipped bar for the panes they address", () => {
-    const mine = [op({ agent: "claude", command: "/statusline", bar: true, barLabel: "Status" })];
+    const mine = [operatorBarStatus];
     expect(barFor("claude", mine)).toEqual([
       {
         id: "op:/statusline",

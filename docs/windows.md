@@ -8,15 +8,16 @@ by design.
 > experimental Windows zip when the Windows payload job succeeds. Check the release assets before
 > installing. Use the install commands below only when the assets include
 > `collie-<version>-windows-x64.zip`. If they do not, `install.ps1` and `collie update` say so and
-> install nothing. Windows VM install/update/rollback rehearsal is waived for fork 1.16.0 and
-> remains unverified. Windows CI is still required to be green. Phone access needs a front door that
+> install nothing. This fork permanently waives only the Windows VM install, update and rollback
+> rehearsal, and that path remains unverified. Windows CI on the release commit is still required
+> to be green. Phone access needs a front door that
 > you set up yourself, and it has not been tested on Windows.
 
 Two words on this page have a fixed meaning:
 
 - **Supported** means the maintainer owns the Windows code and tests it: CI on pull requests and
-  pushes to `main`, and a Windows 11 VM rehearsal before each release tag. Fork 1.16.0 has a
-  one-release waiver for that rehearsal; its install, update and rollback remain unverified
+  pushes to `main`, and, upstream, a Windows 11 VM rehearsal before each release tag. This fork
+  permanently waives only that VM rehearsal; install, update and rollback remain unverified
   ([ADR 0075](../.adr/0075-windows-is-a-supported-host.md)).
 - **Experimental** means the install path and the phone path are not yet proven against a real
   release. The word leaves only when all of these are true together: a release carries the Windows
@@ -74,9 +75,10 @@ What the support rests on:
   pull request and every push to `main`. It is not yet a required check. The maintainer plans to
   make it one after about ten green runs in a row.
 - Each release is meant to build `collie-<version>-windows-x64.zip` with a `.sha256` file.
-- Before each release tag, `make win-rehearse` installs a release on a fresh Windows 11 VM,
-  updates it from the terminal and from the phone's endpoint, forces a failed health check and
-  checks the rollback.
+- Before each release tag, upstream requires `make win-rehearse` on a fresh Windows 11 VM: it
+  installs a release, updates it from the terminal and from the phone's endpoint, forces a failed
+  health check and checks the rollback. This fork permanently skips that rehearsal (see
+  [`FORK.md`](../FORK.md)). The VM path stays unverified.
 - Herdr's Windows build is made by the Herdr project. Collie depends on it and does not control it.
 
 WSL is not Windows here. Inside WSL, follow the Linux install.

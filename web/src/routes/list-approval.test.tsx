@@ -16,6 +16,7 @@ import { resetPanePrefetch } from "@/lib/pane-prefetch";
 import { fixtureAgents, fixtureServers, fixtureTabs, fixtureWorkspaces } from "@/test/handlers";
 import { withHeaderHost } from "@/test/header-host";
 import { server } from "@/test/setup";
+import { changedPermissionScreen, unknownModalScreen } from "@/test/fork-supplement-data";
 import { HomeRoute } from "./home";
 import { SpaceRoute } from "./space";
 
@@ -110,7 +111,7 @@ it("sends the printed don't-ask-again choice once, with a prompt binding", async
   expect(app.router.state.location.pathname).toBe("/");
 });
 
-it.each([["question", question], ["plan", plan], ["trust", trust], ["unknown", "An unknown modal\n1. Yes\n2. No"]])(
+it.each([["question", question], ["plan", plan], ["trust", trust], ["unknown", unknownModalScreen]])(
   "opens the pane rather than treating %s as a tool permission", async (_label, text) => {
     const app = setup();
     app.setText(text);
@@ -142,7 +143,7 @@ it.each(["answered", "different prompt", "gone", "read failure"])("closes the ol
   await tapBlocked();
   await sheet();
   if (change === "answered") app.setText("The tool has finished.");
-  if (change === "different prompt") app.setText(permission.replaceAll("mkfifo fixture-fifo", "rm other-file"));
+  if (change === "different prompt") app.setText(changedPermissionScreen(permission));
   if (change === "gone") app.data.agents = [];
   if (change === "read failure") app.failRead();
   await refresh(app);
@@ -166,7 +167,7 @@ it("rejects a stale tap even when the pane revision stays zero", async () => {
   const app = setup();
   await tapBlocked();
   const button = approve(await sheet());
-  app.setText(permission.replaceAll("mkfifo fixture-fifo", "rm other-file"));
+  app.setText(changedPermissionScreen(permission));
   await userEvent.click(button);
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   expect(app.writes).toEqual([]);

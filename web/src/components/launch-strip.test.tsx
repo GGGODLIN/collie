@@ -5,7 +5,15 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ROOT_ROUTE_ID, type HomeData } from "@/lib/loaders";
 import type { LaunchersState } from "@/lib/launchers";
-import type { DeviceAuth, Launcher } from "@/lib/types";
+import type { DeviceAuth } from "@/lib/types";
+import {
+  launchHere,
+  launchHome,
+  launchPeek,
+  launchQuota,
+  launchReadOnly,
+  launchSuccess,
+} from "@/test/sweep-loop-actions-data";
 
 // Stub the launcher store at its seam — same idiom as operator-commands tests: the component
 // reads the hook, so we control what the hook returns per-case without touching the network.
@@ -20,16 +28,7 @@ vi.mock("@/lib/launchers", () => ({
 // Stub the bridge's launch endpoint at the api seam, so the hook's read-only short-circuit
 // (which fires before api.launch) can be proven by "api never called". The hook itself stays real.
 const { mockLaunch } = vi.hoisted(() => ({
-  mockLaunch: vi.fn(async (_command: string, _beside?: string, _scope?: { host?: string; session?: string }) => ({
-    ok: true as const,
-    pane: {
-      paneId: "p1",
-      workspaceId: "w1",
-      workspaceLabel: "peek",
-      tabId: "t1",
-      cwd: "/home",
-    },
-  })),
+  mockLaunch: vi.fn(async (_command: string, _beside?: string, _scope?: { host?: string; session?: string }) => launchSuccess),
 }));
 // Explicit factory, the way every other component test stubs the api module: only the calls this
 // tree can make are declared, so an unexpected one is a missing-function error rather than a silent
@@ -38,9 +37,6 @@ vi.mock("@/lib/api", () => ({ launch: mockLaunch }));
 
 import { LaunchStrip } from "./launch-strip";
 
-const peek: Launcher = { command: "rumen-peek", label: "Runs & quota", cwd: "/home/op/project" };
-const quota: Launcher = { command: "showy-quota-peek", label: "Quota bars", cwd: "/home/op/project" };
-const here: Launcher = { command: "htop", label: "Top" };
 
 function homeData(device: DeviceAuth | undefined): HomeData {
   return {
@@ -92,7 +88,7 @@ describe("LaunchStrip", () => {
   });
 
   it("renders one button per launcher using its label", async () => {
-    launchersValue.current = { launchers: [peek, quota], home: "/home/op" };
+    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome };
     mockLaunch.mockClear();
     render(<RouterProvider router={makeRouter(undefined)} />);
     expect(await screen.findByRole("button", { name: /Runs & quota/ })).toBeInTheDocument();
@@ -102,7 +98,7 @@ describe("LaunchStrip", () => {
   });
 
   it("a pinned row shows its folder shortened under home; an absent one shows nothing", async () => {
-    launchersValue.current = { launchers: [peek, here], home: "/home/op" };
+    launchersValue.current = { launchers: [launchPeek, launchHere], home: launchHome };
     render(<RouterProvider router={makeRouter(undefined)} />);
     // The dashboard implies home, so the folder only earns a suffix when it differs from it.
     expect(await screen.findByText("~/project")).toBeInTheDocument();
@@ -113,7 +109,7 @@ describe("LaunchStrip", () => {
   });
 
   it("tapping a button calls the launch API with that launcher command", async () => {
-    launchersValue.current = { launchers: [peek, quota], home: "/home/op" };
+    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome };
     mockLaunch.mockClear();
     const user = userEvent.setup();
     render(<RouterProvider router={makeRouter(undefined)} />);
@@ -128,7 +124,7 @@ describe("LaunchStrip", () => {
   });
 
   it("double tap launches once", async () => {
-    launchersValue.current = { launchers: [peek, quota], home: "/home/op" };
+    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome };
     mockLaunch.mockClear();
     // A launch is the slowest create there is — the bridge waits for the new shell to draw before
     // it types — so hold this one open and tap again, the way an impatient thumb does.
@@ -137,10 +133,7 @@ describe("LaunchStrip", () => {
       await new Promise<void>((resolve) => {
         release = resolve;
       });
-      return {
-        ok: true as const,
-        pane: { paneId: "p1", workspaceId: "w1", workspaceLabel: "peek", tabId: "t1", cwd: "/home" },
-      };
+      return launchSuccess;
     });
     const user = userEvent.setup();
     render(<RouterProvider router={makeRouter(undefined)} />);
@@ -159,12 +152,11 @@ describe("LaunchStrip", () => {
   });
 
   it("a read-only device does not fire the launch API", async () => {
-    launchersValue.current = { launchers: [peek], home: "/home/op" };
+    launchersValue.current = { launchers: [launchPeek], home: launchHome };
     mockLaunch.mockClear();
     const user = userEvent.setup();
     // Build the read-only record the way fixtures do: `enforced` + not `authorized` → read-only.
-    const ro: DeviceAuth = { enforced: true, device: "phone", authorized: false };
-    render(<RouterProvider router={makeRouter(ro)} />);
+    render(<RouterProvider router={makeRouter(launchReadOnly)} />);
     expect(await screen.findByRole("button", { name: /Runs & quota/ })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Runs & quota/ }));
@@ -174,7 +166,7 @@ describe("LaunchStrip", () => {
   });
 
   it("folds to its header, keeping the count visible", async () => {
-    launchersValue.current = { launchers: [peek, quota], home: "/home/op" };
+    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome };
     render(<RouterProvider router={makeRouter(undefined, false)} />);
 
     // Folded, the buttons are gone but the header still says how many there are — the count is the
@@ -189,7 +181,7 @@ describe("LaunchStrip", () => {
   });
 
   it("reports a fold toggle to the dashboard, which persists it", async () => {
-    launchersValue.current = { launchers: [peek, quota], home: "/home/op" };
+    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome };
     onOpenChange.mockClear();
     const user = userEvent.setup();
     render(<RouterProvider router={makeRouter(undefined, null)} />);
