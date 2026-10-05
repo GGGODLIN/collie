@@ -1,0 +1,309 @@
+{
+  "runId": "01a10351-bcf1-7c6d-8a68-0ed7566ba456",
+  "startedAt": "2026-10-03T19:50:51.138Z",
+  "finishedAt": "2026-10-03T19:51:05.303Z",
+  "target": "web-phone",
+  "runner": {
+    "name": "e2e",
+    "version": "0.16.0"
+  },
+  "environment": {
+    "ci": false,
+    "trustNoticeShown": false,
+    "os": "darwin 27.0.0",
+    "arch": "arm64",
+    "runtime": "node v24.18.1"
+  },
+  "vcs": {
+    "commit": "32faf8e04a70811eb99d003d9d7c60c1e88b61a1",
+    "branch": "dev",
+    "dirty": true
+  },
+  "summary": {
+    "discovered": 26,
+    "selected": 26,
+    "executed": 26,
+    "passed": 26,
+    "failed": 0,
+    "flaky": 0,
+    "skipped": 0
+  },
+  "reportSha256": "738c65110bbdd1bed434ff321aa87de3955cf77ba587677142db78e9e5474d09",
+  "buildInfo": {
+    "version": "1.16.0-dev",
+    "sha": "32faf8e0-dirty",
+    "time": "2026-10-03T19:34:03.045Z",
+    "id": "1.16.0-dev+32faf8e0-dirty.1791056043",
+    "channel": "dev"
+  },
+  "buildInfoMatchesServedFile": true,
+  "sourceSha256": {
+    "agent-palette.e2e.ts": "0b7fb354a60fdb9d1a04fc598e07bbc42f371e8037bbaa113e5faadb17d696eb",
+    "core-web.e2e.ts": "dce629c709e23b115a3b2d44d05b91a3078ad9f329fb23c8432201c9e6005c58",
+    "data-backed-web.e2e.ts": "8577ec035514e4078150e9dd257f400edf52375403346d5029c921ed1dd0c92c",
+    "supplemental-web.e2e.ts": "25dd7a436cf78c990ad8348b123673a2ec4ba4e0cdacda72b75ca7d19ce52c86",
+    "engine.ts": "cdb331128891a6ba9cf5c7a2a8272b18d78138806ec3259e5ef5fc469984e15c",
+    "fixtures.ts": "aae3f0f20e16f311e8c0effa773a69a0fb4d2bfff900b02ebbfc2ce9a10796c1",
+    "e2e.config.ts": "776b9bc29308e02f094c4b41db61b63df195aab4790b67bbb4c3ba73c0fa9506",
+    "package.json": "c30efbc6b51cd7ffb1a887deaf2cdfb9e9ef44cac2979b946c4613382c3deae3",
+    "contracts/palette-stage-and-send.v1.md": "fa5b3bc276a4be06e4b12d9c2209031d674769edfcb6ea4620bdf5c142451083",
+    "contracts/web-core-batch.v1.md": "635ce64f19fcc71250c2c81e8654fb39f3abf8963a2075d4454c95db39f0831e",
+    "contracts/title-dash.v3.md": "1930610ec549fcff568c3655301eba7a9482b96fed68adffbda777bb26643dff",
+    "contracts/data-backed-web.v1.md": "1619336717c8b3ac3ad8dc4911e9ece8863322c0e0d135bb971dc531ddc13594",
+    "contracts/supplemental-web.v1.md": "c0aaa1d16f5f8543743671a863255e1a19499d5904c0396190dfd98def3f86f9"
+  },
+  "fixtureSha256": {
+    "web/e2e/fixtures/api.ts": "77340d237de3035cb05637d96dbcd22c4a9737ed37cd137d48009bace24e1b13",
+    "web/src/test/fork-regression-data.ts": "2e33f2fb1292517da6a1777d55d84932404f8ac9000e1975e0e76f6323b03539",
+    "web/src/test/fork-supplement-data.ts": "c3872c6060882829a89b9634eaa8bb69b58f075aaee6919611f4fe7afe462543",
+    "web/src/fixtures/panes/claude--permission-bash.txt": "e1e73fd20c5547bc687bdbd7b2bc513b2165928af364723876c0173833c08fd2",
+    "web/src/fixtures/panes/claude--select-menu.txt": "ffa852759ae7ee4bdc4c3432beeb2bdbdd9ddcdde954d1f7ca47401ea0dbb821"
+  },
+  "bundleSha256": {
+    "apple-touch-icon-dev.png": "64537ec4df88630c559f7ee214b140d36c9c9f0593d8a54ede347cc7af3ed08c",
+    "apple-touch-icon.png": "cab5ce4f326b6e7b04f81b8fc46592de3821d235bbfa8c1aa15735212b4dd91e",
+    "assets/c-s18LNSSm.js": "6b587b710603959e9b04bd147067ebec9bd0bdfe35e196c833f94d470e99ebea",
+    "assets/clike-base-CaaTPuKm.js": "0ab9136c77be9fabbb723ae8b7943b3203b5242598ac015e472c581e322d4bad",
+    "assets/core-CqAJ5hk7.js": "47d52b1b7a7bfbee54d4fffc612c51934b35f03cc19cb9a7caba106857ced50d",
+    "assets/cpp-BG9H69rw.js": "f3c26b0e74f6322d04dabb035ccde688c107e1311e329a20988dadd436cbbca3",
+    "assets/csharp-_Os0u5ls.js": "b70531e4cc14f64a58ec53b06a73cafc8437b0210ee54c965f6b5ec997712df7",
+    "assets/css-CEuH5X7o.js": "5043544eb0c36d2934fc577d68f215d1d338a1f5e8a0813c44d885169d6a1f69",
+    "assets/de-CZgexNx6.js": "c6898db38ceaf026c5bcb9f2a0cd148a01f7213ef7dc46f66af73e77f71acac9",
+    "assets/diff-highlight-engine-Cvuk8uI-.js": "2e46424f4b1b42b40102d6eccc652d5bdc9c2a661a2c3d71d428d42c6e18682b",
+    "assets/dockerfile-B4U0qrme.js": "3ce0dd81e151f889bb82c0f34e0ec729c95f6a62c7b64ececd7417457523146f",
+    "assets/es-CFkYrfHy.js": "d42bf4687ba600dff0666c534f500c2b3c4219bea8241dc77954dc10b8aaba82",
+    "assets/go-N320Q7Z5.js": "f9545f339f33caea775bdf331777325cd72db8d27ca6ddff22c5ec562930a947",
+    "assets/graphql-DvH7F4sl.js": "565d129ce21d4fd121566edc87b06b991845d7f4b63be4fab417bad293ca08aa",
+    "assets/hash-comment-base-BAzEXF2x.js": "1456a4b021fcce53e1d23497e3c4c1f5d236fdb46b92705770af5df440e54942",
+    "assets/hcl-BEks3_R3.js": "e705dfb2bdb86bdc8c4593f9c8be232573bbfaa0f48b773df7cf8d6f3c256377",
+    "assets/html-BCAHwqOj.js": "c17caf1b56a552bc75b97e9170cdcbc4e05299895d6ff6b3bc16c5ede1e46fca",
+    "assets/index-Beg-EniZ.css": "a813c785c153752eb9175b10679f8e7188fca1a1197aec04a820148cad753599",
+    "assets/index-CXGngnBi.js": "1767c5baaa1f55a0ecea78c5b5b6908f9aa67700a8e7c9a350ad99ecb47dc1e2",
+    "assets/ja-CRKLKz_f.js": "0068075ab7adc6bc249f389585841eb5caed3c7b9cf1de5fc7501dbe442b668a",
+    "assets/java-BgR1ELr5.js": "46e68744d4c6ce050cd07c2393d76c311da04852b539d1b3165cbf4e1ad6ae8d",
+    "assets/javascript-AJ4mxHsc.js": "fc631993c4dcaf90046589d2ef7392caf3eba9838be8eeff8f2002b861250d01",
+    "assets/javascript-runtime-xnF4R__6.js": "a3adee60ea4d7ffb8e79be92eeb3e3e91c3156f3fa1a3612c40b174dcfd82e4d",
+    "assets/json--JCjCDf6.js": "b7f16c68949ded62b4e3d358230adc16028829c7bee2acd7f1fc92df8bc5c2b8",
+    "assets/ko-DgcHO7A4.js": "2513ef4a6826ca0ed344fb1450a20ca557a445b0b9c0e86b9f52a0e84637bd8a",
+    "assets/kotlin-B2Lpq0-Q.js": "63d4aebeb8eb0be666a1dd3caf676a682bc50a48e2c654106fa889e2fac090da",
+    "assets/lua-BsZoRJhC.js": "0970826699799418fa6bcada63b2f6fbe005df6b78141b86d338e8304fe0c88b",
+    "assets/markdown-C-bDYELm.js": "47510d0175f744912c7c06d727355257d1e47d22065023968e86b5673fc18a50",
+    "assets/php-742SKZFV.js": "5247714fbd0465b8fc33466be6d78fce2fe640214c5a46e0c4824eba271ea7f4",
+    "assets/python-Ce1lBEoQ.js": "6cdc60b978bf4fa6a2becaf57406f6fd980f7897ea2a8b9b38ca9214e0ece81c",
+    "assets/ruby-CqoAfDBg.js": "a52adee914fc917757ec00e938585ceb61df9349fc31321a931edbfb2fdf1c3e",
+    "assets/rust-BvhhJzbn.js": "c4dcb53e15107d3e1cfe408e3218808869ea3e74760851cde7008d40691689f5",
+    "assets/shared-C7WJAaT7.js": "829a93ee3359bdab329e6af03ce0bdfa7c077a66b83f6c543580304176c33526",
+    "assets/shell-D_67pOxV.js": "c4afeb1d2b46675831bb8d769db4701deb4e35ec11bb5cf8586be36b4b2003a0",
+    "assets/sql-CBQ7S8OR.js": "74e912f441e04956bf5ce885be5e5b14768f58e3d1b3b965008faaddc8ecf0c6",
+    "assets/swift-B3T7EU5e.js": "d10e627ff5e956aff1174201925d92f2cc4277b6c6b9d50d8792b96d8cb7400d",
+    "assets/toml-z-IaSaBE.js": "61bc34d087d66c0a27179bad9e7c834a7abc071904e8aeaedf13f43257874b79",
+    "assets/typescript-D8ywcVyR.js": "3f4f246e229ce8730246a0dd14312c0a7ae862071bfc49fdb735cb27f1a4bd8c",
+    "assets/yaml-JkKoJOj4.js": "656f3f5b1856c580d6a16c8f58668474869062376a2d6a2cddcb341a2543ec15",
+    "assets/zh-BXHPUYAZ.js": "f908f20fc7f55120e07a1578702b7556f357830051ebad9cc8fc5ab8356d96ea",
+    "assets/zh-TW-l079kstV.js": "109269c3fc90e187f51c00eb2f1dfd2839d4c7dadb91fa048a04e2f436560879",
+    "assets/zig-UpU_syyi.js": "fe62d48314112116262be831546e7e183c5619b5179c92a637c15da60c30a1ed",
+    "badge-96x96.png": "7cd35d69528ebb4763a6319bb5b38833c11b4b48c7f54be6e11202eaefe63ec1",
+    "build-info.json": "124788bec05f5306c272ec4e9f8457656f71886125745de461991250538ef8ee",
+    "collie-mark-header-dark.svg": "a9db7318180847b009aea170fb1449aa14c1aeedb7a191a3a74811008e567382",
+    "collie-mark-header-light.svg": "e8a05105f9ab13a9d8215ccb6ba14d135754391e9ab61b94de833c3b76eaabab",
+    "dog-gallop.png": "bd95c0232a460326e56b288096e94a44bdf4ed5a4c1ffabbc402246f4b6e4737",
+    "favicon-96x96.png": "1853be67de74e286cb15934f08a28711f537d8c5ce6f8ca13044230871a9a0cf",
+    "favicon-dev-96x96.png": "f2acc680da28f2d55aad86437cf9a0e51bcb062412bd2c9e86f0d576dac27c79",
+    "favicon-dev.ico": "8449289614fb991b64e46a96ee783cd7d3bef0dbcb3a64882fda441452eaab02",
+    "favicon-dev.svg": "1c3d9f42d8b45f416d6605e71ac1a0a1ea2937054eb3b77fc00dee9f020061e6",
+    "favicon-playground-96x96.png": "e26fdf5bd0578a35ac1b7fcc18c0a571bf5f436b19f3fa55404b1ea85e49f83f",
+    "favicon-playground.ico": "4434075a6aed6ac033b6905ccb05021a9567e4ca40a21273eea0a7712df6cb8b",
+    "favicon-playground.svg": "7255efdd7d8cbd076900d82275e814d83dab21495957fec4b823044718b4d061",
+    "favicon.ico": "5095f94fd3b3f88a85de7bf2923798b2d2007d7d436c6b09fc06099d8d63933f",
+    "favicon.svg": "345726ca1933431cfca7441d2053537ea4fa440d854e4586c6c8cabb4fed3617",
+    "fonts/LICENSE-aldrich.txt": "de985adf63cff6b1bcb7c5cb55f1c5850fb1d36289d20a0e26d97a281bfcf956",
+    "fonts/LICENSE-geist.txt": "1781d2806a07d91c4edf4740b88449fab7d0eadad53f7c351b94cd4d4eb8c00f",
+    "fonts/LICENSE-ibm-plex-sans.txt": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+    "fonts/LICENSE-space-grotesk.txt": "564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72",
+    "fonts/LICENSE.txt": "84a7a98c82140fb12c37fe42b93805baa16024cb3e5acc599b7ffe612c55d847",
+    "fonts/nerd-symbols-3.5.0-pua.woff2": "dd6587be79bd6f06addce2a03103efc9e5048f7021aab4e2cd3e13450045d31a",
+    "fonts/nerd-symbols-3.5.0-spua.woff2": "701ea97afa94a0f407d95240e084b62fa963d337d899c27921986e9d8f44f098",
+    "fonts/ui-aldrich-1.002-latin.woff2": "02adccc6fdd2b5ed13e6b469a59ab1357d6aa6dbcbc2991127c17a98e5270788",
+    "fonts/ui-geist-1.800-latin.woff2": "99ccb4b8208a01def0f6fc6f126aba1799e48deaf14e3205b4cbf7c75301d462",
+    "fonts/ui-ibm-plex-sans-3.201-latin.woff2": "8f064e63e71141882e3ea135231d1c3cc72cef5ffab014e0a32cbf53d95cb454",
+    "fonts/ui-space-grotesk-2.000-latin.woff2": "39f8d2b83024f24541c7eefee5a02be6ef0a8f86de384cfc421de7e609c75536",
+    "index.html": "3232c9982fac41ea064124d6304ceb806408256dcac6952cc79f7e1454bd2081",
+    "manifest.webmanifest": "b47ce5bb10fc85e799cb657d6363b72216a1bc6e374c7448b9d5b5d86b3fbb51",
+    "notification-icon-192x192.png": "cd0a8f2da32872379211da0df5596daaf2928b56d30637c5d0074602d68603d5",
+    "sw.js": "b97477a197a546142e28b8b2c0d3861662ffd476dd9eeffb1ef6e9289f635ab7",
+    "theme-init.js": "3ea883a26734cdd32030231a3e3efd0a662b9ee5f451f0708ec579ba15595a10",
+    "web-app-manifest-192x192.png": "99e2c38b199e6df2d1bedd780cc041b0ff092c17e5ba83f8a502692f8e3ba886",
+    "web-app-manifest-512x512.png": "5aa4159d68958b7e43585e37dd03b52eee1a7184592c4d4509927a7f64dbabfe",
+    "web-app-manifest-dev-192x192.png": "7bb604f01b71b767ae7b564d53001c5b12310948f714f9da883d3fd739222c7c",
+    "web-app-manifest-dev-512x512.png": "6c50c9880fe7c1e95e45f91e6875805c75a48aec403b51070b3a8fb105b4cc94"
+  },
+  "artifactCount": 41,
+  "artifactHashMismatches": [],
+  "cases": [
+    {
+      "caseId": "palette-stage-and-send/v1",
+      "file": "agent-palette.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "title-dash/v3",
+      "file": "core-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "palette-danger-stage/v1",
+      "file": "core-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "bar-compact-direct/v1",
+      "file": "core-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "switcher-dashboard-attention/v1",
+      "file": "core-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "switcher-pane-attention/v1",
+      "file": "core-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "switcher-freeze-refresh/v1",
+      "file": "core-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "dashboard-stays-place/v1",
+      "file": "core-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "switcher-shells-trailing/v1",
+      "file": "core-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "retell-absent/v1",
+      "file": "core-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "waitwhat-idle-hidden/v1",
+      "file": "data-backed-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "waitwhat-retelling-hidden/v1",
+      "file": "data-backed-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "operator-claude-merge/v1",
+      "file": "data-backed-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "operator-exact-override/v1",
+      "file": "data-backed-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "description-recap-display/v1",
+      "file": "data-backed-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "attention-newest-first/v1",
+      "file": "data-backed-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "account-idle-sent/v1",
+      "file": "supplemental-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "account-working-confirm/v1",
+      "file": "supplemental-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "list-permission-sheet/v1",
+      "file": "supplemental-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "list-choice-one-post/v1",
+      "file": "supplemental-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "list-prompt-changed/v1",
+      "file": "supplemental-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "list-question-opens-pane/v1",
+      "file": "supplemental-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "list-unknown-opens-pane/v1",
+      "file": "supplemental-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "full-reply-paired/v1",
+      "file": "supplemental-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "full-reply-no-prompt/v1",
+      "file": "supplemental-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    },
+    {
+      "caseId": "full-reply-identity-miss/v1",
+      "file": "supplemental-web.e2e.ts",
+      "status": "passed",
+      "attempts": 1
+    }
+  ],
+  "rawEvidenceDirectory": ".e2e/baseline-01",
+  "negativeControl": {
+    "directory": ".e2e/negative-control",
+    "status": "failed",
+    "expected": "/intentionally-wrong",
+    "observed": "/status",
+    "exitCode": 1
+  },
+  "scope": "Chromium phone frontend with fixture API; not backend or complete fork branch coverage"
+}
