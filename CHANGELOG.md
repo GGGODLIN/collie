@@ -30,9 +30,15 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+## [1.16.2] - 2026-10-06
+
+### Changed
+
+- **Built on upstream Collie 1.16.0.** AltanS/collie v1.16.0, commit 320bb18, unchanged since 1.16.1. ([28534cb4](https://github.com/GGGODLIN/collie/commit/28534cb4))
+
 ### Fixed
 
-- **A Claude pane in Ultracode no longer goes by the name ultracode.** Claude draws the mode badge in the input box's top rule, the same place as a `/rename` name, and Collie took it for one and kept it. Collie now reads that rule's colours to tell the two apart, and forgets a name once the rule shows none.
+- **A Claude pane in Ultracode no longer goes by the name ultracode.** Claude draws the mode badge in the input box's top rule, the same place as a `/rename` name, and Collie took it for one and kept it. Collie now reads that rule's colours to tell the two apart, and forgets a name once the rule shows none. ([c566a752](https://github.com/GGGODLIN/collie/commit/c566a752))
 
 ## [1.16.1] - 2026-10-04
 
