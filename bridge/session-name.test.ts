@@ -51,7 +51,7 @@ describe("extractClaudeSessionName — named sessions", () => {
 
 // The bridge reads the grid with its colours, because colour is the only thing that tells a name from
 // a mode badge Claude draws in the same place. These lines are the rule and prompt verbatim from a
-// live Claude Code 2.2 capture (2026-10-06); the rule runs are shortened, the escapes are untouched.
+// live Claude Code 2.1.290 capture (2026-10-06); the rule runs are shortened, the escapes are untouched.
 const ESC = String.fromCharCode(27);
 const sgr = (codes: string) => `${ESC}[${codes}m`;
 const RULE = "────────────";
