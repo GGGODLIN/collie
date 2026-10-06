@@ -30,6 +30,10 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+### Fixed
+
+- **A session name survives the other ways a terminal spells a colour.** The name-or-badge check now reads palette codes, inverse video and colours carried over from an earlier row the way a terminal does, so a tmux or zellij pane is not read as unnamed and a badge on a default-coloured rule is not read as a name. A rule whose colours it cannot read keeps the name Collie already had.
+
 ## [1.16.2] - 2026-10-06
 
 ### Changed
