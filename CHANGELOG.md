@@ -30,6 +30,10 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+### Fixed
+
+- **A Claude pane in Ultracode no longer goes by the name ultracode.** Claude draws the mode badge in the input box's top rule, the same place as a `/rename` name, and Collie took it for one and kept it. Collie now reads that rule's colours to tell the two apart, and forgets a name once the rule shows none.
+
 ## [1.16.1] - 2026-10-04
 
 ### Changed
