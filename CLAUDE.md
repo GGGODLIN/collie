@@ -19,10 +19,13 @@ explicit need, verify it with the nearest targeted tests, lint and `bun run buil
 Do not enter a full spec / ticket / review workflow, add architecture, refactor adjacent code or run
 the full test / E2E suite unless the user asks or the requested change directly requires it.
 
-A task is not finished at commit or push. After verification, deploy the resulting build to the
-active local Collie instance and leave it ready for phone acceptance. If a change has no deployable
-runtime effect, say so explicitly instead of silently skipping deployment. This applies to the
-operator's own runtime changes, not to preparing an upstream PR or to someone else's clone.
+A task is not finished at commit or push. The operator's Collie follows this fork's `main`: it runs
+the newest fork release and takes the next one through the in-app update, so a change reaches the
+phone only in a release. Building a `dev` checkout deploys nothing. After verification, say whether
+the change needs a release to be seen; when the user wants it on the phone now, cut one (*Fork
+branches and releases* → *Cutting a release*), otherwise it ships with the next. If a change has no
+runtime effect, say so. This applies to the operator's own runtime changes, not to preparing an
+upstream PR or to someone else's clone.
 
 The fork is also published for other people to install and use, and its general changes are
 candidates for upstream. Two rules follow from that:
@@ -782,7 +785,7 @@ Environment traps and trajectories live in `e2e-live/trajectories/`.
 This fork keeps two branches and its own version line; both override upstream's defaults here.
 
 - **`dev` takes every change.** Commit and push to `dev`, never to `main`. The operator's active
-  Collie runs a checkout of `dev`, so *Project mode*'s deploy step means rebuilding that checkout.
+  Collie follows `main` through the in-app update, so a `dev` change reaches it only in a release.
 - **`main` holds releases, plus docs-only commits between them, and only moves forward.** It is
   upstream's history followed by one commit per fork release (or docs-only change, below), whose
   tree is exactly the tree of a commit on `dev`; its first parent is always the previous `main`. Never rebuild or force-push a published
