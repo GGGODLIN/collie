@@ -5,7 +5,7 @@ import { http, HttpResponse } from "msw";
 
 import { server } from "@/test/setup";
 import * as registry from "./harness/registry";
-import { draftCarriesSend, sendGuardedReply } from "./reply-action";
+import { bracketPaste, draftCarriesSend, sendGuardedReply } from "./reply-action";
 
 // The regression suite for #34: a free-text reply must never fire the submit key until the text is
 // verifiably sitting in the harness's input box. Before this, the reply path typed and then submitted
@@ -635,6 +635,67 @@ describe("sendGuardedReply", () => {
       { text: "first line\nsecond line\nthird line\nfourth line", submit: false },
       { text: "", submit: true },
     ]);
+  });
+
+  // Bare, a send this long reached Claude as ~1 KB reads and only the last one survived; that tail
+  // verified, so Enter submitted it (claude/paste.ts → collapsesAsPaste). It now goes as ONE paste.
+  it("types a long Claude send as one bracketed paste, then submits on its placeholder", async () => {
+    const long = "a long voice note that goes on and on ".repeat(30);
+    const calls = harness(() => paneWithDraft("[Pasted text #4]"));
+
+    const out = await sendGuardedReply({ paneId: "w1:p1", text: long, agent: "claude", ...instant });
+
+    expect(out).toEqual({ status: "sent" });
+    expect(calls).toEqual([
+      { text: `\x1b[200~${long}\x1b[201~`, submit: false },
+      { text: "", submit: true },
+    ]);
+  });
+
+  it("drops a paste marker already inside the text, so it cannot end the paste early", () => {
+    expect(bracketPaste("a\x1b[201~\nb\x1b[200~")).toBe("\x1b[200~a\nb\x1b[201~");
+  });
+
+  it("strips until stable: removing an inner marker cannot assemble a new one", () => {
+    expect(bracketPaste("\x1b[2\x1b[201~01~tail\nrm -rf")).toBe("\x1b[200~tail\nrm -rf\x1b[201~");
+  });
+
+  it("strips a start marker nested inside a start marker", () => {
+    expect(bracketPaste("\x1b[20\x1b[200~0~body")).toBe("\x1b[200~body\x1b[201~");
+  });
+
+  it("strips the 8-bit CSI form, alone and mixed with the 7-bit form", () => {
+    expect(bracketPaste("a\x9b201~b\x9b200~c")).toBe("\x1b[200~abc\x1b[201~");
+    expect(bracketPaste("\x9b2\x1b[201~01~x")).toBe("\x1b[200~x\x1b[201~");
+    expect(bracketPaste("\x1b[2\x9b201~01~x")).toBe("\x1b[200~x\x1b[201~");
+  });
+
+  it("frames an empty body when the text is only markers", () => {
+    expect(bracketPaste("\x1b[200~\x1b[201~\x9b200~\x9b201~")).toBe("\x1b[200~\x1b[201~");
+    expect(bracketPaste("\x1b[20\x1b[201~0~")).toBe("\x1b[200~\x1b[201~");
+  });
+
+  it("leaves every other byte alone, other escape sequences and newlines included", () => {
+    const text = "line\n\x1b[31mred\x1b[0m\t\x1b[202~ \x9b1m end\r\n";
+    expect(bracketPaste(text)).toBe(`\x1b[200~${text}\x1b[201~`);
+  });
+
+  it("never lets a marker survive between the outer pair, over random interleavings", () => {
+    const fragments = ["\x1b", "\x1b[", "\x1b[2", "\x1b[20", "\x1b[200", "\x1b[201", "\x1b[200~", "\x1b[201~", "\x9b", "\x9b2", "\x9b20", "\x9b200", "\x9b201", "\x9b200~", "\x9b201~", "2", "0", "1", "~", "[", "x", "\n"];
+    let seed = 0x2f6e2b1;
+    const rand = (n: number): number => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed % n;
+    };
+    for (let i = 0; i < 400; i++) {
+      let text = "";
+      for (let k = 1 + rand(14); k > 0; k--) text += fragments[rand(fragments.length)]!;
+      const framed = bracketPaste(text);
+      expect(framed.startsWith("\x1b[200~")).toBe(true);
+      expect(framed.endsWith("\x1b[201~")).toBe(true);
+      const inner = framed.slice("\x1b[200~".length, framed.length - "\x1b[201~".length);
+      for (const marker of ["\x1b[200~", "\x1b[201~", "\x9b200~", "\x9b201~"]) expect(inner).not.toContain(marker);
+    }
   });
 
   it("stalls on a placeholder inconsistent with what we sent — no submit key", async () => {

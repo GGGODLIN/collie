@@ -142,14 +142,12 @@ release. 1.14.2 was cut this way on 2026-09-28.
    The `windows.yml` run on the release commit must be green as well. **Fork override:** this fork
    never runs that VM rehearsal. The only rule for what is waived and what still holds is *Fork
    branches and releases* → *Windows VM rehearsal*. [ADR 0075](./.adr/0075-windows-is-a-supported-host.md)
-   is not withdrawn. If this release is the first
-   to carry the Windows zip, rewrite the "today" box in `docs/windows.md`, the README and
-   `docs/install.md` in the release commit: they say no release carries the zip. Then tag and push
-   (next paragraph).
+   is not withdrawn. Then tag and push (next paragraph).
 
-   A missing Windows zip stops the release once a published release has carried one, from
-   2026-11-15 (`WINDOWS_ASSET_MANDATORY_FROM` in `scripts/windows-asset.ts`), and whenever the
-   releases API does not answer. For a Linux hotfix while the Windows job is broken, set the
+   A missing Windows zip stops the release from the first of two moments: once an earlier stable
+   release (not a draft, not a prerelease) has carried one, or on 2026-11-15
+   (`WINDOWS_ASSET_MANDATORY_FROM` in `scripts/windows-asset.ts`). It also stops the release
+   whenever the releases API does not answer. For a Linux hotfix while the Windows job is broken, set the
    repository variable `COLLIE_WINDOWS_ASSET_OVERRIDE` to `optional` (Settings > Secrets and
    variables > Actions > Variables) before the tag, and delete it right after the release: the run
    warns loudly while it is set. To move the date instead, change that one constant in a commit.
@@ -516,7 +514,8 @@ lint guard, the crew-wire guard or the `flake.lock` guard.
 - Routes (`web/src/router.tsx`): `/`, `/space/:spaceId`, `/settings` (an INDEX of four sections:
   `/settings/appearance`, `/settings/device`, `/settings/alerts`, `/settings/system`), `/pane/:paneId`,
   `/pane/:paneId/history`, `/pane/:paneId/changes` and `/space/:spaceId/changes` (both matched as
-  `changes/*`, so the commit view `…/changes/commit` shares the list's component). The router
+  `changes/*`, so the commit view `…/changes/commit` and a folder or file of the tree `…/changes/files`
+  share the screen's route; the tree's root is `…/changes` itself, ADR 0083). The router
   instance is module-scoped so it keeps its location.
 - **Back goes up one level.** Navigate through `useNav()` (`web/src/hooks/use-nav.ts`): down is a
   push that records `from`, sideways is a replace, up steps back onto a legitimate parent or
@@ -684,14 +683,19 @@ the rule below: `stt.json` in the state dir when the operator ran `collie stt se
 font files under `<config-dir>/fonts`, served read-only through `bridge/operator-fonts.ts`
 ([ADR 0033](./.adr/0033-the-app-face-is-a-device-preference.md)).
 
-**The law is that a CLIENT-SUPPLIED value becomes a path in two places only: the journal, and the
-Changes view** — in the journal it is a pane id, never a path. The Changes view
+**The law is that a CLIENT-SUPPLIED value becomes a path in three places only: the journal, the
+Changes view, and the Files view** — in the journal it is a pane id, never a path. The Changes view
 (`bridge/changes.ts`, [ADR 0065](./.adr/0065-the-changes-view-reads-git-read-only.md)) is bounded by
 a listed-paths rule: a diff is served only for a repo the bridge's own discovery returned and a path
 git listed there, and an untracked read goes through `containedRealpath` too. Its git runs are
 hardened against repo-driven code execution (fsmonitor, external diff, textconv, filter drivers);
-don't drop a `-c` there without reading the module header. `GET /api/fonts/<basename>` does not
-become a third such place: the request's name is **looked up** in the rows the operator's own
+don't drop a `-c` there without reading the module header. The Files view (`bridge/files-view.ts`,
+[ADR 0083](./.adr/0083-the-files-view-reads-the-changes-root.md)) is bounded by the Changes root: the
+root comes off the snapshot, never the request, and its real path must pass the same bound; the
+client's path is relative, refused on its shape before any disk call, and its real path must sit
+inside the root's through `containedRealpath`; `.git` and the bridge's state and config folders are
+denied on top. It needs an authorised device (`device-read`), and its bytes go out as JSON, never as
+a document. `GET /api/fonts/<basename>` does not become a fourth such place: the request's name is **looked up** in the rows the operator's own
 `theme.toml` declared and that row's path is taken, so a name nobody declared is refused before any path exists. The containment
 rule in [`files.ts`](./bridge/journal/files.ts) then runs anyway, on both surfaces and as an
 independent second check: **every** path about to be read goes through `containedRealpath` — after
@@ -738,7 +742,8 @@ never a shell, a daemon or a client-chosen string. Absent file, absent feature
 **Two device gates guard writes, independently, and compose by AND.** `COLLIE_DEVICE_HEADER` trusts
 a name a proxy injects; **pairing** (`bridge/pairing.ts`, `collie pair` / `collie devices`) requires a
 bearer credential the device holds, and is on exactly when the registry is non-empty. Reads stay
-ungated by both. Neither applies to `/crew/v1/*`, which has its own two factors. The reasoning sits in
+ungated by both, with one exception: the Files view asks for both as a `device-read`
+([ADR 0083](./.adr/0083-the-files-view-reads-the-changes-root.md)). Neither applies to `/crew/v1/*`, which has its own two factors. The reasoning sits in
 `bridge/pairing.ts`'s header; don't collapse the two gates into one.
 
 **Collie manages exactly one front door: `tailscale serve`** — the CLI (`cli/serve.ts`) publishes it,

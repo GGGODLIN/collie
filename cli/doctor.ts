@@ -32,6 +32,7 @@ import {
   tmuxServerLabel,
 } from "../bridge/mux/tmux/exec.ts";
 import { ZELLIJ_BINARY_OPTION, ZELLIJ_MUX } from "../bridge/mux/zellij/adapter.ts";
+import { TERN_BINARY_OPTION } from "../bridge/mux/tern/adapter.ts";
 import { resolveZellijBinary, zellijBinaryCandidates } from "../bridge/mux/zellij/exec.ts";
 import { chooseSession, parseSessionList, ZELLIJ_LIST_SESSIONS_ARGS } from "../bridge/mux/zellij/protocol.ts";
 import { bindIsWildcard } from "../bridge/crew/config.ts";
@@ -77,8 +78,16 @@ import { queryTask, taskOwner, windowsPathKey } from "./task-scheduler.ts";
 import { agentLabel, collieBinary, unitName } from "./unit.ts";
 import { pidFilePath } from "./lifecycle.ts";
 import type { Ui } from "./render.ts";
-import { failureLine, type MemberReach, parseCrewArgs, probeMemberReach, VERSION_REPORTED_SINCE } from "./crew.ts";
+import {
+  failureLine,
+  type MemberReach,
+  parseCrewArgs,
+  probeMemberReach,
+  soloCrewHint,
+  VERSION_REPORTED_SINCE,
+} from "./crew.ts";
 import { fingerprintRoot, mountName, parseRecord, parseServeStatus, rootAvailability } from "./serve.ts";
+import type { ServeMode } from "./context.ts";
 import type { Exec, Files } from "./sys.ts";
 import { BUILD_MARKER, currentVersionDir, listVersions, platformId, readBuildMarker } from "./update.ts";
 import {
@@ -360,10 +369,7 @@ async function render(
   crew: readonly Finding[],
 ): Promise<void> {
   const heading = `collie doctor — ${collieVersionBare(deps.ctx.root, (p) => deps.files.read(p))} · mode ${mode}`;
-  const crewNote = [
-    "crew: none — this collie is not in a crew.",
-    "  `collie crew invite` here makes it a lead; `collie join …` makes it a peer.",
-  ];
+  const crewNote = ["crew: none — this collie is not in a crew.", soloCrewHint(deps.host)];
   // One findings list, two renderings. The terminal gets the columns laid out and the statuses
   // coloured; everything else gets exactly the lines below, which are what `--json`'s human twin has
   // always printed and what scripts/collie-cli.test.sh greps.
@@ -883,11 +889,66 @@ function acl(deps: DoctorDeps): Finding {
 }
 
 /**
+ * On Windows Collie publishes no front door (M43 spec 09, docs/windows.md): the operator runs
+ * `tailscale serve` by hand, so a remedy that says `collie serve` sends them to the wrong place.
+ * The by-hand command lives here, once; every Windows remedy below builds on it.
+ */
+const tailscaleServeByHand = (port: number): string => `\`tailscale serve --bg --set-path=/ ${port}\``;
+
+/**
+ * Collie records no mapping on Windows, so a hand-made one leaves every tailnet device free to use
+ * Collie until a device is paired. The remedies that publish say to pair right away.
+ */
+const WINDOWS_PAIR_NOW = "pair a device right away";
+
+const windowsPublishRemedy = (port: number): string =>
+  `run ${tailscaleServeByHand(port)} in PowerShell, then ${WINDOWS_PAIR_NOW}: until then every tailnet` +
+  " device can use Collie (docs/windows.md); or set COLLIE_SKIP_SERVE=1 if you own the ingress";
+
+const windowsHttpsDisabledHint = (port: number): string =>
+  'enable HTTPS in the admin console (https://login.tailscale.com/admin/dns, "Enable HTTPS"), then run' +
+  ` ${tailscaleServeByHand(port)} again; on a Headscale tailnet (a self-hosted Tailscale server) use` +
+  ` \`tailscale serve --bg --http=80 --set-path=/ ${port}\`; ${WINDOWS_PAIR_NOW} after you publish (docs/windows.md)`;
+
+const windowsStatusUnreadableRemedy = (port: number): string =>
+  `run \`tailscale serve status\` by hand; if no / mapping to port ${port} shows, run` +
+  ` ${tailscaleServeByHand(port)} (docs/windows.md)`;
+
+const windowsOccupiedRemedy = (port: number): string =>
+  "run `tailscale serve status` to see what owns that listener; free it, or point Collie elsewhere, then run" +
+  ` ${tailscaleServeByHand(port)} (docs/windows.md)`;
+
+/**
+ * The listener of a hand-made root mount that proxies to this collie, or `null`. Two places are
+ * looked at: the listener the configured serve mode names, and plain HTTP on :80, which is the form
+ * docs/windows.md gives for a tailnet with no HTTPS certificates (Headscale).
+ */
+function windowsHandMadeDoor(deps: DoctorDeps): number | null {
+  const status = liveServeStatus(deps);
+  if (status === null) return null;
+  const proxy = `http://127.0.0.1:${deps.ctx.port}`;
+  const configured = deps.ctx.serveMode === "http" ? deps.ctx.port : deps.ctx.servePort;
+  const candidates: [number, ServeMode][] = [
+    [configured, deps.ctx.serveMode],
+    [80, "http"],
+  ];
+  for (const [listener, protocol] of candidates) {
+    try {
+      if (rootAvailability(status, listener, protocol, proxy, deps.ctx.basePath) === "adoptable") return listener;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
  * `tailscale serve` reality vs. the `tailscale-managed-handler` record. Only a mapping matching the
  * record is ours (ADR 0001); a mapping we do not own is REPORTED, never touched — and a **peer** with
  * any mapping at all is an error, because a peer publishes nothing (ADR 0013).
  */
 function frontDoor(deps: DoctorDeps, mode: string): Finding {
+  const windows = deps.host.platform === "win32";
   const skip = deps.ctx.env.COLLIE_SKIP_SERVE === "1";
   const raw = deps.files.read(deps.ctx.handlerFile);
 
@@ -913,8 +974,23 @@ function frontDoor(deps: DoctorDeps, mode: string): Finding {
     return skipped(
       "front-door",
       "no `tailscale` here — the published mapping cannot be read",
-      "install tailscale and `collie serve`, or set COLLIE_SKIP_SERVE=1 if you own the ingress (docs/deployment.md Variant E)",
+      windows
+        ? `install tailscale and run ${tailscaleServeByHand(deps.ctx.port)} (docs/windows.md), or set COLLIE_SKIP_SERVE=1 if you own the ingress (docs/deployment.md Variant E)`
+        : "install tailscale and `collie serve`, or set COLLIE_SKIP_SERVE=1 if you own the ingress (docs/deployment.md Variant E)",
     );
+  }
+  // Windows records no mapping, so a root mount that proxies to us is the operator's own
+  // `tailscale serve`, and it is the door working as designed (docs/windows.md). Asked before the
+  // certificate question: on a Headscale tailnet the door is plain HTTP on :80 and no certificate
+  // will ever exist.
+  if (windows && raw === null && mode !== "peer") {
+    const door = windowsHandMadeDoor(deps);
+    if (door !== null) {
+      return ok(
+        "front-door",
+        `:${door} proxies to http://127.0.0.1:${deps.ctx.port}, published by hand (Collie records no mapping on Windows)`,
+      );
+    }
   }
   // No certificates, no https door — and `tailscale serve` says so by asking a question at a
   // terminal a service has not got (#172). `collie serve` refuses on this same fact; doctor names it
@@ -923,7 +999,7 @@ function frontDoor(deps: DoctorDeps, mode: string): Finding {
     return warn(
       "front-door",
       "this tailnet has no HTTPS certificates, so an https front door cannot be published",
-      HTTPS_DISABLED_HINT,
+      windows ? windowsHttpsDisabledHint(deps.ctx.port) : HTTPS_DISABLED_HINT,
     );
   }
   const status = liveServeStatus(deps);
@@ -931,7 +1007,9 @@ function frontDoor(deps: DoctorDeps, mode: string): Finding {
     return skipped(
       "front-door",
       "`tailscale serve status --json` did not answer readably",
-      "run it by hand; then `collie serve` if this collie's root mount is missing",
+      windows
+        ? windowsStatusUnreadableRemedy(deps.ctx.port)
+        : "run it by hand; then `collie serve` if this collie's root mount is missing",
     );
   }
 
@@ -958,20 +1036,25 @@ function frontDoor(deps: DoctorDeps, mode: string): Finding {
       return warn(
         "front-door",
         `:${listener} carries a root mount Collie does not own (${availability}) — reported, never touched`,
-        "free that listener, or point Collie elsewhere, then `collie serve`",
+        windows
+          ? windowsOccupiedRemedy(deps.ctx.port)
+          : "free that listener, or point Collie elsewhere, then `collie serve`",
       );
     }
     const detail = `no Collie-managed mapping is recorded and nothing of ours is published on :${listener}`;
+    const publishRemedy = windows
+      ? windowsPublishRemedy(deps.ctx.port)
+      : "`collie serve` here (or COLLIE_SKIP_SERVE=1 if you own the ingress)";
     return mode === "lead"
       ? bad(
           "front-door",
           `${detail} — the crew has a lead with no URL for the phone`,
-          "`collie serve` here (or COLLIE_SKIP_SERVE=1 if you own the ingress)",
+          publishRemedy,
         )
       : warn(
           "front-door",
           `${detail} — the phone has nothing to point at`,
-          "`collie serve` here (or COLLIE_SKIP_SERVE=1 if you own the ingress)",
+          publishRemedy,
         );
   }
 
@@ -1360,6 +1443,7 @@ interface MuxSettings {
   readonly endpoint: string;
   readonly tmuxBin: string;
   readonly zellijBin: string;
+  readonly ternBin: string;
   readonly origin: MuxOrigin;
 }
 
@@ -1378,6 +1462,7 @@ function muxSettings(deps: DoctorDeps): MuxSettings {
   const env = deps.ctx.env;
   const tmuxBin = (env.COLLIE_TMUX_BIN ?? "").trim();
   const zellijBin = (env.COLLIE_ZELLIJ_BIN ?? "").trim();
+  const ternBin = (env.COLLIE_TERN_BIN ?? "").trim();
   const named = explicitMux(env);
   if (named !== null) {
     return {
@@ -1385,19 +1470,21 @@ function muxSettings(deps: DoctorDeps): MuxSettings {
       endpoint: named === DEFAULT_MUX ? deps.ctx.socket : (env[muxEndpointVar(named)] ?? "").trim(),
       tmuxBin,
       zellijBin,
+      ternBin,
       origin: { kind: "explicit" },
     };
   }
   const found = probeMuxes(deps);
   const only = found.length === 1 ? found[0] : undefined;
   if (only === undefined) {
-    return { name: DEFAULT_MUX, endpoint: "", tmuxBin, zellijBin, origin: { kind: "undecided", found } };
+    return { name: DEFAULT_MUX, endpoint: "", tmuxBin, zellijBin, ternBin, origin: { kind: "undecided", found } };
   }
   return {
     name: only.mux,
     endpoint: only.mux === DEFAULT_MUX ? deps.ctx.socket : only.endpoint,
     tmuxBin,
     zellijBin,
+    ternBin,
     origin: { kind: "auto", evidence: only.evidence },
   };
 }
@@ -1416,7 +1503,11 @@ function muxTarget(settings: MuxSettings): MuxTarget {
     // Zero means "the adapter's own default" (`createMux`'s factories read `timeoutMs || DEFAULT`),
     // and nothing here ever calls the adapter, so no budget of this verb's is being declared.
     timeoutMs: 0,
-    options: { [TMUX_BINARY_OPTION]: settings.tmuxBin, [ZELLIJ_BINARY_OPTION]: settings.zellijBin },
+    options: {
+      [TMUX_BINARY_OPTION]: settings.tmuxBin,
+      [ZELLIJ_BINARY_OPTION]: settings.zellijBin,
+      [TERN_BINARY_OPTION]: settings.ternBin,
+    },
   };
 }
 
