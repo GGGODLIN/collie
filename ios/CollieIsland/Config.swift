@@ -1,18 +1,26 @@
 import Foundation
 
 enum Config {
-  // The tailnet front door `tailscale serve` publishes for the active Collie. The phone must be on
+  // The Collie this app opens, usually the tailnet front door `tailscale serve` publishes. The phone must be on
   // the tailnet; the front door adds the identity header Collie's trusted-user gate requires.
-  // COLLIE_URL in Config.local.xcconfig reaches it through Info.plist's CollieURL.
-  static let configuredURL: URL? = {
-    guard let raw = Bundle.main.object(forInfoDictionaryKey: "CollieURL") as? String,
-          let url = URL(string: raw.trimmingCharacters(in: .whitespaces)),
-          url.scheme == "https" || url.scheme == "http", url.host != nil
+  // The address typed into the app wins; COLLIE_URL from Config.local.xcconfig (through
+  // Info.plist's CollieURL) is the fallback, so a build made with one keeps opening straight in.
+  // A prebuilt .ipa carries no COLLIE_URL and asks on first open (IslandAddress.swift).
+  static var configuredURL: URL? { IslandAddress.saved ?? builtInURL }
+  static let builtInURL = parse(Bundle.main.object(forInfoDictionaryKey: "CollieURL") as? String)
+  // A placeholder while no address is known: nothing is fetched then, and the app asks for one.
+  static var collieURL: URL { configuredURL ?? URL(string: "about:blank")! }
+
+  /// An address as a person types it: a missing scheme means https, and a trailing slash is
+  /// dropped because pane links are built by appending "/pane/<id>".
+  static func parse(_ raw: String?) -> URL? {
+    guard var text = raw?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return nil }
+    if !text.contains("://") { text = "https://" + text }
+    while text.hasSuffix("/") { text.removeLast() }
+    guard let url = URL(string: text), url.scheme == "https" || url.scheme == "http", url.host != nil
     else { return nil }
     return url
-  }()
-  // A placeholder while COLLIE_URL is missing: nothing is fetched then, and the app says why.
-  static let collieURL = configuredURL ?? URL(string: "about:blank")!
+  }
   // ISLAND_SHOW_DETAIL: whether the island and lock screen show what the pane is doing, which can be
   // the newest prompt word for word. Off unless the build says YES.
   static let showDetail = (Bundle.main.object(forInfoDictionaryKey: "CollieShowDetail") as? String) == "YES"

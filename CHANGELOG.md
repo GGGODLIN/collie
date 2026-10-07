@@ -23,6 +23,20 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.17.201] - 2026-10-07
+
+### Added
+
+- **Collie Island asks for your Collie's address in the app.** A build without `COLLIE_URL` opens on an address screen that tests the address against Collie before saving it; a page that will not load offers to change it; and Settings → System → Collie address opens the same screen from inside the app. The Settings row shows only inside Collie Island, and the page never hands the app an address. ([7f7201dc](https://github.com/GGGODLIN/collie/commit/7f7201dc)), ([00d18630](https://github.com/GGGODLIN/collie/commit/00d18630))
+
+### Changed
+
+- **Built on upstream Collie 1.17.2.** AltanS/collie v1.17.2, commit 3d562ae5, unchanged since fork 1.17.0. This is the first release numbered from its upstream base: patch 200 and up is upstream 1.17.2. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+
+### Packaging
+
+- **Each release carries an unsigned CollieIsland.ipa for sideloading.** A macOS job runs `ios/scripts/build-ipa.sh` after the release is created and attaches the .ipa with its `.sha256`; it is not in the integrity manifest, so a failed iOS build never holds back the payloads. The script refuses to package an app that carries a Collie address. `ios/README.md` gains "Install without Xcode" (AltStore with a free Apple ID) and "Change the address". ([4e34bc55](https://github.com/GGGODLIN/collie/commit/4e34bc55))
+
 ## [1.17.0] - 2026-10-07
 
 ### Added

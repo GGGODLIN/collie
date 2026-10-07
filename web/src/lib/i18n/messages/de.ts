@@ -1321,6 +1321,10 @@ export const de: Dictionary = {
   "settings.tour.title": "Den ersten Bildschirm wieder anzeigen",
   "settings.tour.description": "Was Collie tut und wie diese Installation aussieht.",
   "settings.tour.button": "Anzeigen",
+  // --- settings.islandAddress ---
+  "settings.islandAddress.title": "Collie-Adresse",
+  "settings.islandAddress.description": "Die Collie, die diese App öffnet. Eine neue Adresse fängt dort neu an: dort erneut koppeln.",
+  "settings.islandAddress.button": "Ändern",
 
   // --- updateScreen (M28/01): English until translated. ---
   "updateScreen.dialogAria": "Aktualisierung läuft",
