@@ -4,6 +4,9 @@ import SwiftUI
 struct CollieIslandApp: App {
   private let monitor = Monitor.shared
   @State private var navigation = Navigation(url: Config.collieURL, seq: 0)
+  @State private var address = Config.configuredURL
+  @State private var editingAddress = false
+  @State private var loadFailure: String?
   @Environment(\.scenePhase) private var phase
   // "Always" location lets iOS relaunch us in the background right after a reboot, before the
   // first unlock. A WKWebView created then cannot read its encrypted website data and came up
@@ -17,16 +20,40 @@ struct CollieIslandApp: App {
   var body: some Scene {
     WindowGroup {
       Group {
-        if Config.configuredURL == nil {
-          Text("COLLIE_URL is not set. Put your Collie's address in ios/Config.local.xcconfig and build again.")
-            .multilineTextAlignment(.center)
-            .padding()
-        } else if webReady {
-          WebView(navigation: navigation)
+        if let address {
+          if webReady {
+            ZStack {
+              WebView(
+                navigation: navigation,
+                onOpenAddress: { editingAddress = true },
+                onLoadFailed: { loadFailure = $0 },
+                onLoaded: { loadFailure = nil })
+                // A new address gets a new web view: its user scripts and backup are bound to
+                // one origin when the view is built.
+                .id(address)
+              if let loadFailure {
+                LoadFailedView(
+                  address: address, reason: loadFailure,
+                  onRetry: {
+                    self.loadFailure = nil
+                    navigation = Navigation(url: navigation.url, seq: navigation.seq + 1)
+                  },
+                  onChange: { editingAddress = true })
+              }
+            }
+          } else {
+            Color(.systemBackground)
+          }
         } else {
-          Color(.systemBackground)
+          AddressSetupView(current: nil, onSaved: adopt, onCancel: nil)
         }
       }
+        .sheet(isPresented: $editingAddress) {
+          AddressSetupView(
+            current: address,
+            onSaved: { adopt($0); editingAddress = false },
+            onCancel: { editingAddress = false })
+        }
         // Full-bleed put Collie's header under the status bar and the island: inside a
         // WKWebView its env(safe-area-inset-top) came through as 0. The keyboard stays ignored
         // because WKWebView already resizes for it; SwiftUI shrinking the view too doubles it.
@@ -51,6 +78,13 @@ struct CollieIslandApp: App {
           Text("這是測試備份用的連結。未送出的草稿會被刪掉，設定和配對會從 Keychain 還原。")
         }
     }
+  }
+
+  private func adopt(_ url: URL) {
+    IslandAddress.save(url)
+    address = url
+    loadFailure = nil
+    navigation = Navigation(url: url, seq: navigation.seq + 1)
   }
 
   private func open(_ link: URL) {

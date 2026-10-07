@@ -1280,6 +1280,10 @@ export const zhTW: Dictionary = {
   "settings.tour.title": "再次顯示第一個畫面",
   "settings.tour.description": "Collie 的功能，以及此安裝的架構外觀。",
   "settings.tour.button": "顯示",
+  // --- settings.islandAddress ---
+  "settings.islandAddress.title": "Collie 位址",
+  "settings.islandAddress.description": "這個 app 打開的 Collie。換成新位址會從頭開始，要在新的 Collie 上重新配對。",
+  "settings.islandAddress.button": "更改",
 
   // --- updateScreen (M28/01): English until translated. ---
   "updateScreen.dialogAria": "更新進行中",

@@ -10,16 +10,21 @@ struct Navigation: Equatable {
 
 struct WebView: UIViewRepresentable {
   let navigation: Navigation
+  var onOpenAddress: () -> Void = {}
+  var onLoadFailed: (String) -> Void = { _ in }
+  var onLoaded: () -> Void = {}
 
   func makeCoordinator() -> Coordinator { Coordinator() }
 
   func makeUIView(context: Context) -> WKWebView {
     let config = WKWebViewConfiguration()
     WebStateBackup.install(on: config.userContentController, handler: context.coordinator.backup)
+    config.userContentController.add(context.coordinator.address, name: IslandAddress.handlerName)
     config.allowsInlineMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
     let view = WKWebView(frame: .zero, configuration: config)
     view.uiDelegate = context.coordinator
+    view.navigationDelegate = context.coordinator
     view.isInspectable = true
     view.scrollView.contentInsetAdjustmentBehavior = .never
     view.isOpaque = false
@@ -37,15 +42,40 @@ struct WebView: UIViewRepresentable {
   }
 
   func updateUIView(_ view: WKWebView, context: Context) {
+    context.coordinator.address.onOpen = onOpenAddress
+    context.coordinator.onLoadFailed = onLoadFailed
+    context.coordinator.onLoaded = onLoaded
     guard context.coordinator.loaded != navigation else { return }
     context.coordinator.loaded = navigation
     view.load(URLRequest(url: navigation.url))
   }
 
-  final class Coordinator: NSObject, WKUIDelegate {
+  final class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate {
     var loaded: Navigation?
     let backup = WebStateBackupHandler()
+    let address = IslandAddressHandler()
+    var onLoadFailed: (String) -> Void = { _ in }
+    var onLoaded: () -> Void = {}
     weak var view: WKWebView?
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+      failed(error)
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+      failed(error)
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+      onLoaded()
+    }
+
+    // A load cut short by the next one (a pane link tapped mid-load) is not Collie being down.
+    private func failed(_ error: Error) {
+      if (error as NSError).code == NSURLErrorCancelled { return }
+      MainActor.assumeIsolated { DiagLog.write("page load failed: \(error.localizedDescription)") }
+      onLoadFailed(error.localizedDescription)
+    }
 
     // Collie's composer records voice through getUserMedia; without this WebKit asks on every
     // single recording. The only page this view ever loads is the operator's own Collie.

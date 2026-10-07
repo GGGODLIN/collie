@@ -1286,6 +1286,10 @@ export const zh: Dictionary = {
   "settings.tour.title": "再次显示首屏",
   "settings.tour.description": "Collie 的功能，以及本次安装的形式。",
   "settings.tour.button": "显示",
+  // --- settings.islandAddress ---
+  "settings.islandAddress.title": "Collie 地址",
+  "settings.islandAddress.description": "这个 app 打开的 Collie。换成新地址会从头开始，要在新的 Collie 上重新配对。",
+  "settings.islandAddress.button": "更改",
 
   // --- updateScreen (M28/01): English until translated. ---
   "updateScreen.dialogAria": "正在更新",

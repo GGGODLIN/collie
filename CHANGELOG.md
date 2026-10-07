@@ -23,6 +23,14 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Added
+
+- **Collie Island asks for your Collie's address in the app.** A build without `COLLIE_URL` opens on an address screen that tests the address against Collie before saving it; a page that will not load offers to change it; and Settings → System → Collie address opens the same screen from inside the app. The Settings row shows only inside Collie Island, and the page never hands the app an address.
+
+### Packaging
+
+- **Each release carries an unsigned CollieIsland.ipa for sideloading.** A macOS job runs `ios/scripts/build-ipa.sh` after the release is created and attaches the .ipa with its `.sha256`; it is not in the integrity manifest, so a failed iOS build never holds back the payloads. The script refuses to package an app that carries a Collie address. `ios/README.md` gains "Install without Xcode" (AltStore with a free Apple ID) and "Change the address".
+
 ## [1.17.0] - 2026-10-07
 
 ### Added

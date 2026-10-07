@@ -1300,6 +1300,10 @@ export const ko: Dictionary = {
   "settings.tour.title": "첫 화면 다시 표시",
   "settings.tour.description": "Collie가 하는 일, 그리고 이 설치가 어떻게 구성되는지 안내합니다.",
   "settings.tour.button": "표시",
+  // --- settings.islandAddress ---
+  "settings.islandAddress.title": "Collie 주소",
+  "settings.islandAddress.description": "이 앱이 여는 Collie입니다. 새 주소에서는 처음부터 시작하므로 그곳에서 다시 페어링하세요.",
+  "settings.islandAddress.button": "변경",
 
   // --- updateScreen (M28/01): English until translated. ---
   "updateScreen.dialogAria": "업데이트 진행 중",

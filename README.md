@@ -28,9 +28,9 @@ release's. Day-to-day work happens on `dev`, which is not tested for anyone else
 ### Your agents on the iPhone's Dynamic Island
 
 The fork's main addition is an iPhone app, in [`ios/`](./ios/README.md), that puts your agents'
-state on the Dynamic Island and the lock screen, and opens Collie when you tap it. You build it with
-your own Apple ID; a free one is enough, and nothing goes through a push service or a third-party
-server.
+state on the Dynamic Island and the lock screen, and opens Collie when you tap it. Build it, or
+sideload the `.ipa` each release carries; either way it is signed with your own Apple ID. A free one
+is enough, and nothing goes through a push service or a third-party server.
 
 <table>
   <tr>
@@ -117,7 +117,7 @@ install the tool, and Collie runs the same without them.
 | --- | --- | --- |
 | A pane's description can use Claude's own recap, and the mirror hides the tool's button row | [cc-mod-waitwhat](https://github.com/GGGODLIN/cc-mod-waitwhat) | The description uses the waiting approval or your newest prompt |
 | *Plain* and *Lost* retell a Claude session in plain words | [cc-sidecar-waitwhat](https://github.com/GGGODLIN/cc-sidecar-waitwhat), named in `retell.toml` ([Configure](./docs/configure.md#retell-a-claude-session)) | The two rows are not offered |
-| Agents' state on the iPhone's Dynamic Island | The iPhone app in [`ios/`](./ios/README.md), built with your own Apple ID; it reads any Collie | Nothing changes; Collie does not know about it |
+| Agents' state on the iPhone's Dynamic Island | The iPhone app in [`ios/`](./ios/README.md), built or sideloaded with your own Apple ID; it reads any Collie | Nothing changes; Collie's Settings row for the app's address shows only inside the app |
 
 The title bar reads COLLIE-GGGODLIN, so this build is told apart from an upstream install. A pane's
 description line is written in Traditional Chinese (`在等你批准`, `你：`) whatever the app's language.
