@@ -23,9 +23,23 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.17.0] - 2026-10-07
+
+### Added
+
+- **Files shows the workspace folder with the changes marked.** Markdown, JSON and HTML files open as a Preview, and the Changes list's List and Tree choice is one Tree button. From upstream 1.17.0. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+- **Machines show each machine's load and disks for a day.** The page also holds the machine's alert rules. From upstream 1.17.0. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+- **The dashboard can order by Activity or Cache.** An order you already chose is followed on the dashboard too. From upstream 1.17.0. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+
+### Changed
+
+- **Built on upstream Collie 1.17.2.** AltanS/collie v1.17.2, commit 3d562ae5. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+- **The dashboard's tabs are Dashboard, Files and, with a crew, Crew.** The Focus tab is a needs-you switch on the dashboard now; its filter and order rules are unchanged. From upstream 1.17.0. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+- **Chat is the default view of an agent pane.** The Chat switch under Settings → Experiments is gone; a device that chose Terminal keeps it. From upstream 1.17.0. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+
 ### Fixed
 
-- **A session name survives the other ways a terminal spells a colour.** The name-or-badge check now reads palette codes, inverse video and colours carried over from an earlier row the way a terminal does, so a tmux or zellij pane is not read as unnamed and a badge on a default-coloured rule is not read as a name. A rule whose colours it cannot read keeps the name Collie already had.
+- **A session name survives the other ways a terminal spells a colour.** The name-or-badge check now reads palette codes, inverse video and colours carried over from an earlier row the way a terminal does, so a tmux or zellij pane is not read as unnamed and a badge on a default-coloured rule is not read as a name. A rule whose colours it cannot read keeps the name Collie already had. ([04302807](https://github.com/GGGODLIN/collie/commit/04302807))
 
 ## [1.16.2] - 2026-10-06
 
