@@ -23,7 +23,9 @@ enum IslandAddress {
       case .invalid:
         return "這不是網址。格式像 https://your-mac.your-tailnet.ts.net:8443"
       case .unreachable(let why):
-        return "連不上：\(why)。手機要在 Collie 那台機器的 tailnet 上。"
+        // The system's reason already ends in its own full stop ("…to the server.").
+        let reason = why.trimmingCharacters(in: CharacterSet(charactersIn: ".。 "))
+        return "連不上：\(reason)。手機要在 Collie 那台機器的 tailnet 上。"
       case .notCollie(let status):
         return status == 200
           ? "有回應，但不是 Collie。"
