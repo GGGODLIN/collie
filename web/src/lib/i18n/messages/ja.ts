@@ -1234,6 +1234,10 @@ export const ja: Dictionary = {
   "settings.tour.title": "最初の画面を再表示",
   "settings.tour.description": "Collie の機能と、このインストールの概要。",
   "settings.tour.button": "表示",
+  // --- settings.islandAddress ---
+  "settings.islandAddress.title": "Collie のアドレス",
+  "settings.islandAddress.description": "このアプリが開く Collie。新しいアドレスでは最初からやり直し、そこで再度ペアリングします。",
+  "settings.islandAddress.button": "変更",
 
   // --- updateScreen (M28/01): English until translated. ---
   "updateScreen.dialogAria": "アップデートの進行中",

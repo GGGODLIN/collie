@@ -14,6 +14,7 @@ import { FontSettingsControl } from "@/components/font-settings";
 import { HandsFreeControl } from "@/components/hands-free-control";
 import { HapticsControl } from "@/components/haptics-control";
 import { HarnessBarControl } from "@/components/harness-bar-control";
+import { IslandAddressControl } from "@/components/island-address-control";
 import { LanguageControl } from "@/components/language-control";
 import { NotifyPrefsControl } from "@/components/notify-prefs-control";
 import { PaneOrderControl } from "@/components/pane-order-control";
@@ -197,6 +198,8 @@ export function SettingsSystemRoute() {
       {/* Renders NOTHING on a solo install — the card owns that gate itself (useCrew().multi). */}
       <CrewSettingsCard />
       <ConnectionInfo bridge={root?.bridge} device={root?.device} build={serverBuild} />
+      {/* Which Collie the iPhone app talks to. Renders nothing outside Collie Island. */}
+      <IslandAddressControl />
     </SettingsPage>
   );
 }

@@ -108,6 +108,9 @@ enum WebStateBackup {
       """
 
     controller.removeAllUserScripts()
+    // WebKit removes user scripts only all at once, so the address bridge is put back here too;
+    // without it the settings row would vanish on the first reload after a backup.
+    controller.addUserScript(IslandAddress.bridgeScript())
     controller.addUserScript(WKUserScript(source: restore, injectionTime: .atDocumentStart, forMainFrameOnly: true))
     controller.addUserScript(WKUserScript(source: capture, injectionTime: .atDocumentStart, forMainFrameOnly: true))
   }

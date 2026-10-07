@@ -1243,6 +1243,10 @@ export const es: Dictionary = {
   "settings.tour.title": "Volver a mostrar la primera pantalla",
   "settings.tour.description": "Qué hace Collie y cómo es esta instalación.",
   "settings.tour.button": "Mostrar",
+  // --- settings.islandAddress ---
+  "settings.islandAddress.title": "Dirección de Collie",
+  "settings.islandAddress.description": "El Collie que abre esta app. Una dirección nueva empieza de cero: vuelve a emparejar allí.",
+  "settings.islandAddress.button": "Cambiar",
 
   // --- updateScreen (M28/01): English until translated. ---
   "updateScreen.dialogAria": "Actualización en curso",

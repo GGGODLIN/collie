@@ -1362,6 +1362,10 @@ export const en = {
   "settings.tour.title": "Show the first screen again",
   "settings.tour.description": "What Collie does, and what this install looks like.",
   "settings.tour.button": "Show",
+  // --- settings.islandAddress ---
+  "settings.islandAddress.title": "Collie address",
+  "settings.islandAddress.description": "The Collie this app opens. A new address starts over there: pair again on it.",
+  "settings.islandAddress.button": "Change",
 
   // --- updateScreen (M28/01) ---
   // The sheet a running update takes the screen with: one row per machine, one for this device's own

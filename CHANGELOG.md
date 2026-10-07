@@ -30,6 +30,10 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 ## [Unreleased]
 
+### Added
+
+- **Collie Island asks for your Collie's address in the app.** A build without `COLLIE_URL` opens on an address screen that tests the address against Collie before saving it; a page that will not load offers to change it; and Settings → System → Collie address opens the same screen from inside the app. The Settings row shows only inside Collie Island, and the page never hands the app an address.
+
 ### Fixed
 
 - **A session name survives the other ways a terminal spells a colour.** The name-or-badge check now reads palette codes, inverse video and colours carried over from an earlier row the way a terminal does, so a tmux or zellij pane is not read as unnamed and a badge on a default-coloured rule is not read as a name. A rule whose colours it cannot read keeps the name Collie already had.

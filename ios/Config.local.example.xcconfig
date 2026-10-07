@@ -9,7 +9,8 @@ DEVELOPMENT_TEAM = ABCDE12345
 BUNDLE_ID_PREFIX = com.yourname
 
 // Your Collie's address as the phone reaches it, usually the tailnet front door `collie start`
-// printed. xcconfig reads `//` as a comment, so write the scheme as `https:/$()/`.
+// printed. xcconfig reads `//` as a comment, so write the scheme as `https:/$()/`. Optional: left
+// empty, the app asks for it on first open, and an address saved in the app wins over this one.
 COLLIE_URL = https:/$()/your-mac.your-tailnet.ts.net:8443
 
 // YES shows what the top pane is doing on the island and the lock screen. That line can be your
