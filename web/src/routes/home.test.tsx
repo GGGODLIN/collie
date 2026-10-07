@@ -603,7 +603,7 @@ describe("the dashboard's footer (ADR 0066, ADR 0085)", () => {
     await settled();
     await userEvent.click(tab(/^Files$/));
     expect(screen.queryByRole("button", NEEDS)).not.toBeInTheDocument();
-    expect(document.querySelector(".invisible[aria-hidden='true']")).not.toBeNull();
+    expect(screen.getByRole("main").querySelector(".invisible[aria-hidden='true']")).not.toBeNull();
   });
 
   it("Crew draws no switch and no slot at all: it lists machines, so the summary line is not there to jump", async () => {
@@ -611,7 +611,7 @@ describe("the dashboard's footer (ADR 0066, ADR 0085)", () => {
     await settled();
     await userEvent.click(tab(/^Crew$/));
     expect(screen.queryByRole("button", NEEDS)).not.toBeInTheDocument();
-    expect(document.querySelector(".invisible[aria-hidden='true']")).toBeNull();
+    expect(screen.getByRole("main").querySelector(".invisible[aria-hidden='true']")).toBeNull();
   });
 
   it("Files lists each workspace with its counts, says No folder, and opens the workspace's Files screen", async () => {

@@ -1,4 +1,4 @@
-import type { Disposable } from "@playwright/test";
+import type { Disposable, Page } from "@playwright/test";
 
 import type { Locale } from "@/lib/i18n/locale";
 import type { MachineAlerts } from "@/lib/types";
