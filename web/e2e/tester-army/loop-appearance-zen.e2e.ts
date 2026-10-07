@@ -51,20 +51,20 @@ async function openDashboard(app: Openable, screen: Screen, browser: Browser): P
   const response = await launchers;
   expect(response.status).toBe(200);
   expect(await response.json<LaunchersResponse>()).toEqual({ launchers: [], home: "" });
-  await expect(footer(screen).getByRole("button", en["home.tabs.panes"])).toBeVisible();
+  await expect(footer(screen).getByRole("button", new RegExp(`^${en["home.tabs.dashboard"]}(?:\\s*,|$)`, "u"))).toBeVisible();
   await expect(screen.getByRole("button", /^claude logo claude/u)).toBeVisible();
 }
 
 async function openClaudePane(app: Openable, screen: Screen): Promise<void> {
   await app.open(DASHBOARD);
-  await expect(footer(screen).getByRole("button", en["home.tabs.panes"])).toBeVisible();
+  await expect(footer(screen).getByRole("button", new RegExp(`^${en["home.tabs.dashboard"]}(?:\\s*,|$)`, "u"))).toBeVisible();
   await screen.getByRole("button", /^claude logo claude/u).tap();
   await expect(screen.getByRole("button", en["chat.paneMenu.aria"])).toBeVisible();
 }
 
 async function turnZenOn(app: Openable, screen: Screen): Promise<void> {
   await app.open(DASHBOARD);
-  await expect(footer(screen).getByRole("button", en["home.tabs.panes"])).toBeVisible();
+  await expect(footer(screen).getByRole("button", new RegExp(`^${en["home.tabs.dashboard"]}(?:\\s*,|$)`, "u"))).toBeVisible();
   await screen.getByRole("button", en["nav.settings.aria"]).tap();
   await expect(screen.getByRole("heading", en["settings.title"])).toBeVisible();
   await screen.getByRole("button", /^Device\b/u).tap();
@@ -95,7 +95,7 @@ async function expectChromeRestored(screen: Screen): Promise<void> {
 
 test("SET-THEME/reload — Appearance offers System, Light and Dark, and the chosen option is still selected after reload", async ({ app, screen }) => {
   await app.open(DASHBOARD);
-  await expect(footer(screen).getByRole("button", en["home.tabs.panes"])).toBeVisible();
+  await expect(footer(screen).getByRole("button", new RegExp(`^${en["home.tabs.dashboard"]}(?:\\s*,|$)`, "u"))).toBeVisible();
   await screen.getByRole("button", en["nav.settings.aria"]).tap();
   await expect(screen.getByRole("heading", en["settings.title"])).toBeVisible();
   await screen.getByRole("button", /^Appearance\b/u).tap();

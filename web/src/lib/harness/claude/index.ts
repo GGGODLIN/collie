@@ -16,6 +16,7 @@ import { detectMultiSelectRegion } from "./multi-select";
 import { detectPromptSelectRegion } from "./prompt-select";
 import { detectEffortRegion } from "./effort";
 import { detectResumePickerRegion } from "./resume";
+import { detectSwitchModelRegion } from "./switch-model";
 import { detectMarketplacesRegion } from "./marketplaces";
 import { detectMenuRegion } from "./menu";
 import { detectAutocompleteRegion } from "./autocomplete";
@@ -28,7 +29,7 @@ import {
   namesAModalKey,
   inputBoxTail,
 } from "./chrome";
-import { isPastePlaceholderOnly, pasteCarriesSend } from "./paste";
+import { collapsesAsPaste, isPastePlaceholderOnly, pasteCarriesSend } from "./paste";
 import { stripWaitWhatBand } from "./waitwhat-band";
 
 /**
@@ -113,6 +114,20 @@ export function claudeBuildBlocks(lines: StyledLine[]): Block[] {
     return blocks;
   }
 
+  // The "Switch model?" confirmation (switch-model.ts) — the footerless screen the `/model` picker
+  // opens when the conversation is cached. No footer names a key and no "Do you want to" question
+  // makes it a permission dialog, so every grammar above declines it and the generic menu below
+  // could not read it either. Recognised by its own title under the `▔` edge and its two numbered
+  // rows, it lifts as a pointed list: a tap is the arrow walk from the `❯` plus Enter, never a digit.
+  const switchModelRegion = detectSwitchModelRegion(lines);
+  if (switchModelRegion) {
+    const before = trimTrailingBlank(lines.slice(0, switchModelRegion.startLine));
+    const blocks: Block[] = [];
+    if (before.length > 0) blocks.push({ kind: "raw", lines: before });
+    blocks.push({ kind: "prompt-select", prompt: switchModelRegion.model, lines: lines.slice(switchModelRegion.startLine) });
+    return blocks;
+  }
+
   // The `/plugin` Marketplaces tab and a marketplace's detail screen (marketplaces.ts). Their footers
   // say "Enter to select", which files them as a question the question grammars cannot read, so the
   // generic menu below stands aside. Recognised by their own words, they lift as a menu of the keys
@@ -188,7 +203,8 @@ function tailNamesAKey(lines: StyledLine[]): boolean {
     const text = lineText(lines[i]!);
     if (text.trim() !== "") rows.push(text);
   }
-  return rows.some((t) => namesAModalKey(t) || POINTED_OPTION_ROW.test(t) || PRESS_KEY_PROMPT.test(t));
+  const texts = lines.map(lineText);
+  return rows.some((t) => namesAModalKey(t, texts) || POINTED_OPTION_ROW.test(t) || PRESS_KEY_PROMPT.test(t));
 }
 
 export const claudeAdapter: HarnessAdapter = {
@@ -216,4 +232,6 @@ export const claudeAdapter: HarnessAdapter = {
   // "this isn't the user's text" for the stranded-draft preview's Take over.
   draftCarriesSend: pasteCarriesSend,
   draftIsOpaque: isPastePlaceholderOnly,
+  // A send long enough to collapse goes as one bracketed paste; see `collapsesAsPaste`.
+  bracketedPaste: collapsesAsPaste,
 };

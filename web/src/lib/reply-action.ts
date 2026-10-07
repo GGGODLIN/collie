@@ -283,6 +283,7 @@ export async function sendGuardedReply(args: GuardedReplyArgs): Promise<ReplyOut
   const aborted = await runPreType?.();
   if (aborted) return aborted;
 
+  const onWire = (part: string): string => (adapter.bracketedPaste?.(part) ? bracketPaste(part) : part);
   const chunks = adapter.replyChunks?.(args.text) ?? [args.text];
   if (chunks.length === 0 || chunks.join("") !== args.text) {
     return { status: "error", error: t("reply.stalled.generic") };
@@ -304,7 +305,7 @@ export async function sendGuardedReply(args: GuardedReplyArgs): Promise<ReplyOut
   for (let i = 0; i < chunks.length - 1; i++) {
     let part;
     try {
-      part = await sendReply(args.paneId, chunks[i]!, false, args.scope);
+      part = await sendReply(args.paneId, onWire(chunks[i]!), false, args.scope);
     } catch (e) {
       return { status: "error", error: message(e) };
     }
@@ -336,7 +337,7 @@ export async function sendGuardedReply(args: GuardedReplyArgs): Promise<ReplyOut
 
   let typed;
   try {
-    typed = await sendReply(args.paneId, chunks[chunks.length - 1]!, false, args.scope);
+    typed = await sendReply(args.paneId, onWire(chunks[chunks.length - 1]!), false, args.scope);
   } catch (e) {
     return { status: "error", error: message(e) };
   }
@@ -413,6 +414,33 @@ export async function sendGuardedReply(args: GuardedReplyArgs): Promise<ReplyOut
     status: "stalled",
     error: t("reply.stalled.generic"),
   };
+}
+
+const PASTE_START = "\x1b[200~";
+const PASTE_END = "\x1b[201~";
+/** Both paste markers in the 7-bit form (`ESC [`) and the 8-bit CSI form (`\x9b`). */
+const PASTE_MARKERS = [PASTE_START, PASTE_END, "\x9b200~", "\x9b201~"] as const;
+
+function withoutPasteMarkers(text: string): string {
+  return PASTE_MARKERS.reduce((out, marker) => out.replaceAll(marker, ""), text);
+}
+
+/**
+ * One reply part framed as a single bracketed paste, for a harness whose `bracketedPaste` asks. Any
+ * paste marker already inside the text is dropped, and the drop repeats until the text stops
+ * changing: one pass can join the pieces on either side of a removed marker into a new one
+ * (`ESC[2` + `ESC[201~` + `01~`), so no sequence of removals may leave a marker behind. An end marker
+ * left in would close the paste early and the rest, newlines included, would arrive as keystrokes.
+ * Every other byte of the reply is kept as it is.
+ */
+export function bracketPaste(text: string): string {
+  let body = text;
+  let next = withoutPasteMarkers(body);
+  while (next !== body) {
+    body = next;
+    next = withoutPasteMarkers(body);
+  }
+  return `${PASTE_START}${body}${PASTE_END}`;
 }
 
 function noBoxMessage(): string {

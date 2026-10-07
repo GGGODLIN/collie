@@ -146,7 +146,7 @@ until explicitly configured.
 - **Quick actions and slash commands** configured per agent
 - **Keypad for terminal control keys**: `Esc`, `Ctrl+C`, arrows, and modifier combinations
 - **Output search** and full conversation history beyond standard terminal scrollback
-- **Changes view**: what an agent changed in its workspace's git repos, as diffs with syntax colour, and its last commit, read-only
+- **Files screen**: the files of an agent's workspace folder with the changes marked, and a Changes segment with what it changed in its git repos, as diffs with syntax colour, and its last commit, read-only
 - **File attachments**: images from the camera roll, and markdown, text and code files
 - **Device pairing** as the write credential: once a device is paired, every write needs its token
 - **Crews**: several machines' Collies behind one URL, with operator-triggered failover
@@ -258,10 +258,10 @@ and that is the only way to install it on a phone.
 | [**Windows**](./docs/windows.md) | Windows 11 with Herdr: what is supported, installing with `install.ps1`, the unsigned binary, updating, long paths, and what is not tested |
 | [**Security**](./docs/security.md) | What a Collie exposes, the defenses, and pairing a device as the write credential |
 | [**Configure**](./docs/configure.md) | The `.env`, your own slash commands, keys, quick replies and typefaces; appearance, Zen mode, language |
-| [**Changes**](./docs/changes.md) | What an agent changed in its workspace: the changed files, their diffs and the last commit, from the pane or the dashboard. Read-only git, nested repos, and the two settings that decide how far it looks |
+| [**Changes**](./docs/changes.md) | The Files screen: a workspace's folder with its changes marked, the changed files and their diffs, and the last commit, from the pane or the dashboard's Files tab. Read-only git, nested repos, and the two settings that decide how far it looks |
 | [**Deployment**](./docs/deployment.md) | Front doors other than the default: an identity-aware proxy, a reverse proxy with no Tailscale, an off-host ingress, several Collies on one host (one per user, or several instances for one user), and a crew's standby door |
 | [**Commands**](./docs/commands.md) | Every `collie` verb, putting `collie` on your PATH, and the Herdr actions that mirror the verbs on a Herdr-managed install |
-| [**Multiplexers**](./docs/multiplexers.md) | Pointing Collie at Herdr, tmux, zellij or tuios, what each backend can answer, and agent beacons. Experimental for tmux, zellij and tuios; bug reports wanted |
+| [**Multiplexers**](./docs/multiplexers.md) | Pointing Collie at Herdr, tmux, zellij, tuios or Tern, what each backend can answer, and agent beacons. Experimental for tmux, zellij, tuios and Tern; bug reports wanted |
 | [**Crews**](./docs/crew.md) | Several machines' Collies behind one URL: invite, join, deputy, failover |
 | [**Voice input and Web Push**](./docs/voice-and-push.md) | The microphone in the composer, and notifications when an agent is waiting on you |
 | [**Manage & update**](./docs/upgrading.md) | Update from the phone or the terminal, roll back, update a crew, cross a major, stop, uninstall, and upgrading a 0.x install to 1.0 |
@@ -313,13 +313,26 @@ Linux and macOS: nothing changes for you.
 Check the release assets before installing. Install only when the assets include
 `collie-<version>-windows-x64.zip`. If they do not, `install.ps1` and `collie update` say so and
 install nothing. This fork permanently waives only the Windows VM install, update and rollback
-rehearsal, and that path remains unverified. Phone access needs a front door that you set up yourself, and it has not been
-tested on Windows.
+rehearsal, and that path remains unverified. Phone access needs a front door that you set up yourself,
+and it has not been tested with this fork on Windows.
 
-Windows 11 on x64 with Herdr is a supported host: the maintainer owns the code and tests it. It stays
-marked experimental, because the install path and the phone path are not yet proven against a real
-release. The conditions for dropping the word are on the Windows page. [**docs/windows.md**](./docs/windows.md) has the install, the update, and what is not
-tested. In short:
+Upstream's installer:
+
+```powershell
+irm https://colliepwa.dev/install.ps1 | iex
+```
+
+Upstream v1.16.0 is its first release with a Windows zip. Its installer was run against that release on
+a Windows 11 VM, and `collie start`, `status`, `doctor` and `stop` worked. Phone access over HTTP
+through Tailscale Serve was run too. Not tested yet are an update between two real releases on
+Windows and the HTTPS form of Tailscale Serve on Windows, which is why it stays experimental.
+
+The release check requires the Windows zip from now on. Only the maintainer can override that, for a
+Linux hotfix.
+
+Windows 11 on x64 with Herdr is a supported host: the maintainer owns the code and tests it.
+The conditions for dropping the word are on the Windows page. [**docs/windows.md**](./docs/windows.md)
+has the install, the update, and what is not tested. In short:
 
 - **Checks.** The `windows.yml` workflow runs the bridge, cli and scripts tests on pull requests
   and pushes to `main`. This fork permanently waives only the Windows 11 VM rehearsal; install,

@@ -791,19 +791,128 @@ describe("collie doctor — the local checks", () => {
     expect(byCheck.get("front-door")?.remedy).toContain("https://login.tailscale.com/admin/dns");
   });
 
+  test("front-door: on a Windows host the no-certificates remedy names the by-hand command, not `collie serve` (#172)", async () => {
+    const answers: NonNullable<Scripted["answers"]> = [
+      ["tailscale status --json", { stdout: JSON.stringify({ Self: { DNSName: "laptop.tail.ts.net." } }) }],
+      ["tailscale serve status --json", { stdout: SERVE_OK }],
+      ...netmapAnswers(NETMAP_OPEN),
+    ];
+    const win = harness(null, [], { answers });
+    win.deps = { ...win.deps, host: hostFor("win32") };
+    const winFinding = (await findings(win)).byCheck.get("front-door")!;
+    expect(winFinding.status).toBe("warn");
+    expect(winFinding.detail).toContain("no HTTPS certificates");
+    expect(winFinding.remedy).toContain("https://login.tailscale.com/admin/dns");
+    expect(winFinding.remedy).toContain(`tailscale serve --bg --set-path=/ ${win.deps.ctx.port}`);
+    expect(winFinding.remedy).toContain(`tailscale serve --bg --http=80 --set-path=/ ${win.deps.ctx.port}`);
+    expect(winFinding.remedy).toContain("pair a device");
+    expect(winFinding.remedy).toContain("docs/windows.md");
+    expect(winFinding.remedy).not.toContain("collie serve");
+
+    const posix = harness(null, [], { answers });
+    posix.deps = { ...posix.deps, host: hostFor("linux") };
+    const posixFinding = (await findings(posix)).byCheck.get("front-door")!;
+    expect(posixFinding.remedy).toContain("collie serve");
+    expect(posixFinding.remedy).not.toContain("tailscale serve --bg");
+  });
+
+  test("front-door: on a Windows host a solo collie with no mapping is told the by-hand command, not `collie serve`", async () => {
+    const files = healthyFiles();
+    delete files[HANDLER];
+    const answers: NonNullable<Scripted["answers"]> = [
+      ["tailscale status --json", { stdout: CERTS_ONLY }],
+      ["tailscale serve status --json", { stdout: "{}" }],
+      ...netmapAnswers(NETMAP_OPEN),
+    ];
+    const win = harness(null, [], { files, answers });
+    win.deps = { ...win.deps, host: hostFor("win32") };
+    const winFinding = (await findings(win)).byCheck.get("front-door")!;
+    expect(winFinding.status).toBe("warn");
+    expect(winFinding.remedy).toContain(`tailscale serve --bg --set-path=/ ${win.deps.ctx.port}`);
+    expect(winFinding.remedy).toContain("pair a device");
+    expect(winFinding.remedy).toContain("COLLIE_SKIP_SERVE=1");
+    expect(winFinding.remedy).not.toContain("collie serve");
+
+    const posix = harness(null, [], { files, answers });
+    posix.deps = { ...posix.deps, host: hostFor("linux") };
+    expect((await findings(posix)).byCheck.get("front-door")?.remedy).toContain("`collie serve` here");
+  });
+
+  test("front-door: on a Windows host a hand-made root mount that proxies to this collie passes; a POSIX host still warns", async () => {
+    const files = healthyFiles();
+    delete files[HANDLER];
+    const answers: NonNullable<Scripted["answers"]> = [
+      ["tailscale status --json", { stdout: CERTS_ONLY }],
+      ["tailscale serve status --json", { stdout: SERVE_OK }],
+      ...netmapAnswers(NETMAP_OPEN),
+    ];
+    const win = harness(null, [], { files, answers });
+    win.deps = { ...win.deps, host: hostFor("win32") };
+    const winFinding = (await findings(win)).byCheck.get("front-door")!;
+    expect(winFinding.status).toBe("ok");
+    expect(winFinding.detail).toContain(`proxies to http://127.0.0.1:${win.deps.ctx.port}`);
+    expect(winFinding.detail).toContain("published by hand");
+
+    const posix = harness(null, [], { files, answers });
+    posix.deps = { ...posix.deps, host: hostFor("linux") };
+    const posixFinding = (await findings(posix)).byCheck.get("front-door")!;
+    expect(posixFinding.status).toBe("warn");
+    expect(posixFinding.remedy).toContain("`collie serve` here");
+  });
+
+  test("front-door: on a Windows host a hand-made HTTP mount on :80 passes on a tailnet with no certificates (Headscale)", async () => {
+    const files = healthyFiles();
+    delete files[HANDLER];
+    const serveHttp80 = JSON.stringify({
+      TCP: { "80": { HTTP: true } },
+      Web: { "laptop.tail.ts.net:80": { Handlers: { "/": { Proxy: PROXY } } } },
+    });
+    const answers: NonNullable<Scripted["answers"]> = [
+      ["tailscale status --json", { stdout: JSON.stringify({ Self: { DNSName: "laptop.tail.ts.net." } }) }],
+      ["tailscale serve status --json", { stdout: serveHttp80 }],
+      ...netmapAnswers(NETMAP_OPEN),
+    ];
+    const win = harness(null, [], { files, answers });
+    win.deps = { ...win.deps, host: hostFor("win32") };
+    const winFinding = (await findings(win)).byCheck.get("front-door")!;
+    expect(winFinding.status).toBe("ok");
+    expect(winFinding.detail).toContain(`:80 proxies to http://127.0.0.1:${win.deps.ctx.port}`);
+
+    // A mount on :80 that proxies somewhere else is not ours: the certificate warning stays.
+    const elsewhere = harness(null, [], {
+      files,
+      answers: [
+        answers[0]!,
+        ["tailscale serve status --json", { stdout: serveHttp80.replace(PROXY, "http://127.0.0.1:9999") }],
+        ...netmapAnswers(NETMAP_OPEN),
+      ],
+    });
+    elsewhere.deps = { ...elsewhere.deps, host: hostFor("win32") };
+    const elsewhereFinding = (await findings(elsewhere)).byCheck.get("front-door")!;
+    expect(elsewhereFinding.status).toBe("warn");
+    expect(elsewhereFinding.detail).toContain("no HTTPS certificates");
+
+    const posix = harness(null, [], { files, answers });
+    posix.deps = { ...posix.deps, host: hostFor("linux") };
+    const posixFinding = (await findings(posix)).byCheck.get("front-door")!;
+    expect(posixFinding.status).toBe("warn");
+    expect(posixFinding.detail).toContain("no HTTPS certificates");
+  });
+
   test("front-door: a LEAD with no mapping and no COLLIE_SKIP_SERVE is an error", async () => {
     const files = { ...healthyFiles(), ...markerFile(LEAD) };
     delete files[HANDLER];
-    const { code, byCheck } = await findings(
-      harness(LEAD, [hello()], {
-        files,
-        answers: [
-          ["tailscale status --json", { stdout: CERTS_ONLY }],
-          ["tailscale serve status --json", { stdout: "{}" }],
-          ...netmapAnswers(NETMAP_OPEN),
-        ],
-      }),
-    );
+    const lead = harness(LEAD, [hello()], {
+      files,
+      answers: [
+        ["tailscale status --json", { stdout: CERTS_ONLY }],
+        ["tailscale serve status --json", { stdout: "{}" }],
+        ...netmapAnswers(NETMAP_OPEN),
+      ],
+    });
+    // The remedy names `collie serve` on a POSIX host only; a Windows host is told the by-hand command.
+    lead.deps = { ...lead.deps, host: hostFor("linux") };
+    const { code, byCheck } = await findings(lead);
     expect(byCheck.get("front-door")?.status).toBe("error");
     expect(byCheck.get("front-door")?.remedy).toContain("collie serve");
     expect(code).toBe(EXIT.FAIL);
@@ -1324,7 +1433,7 @@ describe("mux", () => {
     const finding = byCheck.get("mux")!;
     expect(finding.status).toBe("error");
     expect(finding.detail).toContain("no multiplexers are running");
-    expect(finding.remedy).toContain("COLLIE_MUX=<herdr|tmux|tuios|zellij> collie start");
+    expect(finding.remedy).toContain("COLLIE_MUX=<herdr|tern|tmux|tuios|zellij> collie start");
   });
 
   test("nothing configured and two multiplexers running is an error naming both", async () => {
@@ -1939,6 +2048,26 @@ describe("the config-file finding", () => {
     const f = (await findings(h)).byCheck.get("config-file")!;
     expect(f.status).toBe("error");
     expect(f.remedy).toBe("run the `icacls` line the warning above names for that file, then `collie restart`");
+  });
+
+  test("solo on a Windows host says it cannot join or lead, and suggests no verb that refuses", async () => {
+    const h = harness(null);
+    h.deps = { ...h.deps, host: hostFor("win32") };
+    await cmdDoctor(h.deps, []);
+    const lines = h.io.stdout;
+    const at = lines.indexOf("crew: none — this collie is not in a crew.");
+    expect(at).toBeGreaterThan(-1);
+    expect(lines[at + 1]).toBe("  A Windows machine cannot join or lead a crew in this release.");
+    expect(lines.join("\n")).not.toContain("crew invite");
+  });
+
+  test("solo on a POSIX host still names both ways into a crew", async () => {
+    const h = harness(null);
+    h.deps = { ...h.deps, host: hostFor("linux") };
+    await cmdDoctor(h.deps, []);
+    const lines = h.io.stdout;
+    const at = lines.indexOf("crew: none — this collie is not in a crew.");
+    expect(lines[at + 1]).toBe("  `collie crew invite` here makes it a lead; `collie join …` makes it a peer.");
   });
 
   test("a typo'd COLLIE_CONFIG shows as an absent path rather than as silence", async () => {

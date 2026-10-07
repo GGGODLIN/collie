@@ -45,7 +45,7 @@ A Herdr plugin is still the same `collie` binary; the actions forward to it
 the verbs that have no action (`pair`, `qr`, `logs`, `link`, `devices`, `stt`, `config`) run from
 the plugin's directory as `bin/collie <verb>`.
 
-Herdr is also one of the three multiplexers Collie can mirror. Which one you mirror is a separate
+Herdr is also one of the five multiplexers Collie can mirror (Herdr, tmux, zellij, tuios and tern). Which one you mirror is a separate
 choice ([Name your multiplexer](#name-your-multiplexer)): a standalone Collie can mirror Herdr, and
 a Herdr plugin can mirror tmux.
 
@@ -59,7 +59,7 @@ experimental; see [Windows support](#windows-support-experimental).
 | `curl`, `tar`, sha256 tool (`sha256sum`/`shasum`) | Binary install script and updates | Download and verify release archives. |
 | [Bun](https://bun.sh) | Source builds | Run the bridge and build the web UI. |
 | git | Source builds and Herdr routes | Clone and update the repository. |
-| Multiplexer: Herdr, [tmux](https://github.com/tmux/tmux), or [zellij](https://zellij.dev) | All installs | Mirrored backend set via `COLLIE_MUX`. tmux and zellij are experimental in 1.0; see [Pointing Collie at a multiplexer](multiplexers.md#pointing-collie-at-a-multiplexer) and [`MUX_CONTRACT.md`](../MUX_CONTRACT.md). |
+| Multiplexer: Herdr, [tmux](https://github.com/tmux/tmux), [zellij](https://zellij.dev), tuios or tern | All installs | Mirrored backend set via `COLLIE_MUX`. tmux and zellij are experimental in 1.0, and tuios and tern are experimental too; see [Pointing Collie at a multiplexer](multiplexers.md#pointing-collie-at-a-multiplexer) and [`MUX_CONTRACT.md`](../MUX_CONTRACT.md). |
 | [Herdr](https://herdr.dev) ≥ 0.7.0 | Herdr backend only | Required when `COLLIE_MUX=herdr`. Check with `herdr --version`. |
 | [Tailscale](https://tailscale.com) | The default front door | `tailscale serve` proxies Collie to your tailnet. Not needed behind [another front door](deployment.md#front-doors-one-product-at-a-time). |
 
@@ -171,18 +171,20 @@ macOS has no package yet. [mise](#mise) works on a Mac, as does the `aarch64-dar
 > against a real release, and it stays until the conditions on the Windows page are all met.
 > [Collie on Windows](windows.md) has the whole page.
 
-Save `scripts/install.ps1` from the repository, read it, and run it. It needs no Bun, Git or
-`bash`:
+Run `install.ps1`. It needs no Bun, Git or `bash`:
 
 ```powershell
 $env:COLLIE_UPDATE_REPO = "GGGODLIN/collie"
 Invoke-WebRequest -OutFile install.ps1 `
   https://raw.githubusercontent.com/GGGODLIN/collie/main/scripts/install.ps1
+notepad install.ps1
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-`irm https://colliepwa.dev/install.ps1 | iex` is the intended front door once that address is live.
-Then open a new terminal, start Herdr, and run `collie start`.
+Then open a new terminal and start Herdr. Herdr takes over that terminal, so open a second terminal
+or a Herdr pane and run `collie start` there.
+[Zero to phone](windows.md#zero-to-phone) has every step, including how to open Collie on your
+phone.
 
 What to know before you start:
 
@@ -190,9 +192,11 @@ What to know before you start:
   covered.
 - **The binary is unsigned.** SmartScreen can ask before it runs, and Smart App Control can block it.
   [Windows page](windows.md#unsigned-binary-smartscreen-and-smart-app-control).
-- **There is no managed front door yet.** `collie start` does not run `tailscale serve` on Windows.
-  Bring your own, as in
-  [Variant C](deployment.md#variant-c--reverse-proxy-as-the-only-front-door-no-tailscale).
+- **You publish the address yourself.** On Linux and macOS `collie start` runs `tailscale serve`
+  for you. On Windows it does not, so you run it by hand: [Reaching it from your phone](windows.md#reaching-it-from-your-phone) has the
+  steps with Tailscale, and
+  [Variant C](deployment.md#variant-c--reverse-proxy-as-the-only-front-door-no-tailscale) covers a
+  reverse proxy.
 - **A Windows machine cannot join a crew in this release.**
 - **A build from source needs Git for Windows' `bash`.** The zip needs no toolchain.
 - **A source checkout never updates itself on Windows.** Moving to the zip install is a one-time

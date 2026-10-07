@@ -20,7 +20,7 @@ import {
 } from "../../src/test/sweep-loop-actions-data.ts";
 import { fill } from "../fixtures/api.ts";
 import { engine } from "./engine.ts";
-import { test } from "./fixtures.ts";
+import { pinTerminalView, test } from "./fixtures.ts";
 
 // Loop batch 03. Account refusal is the bridge's HTTP 409 account.draft_present
 // body, shown with messages/en.ts; it does not prove the terminal draft was kept.
@@ -109,10 +109,11 @@ async function fulfillPath<Body>(pathname: string, body: Body, status = 200): Pr
 
 async function openDashboard(app: Openable, screen: Screen): Promise<void> {
   await app.open(DASHBOARD);
-  await expect(screen.getByRole("navigation", en["home.tabs.aria"]).getByRole("button", en["home.tabs.panes"])).toBeVisible();
+  await expect(screen.getByRole("navigation", en["home.tabs.aria"]).getByRole("button", new RegExp(`^${en["home.tabs.dashboard"]}(?:\\s*,|$)`, "u"))).toBeVisible();
 }
 
 async function openClaudeSheet(app: Openable, screen: Screen): Promise<void> {
+  await pinTerminalView();
   await openDashboard(app, screen);
   await expect(screen.getByRole("button", CLAUDE_ROW)).toBeVisible();
   await screen.getByRole("button", CLAUDE_ROW).tap();
@@ -124,7 +125,7 @@ function posted(posts: readonly ApiPost[], suffix: string): ApiPost[] {
   return posts.filter((post) => post.path.endsWith(suffix));
 }
 
-test("ACCT-DRAFT/refuse — Personal shows the unsent-text refusal, records one account POST, and does not resend", async ({ app, screen, browser }) => {
+test("ACCT-DRAFT/refuse/v2 — Personal shows the unsent-text refusal, records one account POST, and does not resend", async ({ app, screen, browser }) => {
   const posts = watchApiPosts();
   const wire = accountDraftWire();
   const paneId = claudePaneId();
@@ -155,7 +156,7 @@ test("ACCT-DRAFT/refuse — Personal shows the unsent-text refusal, records one 
   expect(posted(posts, "/reply")).toEqual([]);
 });
 
-test("RETELL-ON/lost — Plain and Lost are offered, and Lost shows the original finished answer", async ({ app, screen, browser }) => {
+test("RETELL-ON/lost/v2 — Plain and Lost are offered, and Lost shows the original finished answer", async ({ app, screen, browser }) => {
   const posts = watchApiPosts();
   const paneId = claudePaneId();
   await fulfillPath("/api/snapshot", idleClaudeSnapshot());
@@ -179,7 +180,7 @@ test("RETELL-ON/lost — Plain and Lost are offered, and Lost shows the original
   ]);
 });
 
-test("RETELL-ON/plain-broken — Plain shows the original sidecar reason", async ({ app, screen, browser }) => {
+test("RETELL-ON/plain-broken/v2 — Plain shows the original sidecar reason", async ({ app, screen, browser }) => {
   const posts = watchApiPosts();
   const paneId = claudePaneId();
   await fulfillPath("/api/snapshot", idleClaudeSnapshot());

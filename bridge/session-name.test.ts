@@ -82,6 +82,51 @@ describe("extractClaudeSessionName — styled reads", () => {
   test("an unstyled plain rule above the styled prompt is unnamed", () => {
     expect(extractClaudeSessionName(readFileSync(join(FIXTURES, "claude--fresh-idle.txt"), "utf8"))).toBeNull();
   });
+
+  // The cases below are not in a capture. tmux (`capture-pane -e`) and zellij hand back styled text
+  // too, and a terminal may spell one colour several ways, so the rule is pinned against each spelling.
+  test("a palette chip matches its rule whichever code names the colour", () => {
+    const basic = `${sgr("31")}${RULE} ${sgr("30")}${sgr("41")}my-name${sgr("0")}${sgr("31")} ─${sgr("0")}`;
+    const bright = `${sgr("91")}${RULE} ${sgr("30")}${sgr("101")}my-name${sgr("0")}${sgr("91")} ─${sgr("0")}`;
+    const mixed = `${sgr("31")}${RULE} ${sgr("30")}${sgr("48;5;1")}my-name${sgr("0")}${sgr("31")} ─${sgr("0")}`;
+    expect(extractClaudeSessionName(box(basic))).toBe("my-name");
+    expect(extractClaudeSessionName(box(bright))).toBe("my-name");
+    expect(extractClaudeSessionName(box(mixed))).toBe("my-name");
+  });
+
+  test("a chip drawn in inverse video over the rule's colour is a name", () => {
+    const rule = `${sgr("38;2;220;38;38")}${RULE} ${sgr("7")}my-name${sgr("27")} ─${sgr("0")}`;
+    expect(extractClaudeSessionName(box(rule))).toBe("my-name");
+  });
+
+  test("a colour set on an earlier row carries into the rule", () => {
+    const text = [
+      `${sgr("38;2;220;38;38")}scrollback`,
+      `${RULE} ${sgr("38;2;0;0;0")}${sgr("48;2;220;38;38")}my-name${sgr("49")}${sgr("38;2;220;38;38")} ─${sgr("0")}`,
+      `${sgr("0")}❯`,
+    ].join("\n");
+    expect(extractClaudeSessionName(text)).toBe("my-name");
+  });
+
+  test("a coloured badge on a rule in the default colour is not a name", () => {
+    const rule = `${sgr("0")}${RULE} ${sgr("35")}ultracode ${sgr("0")}─`;
+    expect(extractClaudeSessionName(box(rule))).toBeNull();
+  });
+
+  test("a name in the default colour on a rule in the default colour is a name", () => {
+    expect(extractClaudeSessionName(box(`${sgr("0")}${RULE} my-name ─`))).toBe("my-name");
+  });
+
+  test("a colour this reader cannot parse says nothing, so the cached name stays", () => {
+    const rule = `${sgr("38:2::220:38:38")}${RULE} my-name ─${sgr("0")}`;
+    expect(extractClaudeSessionName(box(rule))).toBeUndefined();
+  });
+
+  test("without any colour the badge still reads as a name (the known limit)", () => {
+    // A multiplexer that drops colour leaves nothing to tell the two apart, so the words are taken
+    // as a name rather than lose a real one.
+    expect(extractClaudeSessionName(["──── ultracode ─", "❯"].join("\n"))).toBe("ultracode");
+  });
 });
 
 describe("extractClaudeSessionName — no name / no false positives", () => {

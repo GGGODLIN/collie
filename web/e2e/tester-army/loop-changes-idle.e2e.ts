@@ -55,7 +55,7 @@ function footer(screen: Screen) {
 
 async function openClaudePane(app: Openable, screen: Screen): Promise<void> {
   await app.open("/");
-  await expect(footer(screen).getByRole("button", en["home.tabs.panes"])).toBeVisible();
+  await expect(footer(screen).getByRole("button", new RegExp(`^${en["home.tabs.dashboard"]}(?:\\s*,|$)`, "u"))).toBeVisible();
   await screen.getByRole("button", /^claude logo claude/u).tap();
 }
 
@@ -67,7 +67,16 @@ async function expectCheckoutRow(screen: Screen): Promise<void> {
   await expect(row).toHaveAccessibleName(/−1/u);
 }
 
-test("CHG-LIST/pane — the belt opens the fixture list, List shows checkout.tsx as Modified, and the read posts nothing", async ({ app, screen, browser, prepared }) => {
+async function showChangesList(screen: Screen): Promise<void> {
+  const mode = screen.getByRole("radiogroup", en["files.mode.aria"]);
+  const changes = mode.getByRole("radio", /^Changes\b/u);
+  await expect(mode.getByRole("radio", en["files.mode.all"])).toHaveAttribute("aria-checked", "true");
+  await changes.tap();
+  await expect(changes).toHaveAttribute("aria-checked", "true");
+  await expect(screen.getByRole("button", en["changes.layout.tree"])).toHaveAttribute("aria-pressed", "false");
+}
+
+test("CHG-LIST/pane/v2 — the Files belt opens Changes and shows checkout.tsx as Modified without writes", async ({ app, screen, browser, prepared }) => {
   expect(prepared).toBe(true);
   const writes = watchWrites();
   await openClaudePane(app, screen);
@@ -75,11 +84,8 @@ test("CHG-LIST/pane — the belt opens the fixture list, List shows checkout.tsx
   const entry = screen.getByRole("button", en["chat.changes.label"]);
   await expect(entry).toBeVisible();
   await entry.tap();
-  // The heading's accessible name is the title plus the workspace label, not the title alone.
-  await expect(screen.getByRole("heading", new RegExp(`^${en["changes.title"]}\\b`, "u"))).toBeVisible();
-  const listLayout = screen.getByRole("radiogroup", en["changes.layout.aria"]).getByRole("radio", en["changes.layout.list"]);
-  await listLayout.tap();
-  await expect(listLayout).toHaveAttribute("aria-checked", "true");
+  await expect(screen.getByRole("heading", new RegExp(`^${en["files.title"]}\\b`, "u"))).toBeVisible();
+  await showChangesList(screen);
   await expectCheckoutRow(screen);
   await expect(screen.getByRole("button", /^Stage\b/u)).toHaveCount(0);
   await expect(screen.getByRole("button", /^Commit\b/u)).toHaveCount(0);
@@ -87,17 +93,18 @@ test("CHG-LIST/pane — the belt opens the fixture list, List shows checkout.tsx
   expect(writes).toEqual([]);
 });
 
-test("CHG-LIST/dashboard — footer Changes opens the webapp row onto the same fixture file", async ({ app, screen, browser, prepared }) => {
+test("CHG-LIST/dashboard/v2 — footer Files opens webapp and its Changes segment shows the same fixture file", async ({ app, screen, browser, prepared }) => {
   expect(prepared).toBe(true);
   const writes = watchWrites();
   await app.open("/");
-  await footer(screen).getByRole("button", en["changes.title"]).tap();
+  await footer(screen).getByRole("button", en["files.title"]).tap();
   const list = screen.getByRole("list", en["home.changes.listAria"]);
   await expect(list).toBeVisible();
   const row = list.getByRole("button", new RegExp(`^${WEBAPP.label}\\b`, "u"));
   await expect(row).toBeVisible();
   await row.tap();
   await expect(browser).toHaveURL(new RegExp(`/space/${WEBAPP.workspaceId}/changes`, "u"));
+  await showChangesList(screen);
   await expectCheckoutRow(screen);
   expect(writes).toEqual([]);
 });

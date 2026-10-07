@@ -1,8 +1,22 @@
 import { surfaceOf, test as base } from "@e2e-dev/web";
 
 import { installApiStub } from "../fixtures/api.ts";
+import { parseJsonObject } from "../../src/lib/json.ts";
 import { resetTypedDraft } from "../../src/test/handlers.ts";
 import { engine } from "./engine.ts";
+
+// 鏡像案例需要 Terminal；保留其他設定，避免抹掉案例已選的 Zen 或清單偏好。
+export async function pinTerminalView(): Promise<void> {
+  const live = surfaceOf(engine);
+  if (live === undefined) throw new Error("TesterArmy has no active browser surface");
+  const storageKey = "collie:dash-prefs:v1";
+  const stored = await live.page().evaluate((key) => window.localStorage.getItem(key), storageKey);
+  const prefs = parseJsonObject(stored ?? "") ?? {};
+  await live.page().evaluate(
+    ([key, value]) => window.localStorage.setItem(key, value),
+    [storageKey, JSON.stringify({ ...prefs, paneView: "terminal" })] as const,
+  );
+}
 
 export const test = base.extend<{ prepared: boolean }>({
   prepared: async ({ app }, use) => {

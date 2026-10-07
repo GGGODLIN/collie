@@ -19,10 +19,13 @@ explicit need, verify it with the nearest targeted tests, lint and `bun run buil
 Do not enter a full spec / ticket / review workflow, add architecture, refactor adjacent code or run
 the full test / E2E suite unless the user asks or the requested change directly requires it.
 
-A task is not finished at commit or push. After verification, deploy the resulting build to the
-active local Collie instance and leave it ready for phone acceptance. If a change has no deployable
-runtime effect, say so explicitly instead of silently skipping deployment. This applies to the
-operator's own runtime changes, not to preparing an upstream PR or to someone else's clone.
+A task is not finished at commit or push. The operator's Collie follows this fork's `main`: it runs
+the newest fork release and takes the next one through the in-app update, so a change reaches the
+phone only in a release. Building a `dev` checkout deploys nothing. After verification, say whether
+the change needs a release to be seen; when the user wants it on the phone now, cut one (*Fork
+branches and releases* → *Cutting a release*), otherwise it ships with the next. If a change has no
+runtime effect, say so. This applies to the operator's own runtime changes, not to preparing an
+upstream PR or to someone else's clone.
 
 The fork is also published for other people to install and use, and its general changes are
 candidates for upstream. Two rules follow from that:
@@ -139,14 +142,12 @@ release. 1.14.2 was cut this way on 2026-09-28.
    The `windows.yml` run on the release commit must be green as well. **Fork override:** this fork
    never runs that VM rehearsal. The only rule for what is waived and what still holds is *Fork
    branches and releases* → *Windows VM rehearsal*. [ADR 0075](./.adr/0075-windows-is-a-supported-host.md)
-   is not withdrawn. If this release is the first
-   to carry the Windows zip, rewrite the "today" box in `docs/windows.md`, the README and
-   `docs/install.md` in the release commit: they say no release carries the zip. Then tag and push
-   (next paragraph).
+   is not withdrawn. Then tag and push (next paragraph).
 
-   A missing Windows zip stops the release once a published release has carried one, from
-   2026-11-15 (`WINDOWS_ASSET_MANDATORY_FROM` in `scripts/windows-asset.ts`), and whenever the
-   releases API does not answer. For a Linux hotfix while the Windows job is broken, set the
+   A missing Windows zip stops the release from the first of two moments: once an earlier stable
+   release (not a draft, not a prerelease) has carried one, or on 2026-11-15
+   (`WINDOWS_ASSET_MANDATORY_FROM` in `scripts/windows-asset.ts`). It also stops the release
+   whenever the releases API does not answer. For a Linux hotfix while the Windows job is broken, set the
    repository variable `COLLIE_WINDOWS_ASSET_OVERRIDE` to `optional` (Settings > Secrets and
    variables > Actions > Variables) before the tag, and delete it right after the release: the run
    warns loudly while it is set. To move the date instead, change that one constant in a commit.
@@ -513,7 +514,8 @@ lint guard, the crew-wire guard or the `flake.lock` guard.
 - Routes (`web/src/router.tsx`): `/`, `/space/:spaceId`, `/settings` (an INDEX of four sections:
   `/settings/appearance`, `/settings/device`, `/settings/alerts`, `/settings/system`), `/pane/:paneId`,
   `/pane/:paneId/history`, `/pane/:paneId/changes` and `/space/:spaceId/changes` (both matched as
-  `changes/*`, so the commit view `…/changes/commit` shares the list's component). The router
+  `changes/*`, so the commit view `…/changes/commit` and a folder or file of the tree `…/changes/files`
+  share the screen's route; the tree's root is `…/changes` itself, ADR 0083). The router
   instance is module-scoped so it keeps its location.
 - **Back goes up one level.** Navigate through `useNav()` (`web/src/hooks/use-nav.ts`): down is a
   push that records `from`, sideways is a replace, up steps back onto a legitimate parent or
@@ -681,14 +683,19 @@ the rule below: `stt.json` in the state dir when the operator ran `collie stt se
 font files under `<config-dir>/fonts`, served read-only through `bridge/operator-fonts.ts`
 ([ADR 0033](./.adr/0033-the-app-face-is-a-device-preference.md)).
 
-**The law is that a CLIENT-SUPPLIED value becomes a path in two places only: the journal, and the
-Changes view** — in the journal it is a pane id, never a path. The Changes view
+**The law is that a CLIENT-SUPPLIED value becomes a path in three places only: the journal, the
+Changes view, and the Files view** — in the journal it is a pane id, never a path. The Changes view
 (`bridge/changes.ts`, [ADR 0065](./.adr/0065-the-changes-view-reads-git-read-only.md)) is bounded by
 a listed-paths rule: a diff is served only for a repo the bridge's own discovery returned and a path
 git listed there, and an untracked read goes through `containedRealpath` too. Its git runs are
 hardened against repo-driven code execution (fsmonitor, external diff, textconv, filter drivers);
-don't drop a `-c` there without reading the module header. `GET /api/fonts/<basename>` does not
-become a third such place: the request's name is **looked up** in the rows the operator's own
+don't drop a `-c` there without reading the module header. The Files view (`bridge/files-view.ts`,
+[ADR 0083](./.adr/0083-the-files-view-reads-the-changes-root.md)) is bounded by the Changes root: the
+root comes off the snapshot, never the request, and its real path must pass the same bound; the
+client's path is relative, refused on its shape before any disk call, and its real path must sit
+inside the root's through `containedRealpath`; `.git` and the bridge's state and config folders are
+denied on top. It needs an authorised device (`device-read`), and its bytes go out as JSON, never as
+a document. `GET /api/fonts/<basename>` does not become a fourth such place: the request's name is **looked up** in the rows the operator's own
 `theme.toml` declared and that row's path is taken, so a name nobody declared is refused before any path exists. The containment
 rule in [`files.ts`](./bridge/journal/files.ts) then runs anyway, on both surfaces and as an
 independent second check: **every** path about to be read goes through `containedRealpath` — after
@@ -735,7 +742,8 @@ never a shell, a daemon or a client-chosen string. Absent file, absent feature
 **Two device gates guard writes, independently, and compose by AND.** `COLLIE_DEVICE_HEADER` trusts
 a name a proxy injects; **pairing** (`bridge/pairing.ts`, `collie pair` / `collie devices`) requires a
 bearer credential the device holds, and is on exactly when the registry is non-empty. Reads stay
-ungated by both. Neither applies to `/crew/v1/*`, which has its own two factors. The reasoning sits in
+ungated by both, with one exception: the Files view asks for both as a `device-read`
+([ADR 0083](./.adr/0083-the-files-view-reads-the-changes-root.md)). Neither applies to `/crew/v1/*`, which has its own two factors. The reasoning sits in
 `bridge/pairing.ts`'s header; don't collapse the two gates into one.
 
 **Collie manages exactly one front door: `tailscale serve`** — the CLI (`cli/serve.ts`) publishes it,
@@ -782,7 +790,7 @@ Environment traps and trajectories live in `e2e-live/trajectories/`.
 This fork keeps two branches and its own version line; both override upstream's defaults here.
 
 - **`dev` takes every change.** Commit and push to `dev`, never to `main`. The operator's active
-  Collie runs a checkout of `dev`, so *Project mode*'s deploy step means rebuilding that checkout.
+  Collie follows `main` through the in-app update, so a `dev` change reaches it only in a release.
 - **`main` holds releases, plus docs-only commits between them, and only moves forward.** It is
   upstream's history followed by one commit per fork release (or docs-only change, below), whose
   tree is exactly the tree of a commit on `dev`; its first parent is always the previous `main`. Never rebuild or force-push a published
