@@ -38,6 +38,10 @@ PATH. Details and rollback: [`docs/upgrading.md`](./docs/upgrading.md) → *Upgr
 
 - **A session name survives the other ways a terminal spells a colour.** The name-or-badge check now reads palette codes, inverse video and colours carried over from an earlier row the way a terminal does, so a tmux or zellij pane is not read as unnamed and a badge on a default-coloured rule is not read as a name. A rule whose colours it cannot read keeps the name Collie already had.
 
+### Packaging
+
+- **Each release carries an unsigned CollieIsland.ipa for sideloading.** A macOS job runs `ios/scripts/build-ipa.sh` after the release is created and attaches the .ipa with its `.sha256`; it is not in the integrity manifest, so a failed iOS build never holds back the payloads. The script refuses to package an app that carries a Collie address. `ios/README.md` gains "Install without Xcode" (AltStore with a free Apple ID) and "Change the address".
+
 ## [1.16.2] - 2026-10-06
 
 ### Changed

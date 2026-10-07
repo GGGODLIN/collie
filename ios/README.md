@@ -8,8 +8,9 @@ island and it jumps to the pane that needs you most.
   <img src="../assets/fork/lock-screen.jpg" alt="The iPhone lock screen with the same Collie card under the clock" width="160">
 </p>
 
-It is built from source and signed with your own Apple ID. A free Apple ID is enough: no paid
-developer account, no APNs, no third-party server. It is not on the App Store and cannot be: it
+Build it from source, or sideload the unsigned `CollieIsland.ipa` each release carries (see
+"Install without Xcode"). Either way it is signed with your own Apple ID. A free Apple ID is
+enough: no paid developer account, no APNs, no third-party server. It is not on the App Store and cannot be: it
 stays awake in the background through location updates, which App Review does not accept for this
 purpose.
 
@@ -40,7 +41,89 @@ Don't Allow turns off the island and the lock-screen card; turn Live Activities 
 app's page in the Settings app, where it is listed as Collie.
 
 Every value lives in `Config.local.xcconfig`, which git ignores; `Config.xcconfig` only holds the
-defaults. An app built without a Collie address opens on a line saying so, and fetches nothing.
+defaults. An app built without a Collie address asks for one the first time it opens.
+
+## Install without Xcode
+
+Download `CollieIsland.ipa` from the newest release and sign it with your own Apple ID through
+AltStore. A free Apple ID is enough; the app then has to be refreshed every 7 days, which AltStore
+does in the background.
+
+You need an iPhone on iOS 18 or newer, Tailscale on the phone reaching your Collie, and a Mac or
+Windows PC on the same Wi-Fi to run AltServer. That can be the machine that runs Collie.
+
+> **Note.** AltServer has no Linux version. If Collie runs on Linux or on a server away from home,
+> run AltServer on any Mac or Windows PC at home instead.
+
+### Set up AltStore (once)
+
+These steps are for macOS; Windows follows [AltStore's Windows guide](https://faq.altstore.io/altstore-classic/how-to-install-altstore-windows).
+
+1. Install AltServer.
+
+   ```bash
+   brew install --cask altserver
+   ```
+
+2. Open AltServer from Applications, and allow it to find devices on the local network.
+3. If its menu shows "Install Mail Plug-in...", follow [AltStore's Mail plug-in steps](https://faq.altstore.io/altstore-classic/how-to-install-altstore-macos/enable-mail-plug-in).
+4. Connect the iPhone with a cable and trust the computer on the phone.
+5. Choose Install AltStore → your iPhone in the AltServer menu, and sign in with your Apple ID.
+6. On the phone, trust your Apple ID under Settings → General → VPN & Device Management.
+7. Turn on Developer Mode under Settings → Privacy & Security, and let the phone restart.
+
+AltStore says your Apple ID and password go only to Apple. A spare Apple ID works too and keeps
+the sideloading apart from your main account.
+
+### Install Collie Island
+
+1. Save `CollieIsland.ipa` to the phone's Files app.
+2. Open AltStore, go to My Apps, tap +, and pick the .ipa.
+3. Open Collie Island and enter your Collie's address.
+4. Allow location **Always**, so the island keeps updating in the background.
+5. Lock the phone and tap **Allow** when iOS asks about Live Activities from Collie.
+
+The 8-hour restart (Control Center button or a Shortcuts automation) works the same as in a
+build from source; see "The 8-hour limit" below.
+
+### Keep it signed
+
+AltStore refreshes its apps in the background whenever AltServer is reachable, over the same
+Wi-Fi or a cable. Set AltServer to open at login and leave it running. If a week passes without
+a refresh, the app stops opening until you tap Refresh All in AltStore with AltServer reachable.
+
+### Limits of a free Apple ID
+
+| limit | what it means here |
+| --- | --- |
+| 3 sideloaded apps active at once | AltStore takes one, Collie Island a second |
+| 10 App IDs a week | Collie Island uses 2, one for the app and one for its widget |
+| 7-day signature | AltStore refreshes it; without a refresh the app stops opening |
+
+AltStore signs the app under a bundle ID of its own, so an install from AltStore and a build from
+source are two separate apps with separate pairings.
+
+> **Note.** Sideloadly does the same job, but its macOS download (0.60) had no code signature on
+> 2026-09-28 and macOS refused to open it.
+
+> **Note.** These steps follow AltStore's own documentation (read 2026-09-28). The .ipa itself was
+> re-signed and installed by hand that day; the AltStore route has not been walked end to end.
+
+## Change the address
+
+The address you type is tested before it is saved: the app reads Collie's `/api/snapshot` and
+keeps the address only if a Collie answered. A typo is refused with the reason, and the old address
+stays.
+
+| when | where |
+| --- | --- |
+| first open, no address yet | the address screen opens by itself |
+| Collie's page does not load | the error screen has **改網址** |
+| any time | Collie → Settings → System → **Collie address** |
+
+The Settings row exists only inside the app. Tapping it asks the app to open its own address
+screen; the page never hands the app an address. An address saved in the app wins over
+`COLLIE_URL` from `Config.local.xcconfig`. Another Collie starts clean: pair the app there again.
 
 ## How it works
 
@@ -164,4 +247,5 @@ limit. With the re-sign at 03:30, the 08:00 trigger brings the island back.
 drafts). The backup is kept per Collie address, so a build pointed at another Collie starts clean. The web view is not created before the
   phone's first unlock, because "Always" location lets iOS start the app earlier than that.
 - Web Push does not work inside the app; the PWA keeps delivering notifications.
-- The app's own text (the location prompt, the Control Center button) is in Traditional Chinese.
+- The app's own text (the address screen, the location prompt, the Control Center button) is in
+  Traditional Chinese.
