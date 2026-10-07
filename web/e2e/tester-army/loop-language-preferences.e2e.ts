@@ -9,10 +9,9 @@ import { test } from "./fixtures.ts";
 
 // Loop batch 05. docs/configure.md: Language is Settings → Appearance and is saved per device;
 // Changes depth is Settings → Device, default on / 2, and turning the folder search off disables
-// the depth without dropping the stored choice; Chat is Settings → Experiments, off until opted
-// in, then the pane menu may offer the view. None of these cases claim a git search or a live Chat
-// transcript. Accessible names are the ones language-control, changes-control and
-// settings-experiments already assert, not strings read back from a failing run.
+// the depth without dropping the stored choice. ADR 0082 makes Chat the default without an opt-in;
+// the pane menu owns the persistent device view choice. These cases claim no git search or live
+// Chat transcript. Names come from the dictionaries and written decisions, not a failing run.
 
 const DASHBOARD = "/";
 
@@ -37,7 +36,7 @@ function footer(screen: Screen) {
 
 async function openSettingsIndex(app: Openable, screen: Screen): Promise<void> {
   await app.open(DASHBOARD);
-  await expect(footer(screen).getByRole("button", en["home.tabs.panes"])).toBeVisible();
+  await expect(footer(screen).getByRole("button", new RegExp(`^${en["home.tabs.dashboard"]}(?:\\s*,|$)`, "u"))).toBeVisible();
   await screen.getByRole("button", en["nav.settings.aria"]).tap();
   await expect(screen.getByRole("heading", en["settings.title"])).toBeVisible();
 }
@@ -60,7 +59,7 @@ async function chooseDepth(screen: Screen, name: (typeof DEPTH)[number]): Promis
 
 async function openClaudeMenu(app: Openable, screen: Screen) {
   await app.open(DASHBOARD);
-  await expect(footer(screen).getByRole("button", en["home.tabs.panes"])).toBeVisible();
+  await expect(footer(screen).getByRole("button", new RegExp(`^${en["home.tabs.dashboard"]}(?:\\s*,|$)`, "u"))).toBeVisible();
   await screen.getByRole("button", /^claude logo claude/u).tap();
   await expect(screen.getByRole("button", en["chat.paneMenu.aria"])).toBeVisible();
   await screen.getByRole("button", en["chat.paneMenu.aria"]).tap();
@@ -132,31 +131,29 @@ test("SET-CHG-RANGE/off — turning folder search off disables the depth radios 
   await expect(depthRadio(screen, DEPTH_CHOSEN)).toHaveAttribute("aria-checked", "true");
 });
 
-test("SET-CHAT/off — Experiments offers Chat off, and the pane menu has Find but no view row", async ({ app, screen }) => {
-  await openSection(app, screen, /^Experiments\b/u, en["settings.section.experiments.title"]);
-  await expect(screen.getByText(en["settings.experiments.contract"])).toBeVisible();
-  const chat = screen.getByRole("switch", en["settings.experiments.chat.title"]);
-  await expect(chat).toHaveAttribute("aria-checked", "false");
-  await expect(screen.getByText(en["settings.experiments.chat.caveat"])).toBeVisible();
+test("SET-CHAT/default/v2 — Chat needs no opt-in, and the pane menu offers Terminal view", async ({ app, screen }) => {
+  await openSettingsIndex(app, screen);
+  await expect(screen.getByRole("button", /^Experiments\b/u)).toHaveCount(0);
 
-  const sheet = await openClaudeMenu(app, screen);
-  await expect(sheet.getByRole("button", /^Chat view\b/u)).toHaveCount(0);
-  await expect(sheet.getByRole("button", /^Terminal view\b/u)).toHaveCount(0);
-});
-
-test("SET-CHAT/reload — turning Chat on stays on after reload, and the pane menu then offers the view", async ({ app, screen }) => {
-  await openSection(app, screen, /^Experiments\b/u, en["settings.section.experiments.title"]);
-  const chat = screen.getByRole("switch", en["settings.experiments.chat.title"]);
-  await expect(chat).toHaveAttribute("aria-checked", "false");
-  await chat.tap();
-  await expect(chat).toHaveAttribute("aria-checked", "true");
-
-  await page().reload();
-  await expect(screen.getByRole("heading", en["settings.section.experiments.title"])).toBeVisible();
-  await expect(chat).toHaveAttribute("aria-checked", "true");
-
-  // Default paneView is already "chat" (use-dash-prefs), so the row names the place it goes: Terminal view.
-  // A hint may follow the label when this pane has no transcript; the label itself is the row.
   const sheet = await openClaudeMenu(app, screen);
   await expect(sheet.getByRole("button", /^Terminal view\b/u)).toBeVisible();
+  await expect(sheet.getByRole("button", /^Chat view\b/u)).toHaveCount(0);
+});
+
+test("SET-CHAT/reload/v2 — Terminal and Chat choices both survive reload without an experiment switch", async ({ app, screen }) => {
+  const sheet = await openClaudeMenu(app, screen);
+  await sheet.getByRole("button", /^Terminal view\b/u).tap();
+  await expect(sheet).toBeHidden();
+
+  await page().reload();
+  await screen.getByRole("button", en["chat.paneMenu.aria"]).tap();
+  await expect(sheet.getByRole("button", /^Chat view\b/u)).toBeVisible();
+  await expect(sheet.getByRole("button", /^Terminal view\b/u)).toHaveCount(0);
+  await sheet.getByRole("button", /^Chat view\b/u).tap();
+  await expect(sheet).toBeHidden();
+
+  await page().reload();
+  await screen.getByRole("button", en["chat.paneMenu.aria"]).tap();
+  await expect(sheet.getByRole("button", /^Terminal view\b/u)).toBeVisible();
+  await expect(sheet.getByRole("button", /^Chat view\b/u)).toHaveCount(0);
 });

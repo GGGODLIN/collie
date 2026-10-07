@@ -33,7 +33,7 @@ import {
 import type { AgentView, SnapshotResponse } from "../../src/lib/types.ts";
 import { fill } from "../fixtures/api.ts";
 import { engine } from "./engine.ts";
-import { test } from "./fixtures.ts";
+import { pinTerminalView, test } from "./fixtures.ts";
 
 interface ApiWrite {
   method: string;
@@ -303,12 +303,13 @@ test("list-unknown-opens-pane/v1 — the unit's unknown modal opens the pane and
 });
 
 async function openFullReply(text: string, prompt?: string): Promise<void> {
+  await pinTerminalView();
   await serveSnapshot(withClaude({ hasSession: fullReplyHasSession, readableLines: fullReplyReadableLines }));
   await servePaneText(text);
   await serveHistory(fullReplyHistory(fullReply, prompt));
 }
 
-test("full-reply-paired/v1 — the card shows the prompt and does not repeat the covered tail", async ({ app, screen }) => {
+test("full-reply-paired/v2 — the card shows the prompt and does not repeat the covered tail", async ({ app, screen }) => {
   const origin = new URL(app.baseUrl ?? "").origin;
   const watched = watchApi(origin);
   try {
@@ -320,13 +321,13 @@ test("full-reply-paired/v1 — the card shows the prompt and does not repeat the
     await expect(screen.getByText(fullReplyTail, { exact: false })).toHaveCount(1);
     await expect(screen.getByText(fullReplyAfter, { exact: false })).toBeVisible();
     expect(watched.escapedOrigins).toEqual([]);
-    await app.screenshot("full-reply-paired-v1");
+    await app.screenshot("full-reply-paired-v2");
   } finally {
-    writeEvidence("full-reply-paired-v1", { origin, writes: watched.writes, escapedOrigins: watched.escapedOrigins });
+    writeEvidence("full-reply-paired-v2", { origin, writes: watched.writes, escapedOrigins: watched.escapedOrigins });
   }
 });
 
-test("full-reply-no-prompt/v1 — history with no user turn leaves the tail and draws no card", async ({ app, screen }) => {
+test("full-reply-no-prompt/v2 — history with no user turn leaves the tail and draws no card", async ({ app, screen }) => {
   const origin = new URL(app.baseUrl ?? "").origin;
   const watched = watchApi(origin);
   try {
@@ -337,13 +338,13 @@ test("full-reply-no-prompt/v1 — history with no user turn leaves the tail and 
     await expect(screen.getByRole("button", fullReplyButton)).toHaveCount(0);
     await expect(screen.getByText(fullReplyHead, { exact: false })).toHaveCount(0);
     expect(watched.escapedOrigins).toEqual([]);
-    await app.screenshot("full-reply-no-prompt-v1");
+    await app.screenshot("full-reply-no-prompt-v2");
   } finally {
-    writeEvidence("full-reply-no-prompt-v1", { origin, writes: watched.writes, escapedOrigins: watched.escapedOrigins });
+    writeEvidence("full-reply-no-prompt-v2", { origin, writes: watched.writes, escapedOrigins: watched.escapedOrigins });
   }
 });
 
-test("full-reply-identity-miss/v1 — a different screen draws no Full reply card", async ({ app, screen }) => {
+test("full-reply-identity-miss/v2 — a different screen draws no Full reply card", async ({ app, screen }) => {
   const origin = new URL(app.baseUrl ?? "").origin;
   const watched = watchApi(origin);
   try {
@@ -352,8 +353,8 @@ test("full-reply-identity-miss/v1 — a different screen draws no Full reply car
     await expect(screen.getByText(fullReplyIdentityScreen, { exact: false })).toBeVisible();
     await expect(screen.getByRole("button", fullReplyButton)).toHaveCount(0);
     expect(watched.escapedOrigins).toEqual([]);
-    await app.screenshot("full-reply-identity-miss-v1");
+    await app.screenshot("full-reply-identity-miss-v2");
   } finally {
-    writeEvidence("full-reply-identity-miss-v1", { origin, writes: watched.writes, escapedOrigins: watched.escapedOrigins });
+    writeEvidence("full-reply-identity-miss-v2", { origin, writes: watched.writes, escapedOrigins: watched.escapedOrigins });
   }
 });

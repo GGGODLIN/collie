@@ -28,7 +28,7 @@ import {
   wrappedTableSource,
 } from "../../src/test/sweep-loop-reply-data.ts";
 import { engine } from "./engine.ts";
-import { test } from "./fixtures.ts";
+import { pinTerminalView, test } from "./fixtures.ts";
 
 // Loop batch 04. The wrapped-table source and painted rows are the unit literals.
 // The history prompt is the existing full-reply literal: the table case has no
@@ -116,8 +116,9 @@ async function designStore(browser: Browser): Promise<{ font: string }> {
   return { font };
 }
 
-test("REPLY-PAINT/wrapped-table — a wrapped table whose cells are painted out of source order still shows that reply once", async ({ app, screen, prepared }) => {
+test("REPLY-PAINT/wrapped-table/v2 — a wrapped table whose cells are painted out of source order still shows that reply once", async ({ app, screen, prepared }) => {
   expect(prepared).toBe(true);
+  await pinTerminalView();
   const head = sourceLines()[0];
   const closing = sourceLines().at(-1);
   if (head === undefined || head === "" || closing === undefined || closing === "") {

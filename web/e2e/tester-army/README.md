@@ -3,6 +3,7 @@
 這套使用 TesterArmy 保護 fork 的網頁補丁。案例預期取自 FORK.md、CHANGELOG.md 與 ADR，不是實跑後反填答案。原 Playwright suite、設定與依賴保留。`npm test` 執行本目錄註冊的 `.e2e.ts`；每案各自回報，不把失敗標成預期失敗或跳過。連續 sweep 的來源衝突另列於逐批紀錄，案例通過不代表已裁定那些衝突。
 
 - [本次行為契約](/web/e2e/tester-army/contract.md)
+- [上游介面更新契約 v2](/web/e2e/tester-army/contracts/upstream-1.17-adaptation.v2.md)與[同步後重跑結果](/web/e2e/tester-army/runs/upstream-sync-1.17.2.md)：保留原快照；Dashboard／needs-you／Files／Chat 與 Terminal 前置按核准方案更新。
 - [來源與涵蓋表](/web/e2e/tester-army/coverage.md)
 - [首案快照](/web/e2e/tester-army/contracts/palette-stage-and-send.v1.md)
 - [核心案例](/web/e2e/tester-army/contracts/web-core-batch.v1.md)、[標題目前版本](/web/e2e/tester-army/contracts/title-dash.v3.md)
