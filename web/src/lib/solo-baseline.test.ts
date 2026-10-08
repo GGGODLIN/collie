@@ -116,6 +116,9 @@ const AGENT_VIEW_KEYS = {
   // Not a crew dimension: the pane's description (bridge/description/resolve.ts), computed on the
   // machine the pane lives on and absent when there is nothing to say. An older peer omits it.
   description: true,
+  // Not a crew dimension: what the checkout holding the pane's folder is on, read off the disk of
+  // the machine the pane lives on. An older bridge or peer omits it.
+  gitHead: true,
 } satisfies Record<keyof AgentView, true>;
 
 const DEVICE_AUTH_KEYS = {
@@ -209,6 +212,7 @@ describe("solo zero-tax — the client's mirror types carry no crew dimension", 
       "cwd",
       "description",
       "focused",
+      "gitHead",
       "hasSession",
       "hint",
       "host",
