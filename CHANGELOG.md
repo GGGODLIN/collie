@@ -23,9 +23,15 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.17.205] - 2026-10-08
+
+### Changed
+
+- **Built on upstream Collie 1.17.2.** AltanS/collie v1.17.2, commit 3d562ae5, unchanged since fork 1.17.0. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+
 ### Fixed
 
-- **A long Grok reply ending in a table gets its full-reply card again.** Once a reply outgrows the pane, Grok draws a scrollbar cell at the end of every row, and the table's divider rows stopped reading as table frame. The reply's last row then stayed interleaved and the terminal view showed the broken table instead of the card. Found by charliie on Discord.
+- **A long Grok reply ending in a table gets its full-reply card again.** Once a reply outgrows the pane, Grok draws a scrollbar cell at the end of every row, and the table's divider rows stopped reading as table frame. The reply's last row then stayed interleaved and the terminal view showed the broken table instead of the card. Found by charliie on Discord. ([e9e20302](https://github.com/GGGODLIN/collie/commit/e9e20302))
 
 ## [1.17.204] - 2026-10-08
 
