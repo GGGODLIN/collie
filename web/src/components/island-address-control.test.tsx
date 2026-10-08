@@ -18,7 +18,7 @@ describe("IslandAddressControl", () => {
   it("asks the app to open its own address screen", async () => {
     const openAddress = vi.fn();
     render(<IslandAddressControl host={{ collieIsland: { openAddress } }} />);
-    expect(screen.getByText("Collie address")).toBeInTheDocument();
+    expect(screen.getByText("Gaddi address")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Change" }));
     expect(openAddress).toHaveBeenCalledTimes(1);
   });

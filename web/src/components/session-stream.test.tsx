@@ -115,7 +115,7 @@ describe("SessionStream", () => {
   it("tells a machine a release behind apart from a pane with no session", () => {
     const stale = renderStream(feedOf({ status: { kind: "stale" } }));
     expect(
-      screen.getByText("This machine runs an older Collie. Update it to follow the conversation here."),
+      screen.getByText("This machine runs an older Gaddi. Update it to follow the conversation here."),
     ).toBeInTheDocument();
     stale.unmount();
 
@@ -128,7 +128,7 @@ describe("SessionStream", () => {
   it("keeps the turns a stale answer arrived after — a version skew does not unsay them", () => {
     renderStream(feedOf({ status: { kind: "stale" }, entries: [entry("a", BASE, "said this")] }));
     expect(screen.getByText("said this")).toBeInTheDocument();
-    expect(screen.getByText(/older Collie/)).toBeInTheDocument();
+    expect(screen.getByText(/older Gaddi/)).toBeInTheDocument();
   });
 
   it("offers older turns only where the window says there are some", () => {

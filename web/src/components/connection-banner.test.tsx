@@ -170,21 +170,21 @@ describe("ConnectionBanner — the single connection surface", () => {
     h.lost = true;
     renderBanner({ bridge: "connected", error: true });
     await act(async () => {});
-    expect(announced("alert")).toHaveTextContent("Can't reach Collie");
+    expect(announced("alert")).toHaveTextContent("Can't reach Gaddi");
   });
 
   it("does not reuse a cached disconnected mux as evidence during a snapshot failure", async () => {
     h.lost = true;
     renderBanner({ bridge: "disconnected", error: true });
     await act(async () => {});
-    expect(announced("alert")).toHaveTextContent("Can't reach Collie");
+    expect(announced("alert")).toHaveTextContent("Can't reach Gaddi");
   });
 
   it("does not attribute a member outage to the lead's disconnected mux", async () => {
     h.lost = true;
     renderBanner({ host: "workshop", bridge: "disconnected" });
     await act(async () => {});
-    expect(announced("alert")).toHaveTextContent("Can't reach Collie");
+    expect(announced("alert")).toHaveTextContent("Can't reach Gaddi");
   });
 
   it("keeps the lead's mux failure and updates the cause on host switches", async () => {
@@ -195,7 +195,7 @@ describe("ConnectionBanner — the single connection surface", () => {
     expect(announced("alert")).toHaveTextContent("Herdr is down on the host");
     props.host = "workshop";
     act(() => rerenderBanner());
-    expect(announced("alert")).toHaveTextContent("Can't reach Collie");
+    expect(announced("alert")).toHaveTextContent("Can't reach Gaddi");
     props.host = "bluefin";
     act(() => rerenderBanner());
     expect(announced("alert")).toHaveTextContent("Herdr is down on the host");
@@ -222,7 +222,7 @@ describe("ConnectionBanner — the single connection surface", () => {
       renderBanner({ host: "workshop", servers: down("workshop"), bridge: "connected", error: true, lastSeenAt: 5_000 });
       await act(async () => {});
       expect(announced("alert")).toHaveTextContent(/^workshop is unreachable · /);
-      expect(announced("alert")).not.toHaveTextContent("Can't reach Collie");
+      expect(announced("alert")).not.toHaveTextContent("Can't reach Gaddi");
       expect(announced("alert")).not.toHaveTextContent("Herdr is down");
       expect(announced("alert")).not.toHaveTextContent(/last seen \d/);
     });
@@ -231,7 +231,7 @@ describe("ConnectionBanner — the single connection surface", () => {
       h.lost = true;
       renderBanner({ host: "attic", bridge: "connected", error: true });
       await act(async () => {});
-      expect(announced("alert")).toHaveTextContent("attic is running an incompatible Collie");
+      expect(announced("alert")).toHaveTextContent("attic is running an incompatible Gaddi");
       expect(announced("alert")).toHaveTextContent("crew protocol 2");
     });
 
@@ -239,7 +239,7 @@ describe("ConnectionBanner — the single connection surface", () => {
       h.lost = true;
       renderBanner({ host: "workshop", bridge: "connected", error: true });
       await act(async () => {});
-      expect(announced("alert")).toHaveTextContent("Can't reach Collie");
+      expect(announced("alert")).toHaveTextContent("Can't reach Gaddi");
       expect(announced("alert")).not.toHaveTextContent("is unreachable");
     });
 
@@ -248,7 +248,7 @@ describe("ConnectionBanner — the single connection surface", () => {
       cfg.reachable = false;
       renderBanner({ host: "workshop", servers: down("workshop"), bridge: "connected", error: true });
       await act(async () => {});
-      expect(announced("alert")).toHaveTextContent("Can't reach Collie");
+      expect(announced("alert")).toHaveTextContent("Can't reach Gaddi");
       expect(announced("alert")).not.toHaveTextContent("workshop");
     });
 
@@ -263,7 +263,7 @@ describe("ConnectionBanner — the single connection surface", () => {
       h.lost = true;
       renderBanner({ bridge: "connected", error: true });
       await act(async () => {});
-      expect(announced("alert")).toHaveTextContent("Can't reach Collie");
+      expect(announced("alert")).toHaveTextContent("Can't reach Gaddi");
     });
   });
 
@@ -273,7 +273,7 @@ describe("ConnectionBanner — the single connection surface", () => {
     setOnline(false);
     renderBanner();
     await act(async () => {});
-    expect(screen.getByText("Offline — can't reach Collie")).toBeInTheDocument();
+    expect(screen.getByText("Offline — can't reach Gaddi")).toBeInTheDocument();
     expect(row()?.className).toMatch(/bg-status-blocked/); // offline is always red
   });
 
@@ -283,7 +283,7 @@ describe("ConnectionBanner — the single connection surface", () => {
     setOnline(true);
     renderBanner();
     await act(async () => {});
-    expect(screen.getByText("Can't reach Collie")).toBeInTheDocument();
+    expect(screen.getByText("Can't reach Gaddi")).toBeInTheDocument();
   });
 
   // A cold boot with the tunnel down re-renders the whole herd from cache, which looks exactly like a
@@ -294,7 +294,7 @@ describe("ConnectionBanner — the single connection surface", () => {
     setOnline(true);
     renderBanner({ error: true, lastSeenAt: new Date(2026, 0, 2, 14, 32).getTime() });
     await act(async () => {});
-    expect(announced("alert")).toHaveTextContent(/Can't reach Collie — last seen \d/);
+    expect(announced("alert")).toHaveTextContent(/Can't reach Gaddi — last seen \d/);
   });
 
   it("leaves the red row undated when nothing can date it", async () => {

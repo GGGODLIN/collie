@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { expect } from "e2e";
 import { surfaceOf } from "@e2e-dev/web";
 
+import { t } from "../../src/lib/i18n/index.ts";
 import { en } from "../../src/lib/i18n/messages/en.ts";
 import { fixtureSnapshot } from "../../src/test/handlers.ts";
 import {
@@ -95,14 +96,14 @@ test("title-no-mux/v1 — default config keeps the brand readable and home opera
   let identityHidden: string | null = null;
   try {
     await app.open("/");
-    const brand = screen.getByText("COLLIE-GGGODLIN", { exact: true });
+    const brand = screen.getByText("GADDI", { exact: true });
     await expect(brand).toHaveCount(1);
     const box = await brand.boundingBox();
     brandWidth = box?.width ?? 0;
-    identityHidden = await page().getByText("COLLIE-GGGODLIN", { exact: true }).evaluate((node) => node.parentElement?.getAttribute("hidden") ?? null);
+    identityHidden = await page().getByText("GADDI", { exact: true }).evaluate((node) => node.parentElement?.getAttribute("hidden") ?? null);
     await expect(brand).toBeVisible();
     await expect(screen.getByText(/^on /)).toHaveCount(0);
-    const home = screen.getByRole("button", en["nav.home.aria.default"], { exact: true });
+    const home = screen.getByRole("button", t("nav.home.aria.default"), { exact: true });
     await expect(home).toBeVisible();
     await expect(home).toBeEnabled();
     await home.tap();

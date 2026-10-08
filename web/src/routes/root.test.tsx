@@ -10,6 +10,7 @@ import { CONNECTION_LOST_MS } from "@/hooks/use-connection-lost";
 import { __resetConnectionHealth } from "@/lib/connection-health";
 import { collieMark, markIsLive, markPaper } from "@/test/collie-mark";
 import { ROOT_ROUTE_ID, type HomeData, type PaneData } from "@/lib/loaders";
+import { t } from "@/lib/i18n";
 import { en } from "@/lib/i18n/messages/en";
 import {
   __resetTourStore,
@@ -48,7 +49,7 @@ describe("BootSplash — escalates a stuck cold start", () => {
     act(() => vi.advanceTimersByTime(CONNECTION_LOST_MS));
     expect(screen.queryByText("Connecting to the herd…")).not.toBeInTheDocument();
     expect(screen.getByText("Not connected")).toBeInTheDocument();
-    expect(screen.getByText(/Can.t reach Collie/)).toBeInTheDocument();
+    expect(screen.getByText(/Can.t reach Gaddi/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     // Same mark throughout — it is never swapped for a second drawing, it only stops blooming: the
     // rest state is that mark still, muted. No bloom, because we have stopped trying, and a
@@ -195,7 +196,7 @@ describe("RootLayout — the safe-area inset is reserved exactly once", () => {
 
   it("gives it to the band while a strip is showing, and not to the header as well", async () => {
     const { container } = renderLayout(offered);
-    await waitFor(() => expect(screen.getByText(/Collie 1.5.0 available/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Gaddi 1.5.0 available/)).toBeInTheDocument());
 
     expect(reservations(container)).toHaveLength(1);
     // And it is the band's, above the header — not the header's.
@@ -380,8 +381,8 @@ describe("RootLayout — the first-run gate", () => {
   it("opens on the first live snapshot of a device that has never seen it", async () => {
     renderWith(live);
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
-    expect(screen.getByRole("dialog")).toHaveAccessibleName(en["tour.title"]);
-    expect(screen.getByRole("heading", { name: en["tour.title"] })).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveAccessibleName(t("tour.title"));
+    expect(screen.getByRole("heading", { name: t("tour.title") })).toBeInTheDocument();
   });
 
   // Marked seen on OPEN, before the screen paints. Nothing in the close path writes the key, so a

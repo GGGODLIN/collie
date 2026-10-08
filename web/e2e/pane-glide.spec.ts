@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { t as translate } from "@/lib/i18n";
 import { en } from "@/lib/i18n/messages/en";
 import type { SnapshotResponse } from "@/lib/types";
 import { fixtureSnapshot } from "@/test/handlers";
@@ -29,7 +30,7 @@ const PANE_B = `/pane/${encodeURIComponent("w2:p1")}`;
 const paneRow = (page: Page, agent: "claude" | "codex") =>
   page.getByRole("main").getByRole("button", { name: new RegExp(`^${agent} logo ${agent}`, "u") });
 /** The pane header's way up: the Collie mark. */
-const backArrow = (page: Page) => page.getByRole("button", { name: en["nav.home.aria.default"] });
+const backArrow = (page: Page) => page.getByRole("button", { name: translate("nav.home.aria.default") });
 const screen = (page: Page) => page.locator("[data-slot='screen-transition']");
 const paneName = (page: Page) => page.locator('[data-slot="pane-name"]');
 

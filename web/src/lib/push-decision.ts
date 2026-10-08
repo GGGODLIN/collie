@@ -155,7 +155,7 @@ export function decidePush(
   if (hasVisibleClient && payload.type !== "machine") return { kind: "suppress" };
   return {
     kind: "show",
-    title: localisedTitle(payload, templates) ?? payload.title ?? "Collie",
+    title: localisedTitle(payload, templates) ?? payload.title ?? "Gaddi",
     body: payload.body ?? "",
     tag,
     paneId,

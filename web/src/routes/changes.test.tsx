@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CHANGES_POLL_MS } from "@/hooks/use-visible-interval";
 import { keepChangeCount, resetChangeCountCache } from "@/hooks/use-workspace-change-counts";
 import { resetChangesListCache } from "@/lib/changes-list-cache";
+import { t } from "@/lib/i18n";
 import { en } from "@/lib/i18n/messages/en";
 import { ROOT_ROUTE_ID, type HomeData } from "@/lib/loaders";
 import type { NavState } from "@/lib/nav";
@@ -240,7 +241,7 @@ describe("ChangesRoute — the list", () => {
       ),
     );
     renderAt("/pane/w1%3Ap1/changes");
-    expect(await screen.findByText(en["changes.unavailable.noFolder"])).toBeTruthy();
+    expect(await screen.findByText(t("changes.unavailable.noFolder"))).toBeTruthy();
   });
 
   it("sends the depth and nested choices from Settings, and refetches on refresh", async () => {

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { t } from "@/lib/i18n";
 import { en } from "@/lib/i18n/messages/en";
 import type { SnapshotResponse } from "@/lib/types";
 import { fixtureSnapshot } from "@/test/handlers";
@@ -113,7 +114,7 @@ test("D: dashboard, space, pane, header up is the space, then back is the dashbo
   await landed(page, PANE_B);
 
   // The pane's up: the Collie mark in its header.
-  await page.getByRole("button", { name: en["nav.home.aria.default"] }).click();
+  await page.getByRole("button", { name: t("nav.home.aria.default") }).click();
   await landed(page, "/space/w2");
 
   await page.goBack();
@@ -174,7 +175,7 @@ test("a swipe back (POP) draws no slide of ours, the app's own up arrow still sl
 
   await paneRow(page, "claude").click();
   await landed(page, PANE_A);
-  await page.getByRole("button", { name: en["nav.home.aria.default"] }).click();
+  await page.getByRole("button", { name: t("nav.home.aria.default") }).click();
   await landed(page, "/");
   await expect(screen).toHaveClass(/slide-in-from-left/u);
 });
