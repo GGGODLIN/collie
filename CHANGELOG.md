@@ -23,15 +23,21 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.17.203] - 2026-10-08
+
+### Changed
+
+- **Built on upstream Collie 1.17.2.** AltanS/collie v1.17.2, commit 3d562ae5, unchanged since fork 1.17.0. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+
 ### Fixed
 
-- **Grok's multiline input scrollbar no longer blocks verified replies.** The draft reader ignores the separately styled scrollbar at the composer's right edge in the captured Grok Build 1.0.46 layout, while preserving literal block glyphs. Reply verification and modal refusal stay unchanged.
-- **Grok's fractional scrollbar no longer stalls long replies.** The draft reader also recognises lower partial-block scrollbar cells at the same captured position and style. A live bridge send exposed the missing `▁` cell; literal typed blocks remain unchanged, and submit still waits for verified message text.
-- **Grok's phone mirror drops empty scrollbar rows and right padding.** The wrapped normal view removes the captured right-edge track and compacts its empty viewport rows after screen-row hiding. Message text, meaningful backgrounds, Find, raw-terminal mode, and reply guards keep their existing contracts.
-- **Gaddi's iOS app uses the iPad's available window space.** Both the app and its embedded widget declare iPad support, removing the enlarged iPhone compatibility view. iPad declares portrait and landscape orientations; iPhone stays portrait-only.
-- **Grok's model picker offers native choices on the phone.** The captured model, context-window, and reasoning-effort stages use verified arrow walks and one bound Enter per selection. Ordinary reply typing remains blocked while the picker is open; changed or incomplete screens stay raw.
-- **Chat stops replaying messages after Chinese or emoji text.** File-backed journal cursors count UTF-8 bytes before decoding, so a later append starts at the correct row boundary instead of reading old messages again. A real Grok conversation exposed the duplicate turn.
-- **Dashboard and space lists use more of the tablet window.** Their single-column layouts and shared headers follow the existing wider breakpoint limits in tablet-sized windows. Narrow and short windows keep their original column widths, including phones in landscape.
+- **Grok's multiline input scrollbar no longer blocks verified replies.** The draft reader ignores the separately styled scrollbar at the composer's right edge in the captured Grok Build 1.0.46 layout, while preserving literal block glyphs. Reply verification and modal refusal stay unchanged. ([83caf4f9](https://github.com/GGGODLIN/collie/commit/83caf4f9))
+- **Grok's fractional scrollbar no longer stalls long replies.** The draft reader also recognises lower partial-block scrollbar cells at the same captured position and style. A live bridge send exposed the missing `▁` cell; literal typed blocks remain unchanged, and submit still waits for verified message text. ([651708ab](https://github.com/GGGODLIN/collie/commit/651708ab))
+- **Grok's phone mirror drops empty scrollbar rows and right padding.** The wrapped normal view removes the captured right-edge track and compacts its empty viewport rows after screen-row hiding. Message text, meaningful backgrounds, Find, raw-terminal mode, and reply guards keep their existing contracts. ([b67247e8](https://github.com/GGGODLIN/collie/commit/b67247e8))
+- **Gaddi's iOS app uses the iPad's available window space.** Both the app and its embedded widget declare iPad support, removing the enlarged iPhone compatibility view. iPad declares portrait and landscape orientations; iPhone stays portrait-only. ([28e3b3ba](https://github.com/GGGODLIN/collie/commit/28e3b3ba))
+- **Grok's model picker offers native choices on the phone.** The captured model, context-window, and reasoning-effort stages use verified arrow walks and one bound Enter per selection. Ordinary reply typing remains blocked while the picker is open; changed or incomplete screens stay raw. ([e8def55a](https://github.com/GGGODLIN/collie/commit/e8def55a))
+- **Chat stops replaying messages after Chinese or emoji text.** File-backed journal cursors count UTF-8 bytes before decoding, so a later append starts at the correct row boundary instead of reading old messages again. A real Grok conversation exposed the duplicate turn. ([db870ea5](https://github.com/GGGODLIN/collie/commit/db870ea5))
+- **Dashboard and space lists use more of the tablet window.** Their single-column layouts and shared headers follow the existing wider breakpoint limits in tablet-sized windows. Narrow and short windows keep their original column widths, including phones in landscape. ([de3e36f7](https://github.com/GGGODLIN/collie/commit/de3e36f7))
 
 ## [1.17.202] - 2026-10-08
 
