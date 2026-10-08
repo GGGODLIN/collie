@@ -51,7 +51,7 @@ func summarize(_ agents: [Agent], showDetail: Bool) -> IslandAttributes.ContentS
     needs: count(.needs),
     ready: count(.ready),
     working: count(.working),
-    headline: title ?? "Collie",
+    headline: title ?? "Gaddi",
     detail: showDetail ? (top?.agent.description?.now ?? "") : "",
     paneId: top?.agent.paneId,
     bucket: top?.bucket ?? .recent,

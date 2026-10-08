@@ -74,8 +74,8 @@ describe("iconLinksFor", () => {
 describe("manifestFor", () => {
   it("release: names Collie and the original manifest tiles", () => {
     const manifest = manifestFor("release");
-    expect(manifest.name).toBe("Collie");
-    expect(manifest.short_name).toBe("Collie");
+    expect(manifest.name).toBe("Gaddi");
+    expect(manifest.short_name).toBe("Gaddi");
     expect(manifest.icons.map((i) => i.src)).toEqual([
       "/web-app-manifest-192x192.png",
       "/web-app-manifest-512x512.png",
@@ -84,8 +84,8 @@ describe("manifestFor", () => {
 
   it("dev: names Collie (dev) and the -dev manifest tiles", () => {
     const manifest = manifestFor("dev");
-    expect(manifest.name).toBe("Collie (dev)");
-    expect(manifest.short_name).toBe("Collie dev");
+    expect(manifest.name).toBe("Gaddi (dev)");
+    expect(manifest.short_name).toBe("Gaddi dev");
     expect(manifest.icons.map((i) => i.src)).toEqual([
       "/web-app-manifest-dev-192x192.png",
       "/web-app-manifest-dev-512x512.png",
@@ -133,7 +133,7 @@ describe("transformIndexIcons — the release build stays byte-identical", () =>
     expect(out).not.toContain('href="/favicon.ico"');
     expect(out).not.toContain('href="/apple-touch-icon.png"');
     // Everything past the four <link> tags is untouched (e.g. the title, the boot splash CSS).
-    expect(out).toContain("<title>Collie</title>");
+    expect(out).toContain("<title>Gaddi</title>");
   });
 });
 

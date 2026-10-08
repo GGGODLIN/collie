@@ -25,11 +25,11 @@ enum IslandAddress {
       case .unreachable(let why):
         // The system's reason already ends in its own full stop ("…to the server.").
         let reason = why.trimmingCharacters(in: CharacterSet(charactersIn: ".。 "))
-        return "連不上：\(reason)。手機要在 Collie 那台機器的 tailnet 上。"
+        return "連不上：\(reason)。手機要在 Gaddi 那台機器的 tailnet 上。"
       case .notCollie(let status):
         return status == 200
-          ? "有回應，但不是 Collie。"
-          : "有回應，但沒有拿到 Collie 的資料（HTTP \(status)）。"
+          ? "有回應，但不是 Gaddi。"
+          : "有回應，但沒有拿到 Gaddi 的資料（HTTP \(status)）。"
       }
     }
   }
@@ -109,9 +109,9 @@ struct AddressSetupView: View {
             .onSubmit(submit)
             .disabled(checking)
         } header: {
-          Text("Collie 位址")
+          Text("Gaddi 位址")
         } footer: {
-          Text("輸入 `collie start` 印出的網址。儲存前會先連一次，確認是 Collie。換成另一台 Collie 要在那邊重新配對。")
+          Text("輸入 `collie start` 印出的網址。儲存前會先連一次，確認是 Gaddi。換成另一台 Gaddi 要在那邊重新配對。")
         }
         if let error {
           Section { Text(error).foregroundStyle(.red) }
@@ -126,7 +126,7 @@ struct AddressSetupView: View {
           .disabled(checking || text.trimmingCharacters(in: .whitespaces).isEmpty)
         }
       }
-      .navigationTitle("Collie Island")
+      .navigationTitle("Gaddi Island")
       .toolbar {
         if let onCancel {
           ToolbarItem(placement: .cancellationAction) { Button("取消", action: onCancel) }
@@ -165,7 +165,7 @@ struct LoadFailedView: View {
   var body: some View {
     VStack(spacing: 16) {
       Image(systemName: "wifi.exclamationmark").font(.largeTitle).foregroundStyle(.secondary)
-      Text("連不上 Collie").font(.headline)
+      Text("連不上 Gaddi").font(.headline)
       Text(address.absoluteString).font(.footnote.monospaced()).foregroundStyle(.secondary)
       Text(reason).font(.footnote).multilineTextAlignment(.center).foregroundStyle(.secondary)
       HStack(spacing: 12) {

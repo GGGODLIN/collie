@@ -19,7 +19,7 @@ struct RestartIslandControl: ControlWidget {
         Label("重啟靈動島", systemImage: "pawprint.fill")
       }
     }
-    .displayName("重啟 Collie 靈動島")
+    .displayName("重啟 Gaddi 靈動島")
   }
 }
 
@@ -116,7 +116,7 @@ private func compactLabel(_ s: IslandAttributes.ContentState, stale: Bool) -> St
 }
 
 private func countsLine(_ s: IslandAttributes.ContentState, stale: Bool) -> String {
-  if stale { return "Collie app 已停止更新" }
-  if s.offline { return "連不到 Collie" }
+  if stale { return "Gaddi app 已停止更新" }
+  if s.offline { return "連不到 Gaddi" }
   return "等你 \(s.needs) · 完成 \(s.ready) · 工作中 \(s.working)"
 }
