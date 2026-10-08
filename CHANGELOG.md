@@ -23,10 +23,28 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-10-08
+
+### Added
+
+- **A left-hand layout.** Settings → Appearance → Hand turns the pane screen round for a left thumb. From upstream 1.18.0. ([1f783295](https://github.com/GGGODLIN/collie/commit/1f783295))
+- **Paths the agent prints are links.** A file path in the chat, on an Edit, Write or Read card, or in the terminal mirror opens that file in Files, at the line when the path names one. From upstream 1.18.0. ([1f783295](https://github.com/GGGODLIN/collie/commit/1f783295))
+- **A second agent on a branch.** A pane's menu offers "New agent on a branch": Collie creates a git worktree on a fresh branch and starts a launcher or a shell in it. From upstream 1.18.0. ([1f783295](https://github.com/GGGODLIN/collie/commit/1f783295))
+- **Gaddi speaks five more languages.** Русский, Italiano, Français, Português and Türkçe join the language list in Settings → Appearance; this fork's own strings are translated too. From upstream 1.18.0. ([1f783295](https://github.com/GGGODLIN/collie/commit/1f783295))
+- **A paired device can carry an expiry you chose.** `collie pair --expires 30d` (also `h`, `w`) puts a lifetime on the token the phone claims. From upstream 1.18.0. ([1f783295](https://github.com/GGGODLIN/collie/commit/1f783295))
+- **Known secret shapes are masked before pane text leaves the machine.** API keys with a known prefix, JWTs, PEM private keys, bearer tokens and `password=`-style values become `•` marks of the same width on the bridge. From upstream 1.18.0. ([1f783295](https://github.com/GGGODLIN/collie/commit/1f783295))
+
+### Changed
+
+- **Built on upstream Collie 1.18.0.** AltanS/collie v1.18.0, commit 2ab62eaa. ([1f783295](https://github.com/GGGODLIN/collie/commit/1f783295))
+- **Pairing is always on, and every request needs the token, reads included.** Run `collie pair` and pair every phone and browser you use, the iPhone island app included: an unpaired one now sees only a pair prompt, not the herd. From upstream 1.18.0. ([1f783295](https://github.com/GGGODLIN/collie/commit/1f783295))
+- **The dashboard's top is one control bar.** One line of state words with the needs-you switch, then a Workspace select and a Pane order select; this fork keeps the summary that opens the pane switcher. From upstream 1.18.0. ([1f783295](https://github.com/GGGODLIN/collie/commit/1f783295))
+
 ### Fixed
 
-- **The full-reply card no longer takes another reply, or your next message, for this one.** In the terminal view, a table's own border now ends the table the card reads, so a line under it that holds a `│` keeps its own row. An autolink keeps its address, a code block shown inside a longer one stays code, and the way Claude paints a reply is trusted only while it still holds two whole probes. Found by the review of AltanS/collie#380.
-- **The iPhone island keeps working now that every read needs pairing.** The island app reads with the pairing token of the Collie inside it, and says whether that app was never paired, was revoked or has expired; a tap then opens the pair form. If you use the island, install this release's CollieIsland.ipa and pair inside the app once.
+- **The full-reply card no longer takes another reply, or your next message, for this one.** In the terminal view, a table's own border now ends the table the card reads, so a line under it that holds a `│` keeps its own row. An autolink keeps its address, a code block shown inside a longer one stays code, and the way Claude paints a reply is trusted only while it still holds two whole probes. Found by the review of AltanS/collie#380. ([e0374a27](https://github.com/GGGODLIN/collie/commit/e0374a27))
+- **The iPhone island keeps working now that every read needs pairing.** The island app reads with the pairing token of the Collie inside it, and says whether that app was never paired, was revoked or has expired; a tap then opens the pair form. If you use the island, install this release's CollieIsland.ipa and pair inside the app once. ([22a2de3f](https://github.com/GGGODLIN/collie/commit/22a2de3f))
+- **Herdr 0.9.3 hid every repository from Collie.** The New worktree tab and the Files view list the workspace's repository again. From upstream 1.18.0. ([1f783295](https://github.com/GGGODLIN/collie/commit/1f783295))
 
 ## [1.17.206] - 2026-10-08
 
