@@ -80,9 +80,17 @@ jobs:
   # `release.yml` deliberately gains none of this. It carries no lint step for the same class of
   # reason (release.yml:174-176: oxlint's allocator SIGABRTs below roughly 7 GB), and an operator
   # path must never download a browser.
+  # Fork-only: three shards side by side. One job ran 531 cases on two workers in about 9 minutes and
+  # was CI's longest job by double; each shard keeps the same two workers, so a runner is no busier
+  # than before and the timing-sensitive cases see the same load. `fail-fast: false` lets every
+  # shard report, so one red case does not hide another shard's.
   e2e:
-    name: browser (chromium, webkit)
+    name: browser (chromium, webkit) ${{ matrix.shard }}/3
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -123,13 +131,13 @@ jobs:
       # `e2e` runs `vite build` first: the tier serves the SHIPPED bundle off disk, because the
       # service worker exists only in a real build.
       - name: E2E (tier 1)
-        run: cd web && bun run e2e
+        run: cd web && bun run e2e --shard=${{ matrix.shard }}/3
 
       - name: Upload the failure artefacts
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-artefacts
+          name: e2e-artefacts-${{ matrix.shard }}
           path: |
             web/test-results
             web/playwright-report

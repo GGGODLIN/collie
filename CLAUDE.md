@@ -873,7 +873,18 @@ Upstream reuses numbers this fork has published (both have a `v1.14.0`), so its 
 4. Check it before it is public: its tree equals the `dev` release commit's, its first parent is
    `origin/main`, and `scripts/check-version.sh` reads the version you meant.
 5. Tag it (`git tag -a vX.Y.Z <sha>`), then push the commit and the tag together:
-   `git push --atomic origin <sha>:main vX.Y.Z`. The release workflow waits for CI on that commit.
+   `git push --atomic origin <sha>:main vX.Y.Z`. The release workflow's gate accepts the green
+   push run of step 2's `dev` commit, because that commit has the same tree, and starts building at
+   once; only when no green `dev` commit carries the tree does it wait for CI on the `main` commit.
+
+**Screenshots only for a large UI change, and only when the operator asks.** Before step 3 of a
+release whose changes reshape a screen, ask the operator whether they can tell what changed from the
+bullets alone; if they can, ship text only. If they want pictures, put a before/after image under
+each such bullet (blank line, then `  ![alt](assets/changelog/x.y.z/name.jpg)` indented), shot from
+the previous release's build and this one against the e2e stub fixtures, never a live Collie, and
+commit them on `dev` before the tag: the release page's changelog link reads the tagged tree. The
+release page itself prints bold leads only, so the images change nothing there. 1.17.203 is the
+worked example.
 
 An upstream PR branches off `upstream/main` and takes its commits by cherry-pick; *Project mode*
 still decides when one may be opened.

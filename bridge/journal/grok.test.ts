@@ -247,3 +247,77 @@ describe("GrokTranscriptSource", () => {
     expect(await src.resolve({ kind: "id", value: SID })).toBeNull();
   });
 });
+
+// Herdr keeps the FIRST id a grok pane reported: `/resume` inside a running grok reports the resumed
+// session with source `load`, and Herdr 0.9 drops it. Grok's own active_sessions.json names the
+// session the process really holds, so reconcile swaps the stale id for it when the match is unique.
+describe("GrokTranscriptSource.reconcile", () => {
+  const dirs: string[] = [];
+  afterEach(async () => {
+    for (const d of dirs.splice(0)) await rm(d, { recursive: true, force: true });
+  });
+
+  const CWD = "/Users/you/proj";
+  const STALE = "01a11b46-1e64-74d0-991e-aad07d14bf76";
+  const RESUMED = "01a11b44-fac4-7833-9c3f-42e41c346195";
+  const alive = (): boolean => true;
+
+  async function grokHome(active: string | null): Promise<string> {
+    const base = await realpath(await mkdtemp(join(tmpdir(), "collie-grok-")));
+    dirs.push(base);
+    await mkdir(join(base, "sessions"), { recursive: true });
+    if (active !== null) await writeFile(join(base, "active_sessions.json"), active);
+    return join(base, "sessions");
+  }
+
+  const row = (sessionId: string, cwd = CWD, pid = 4242) => ({
+    session_id: sessionId,
+    pid,
+    cwd,
+    opened_at: "2026-10-08T11:29:28.938239Z",
+  });
+
+  test("a stale reported id gives way to the one live session in the pane's cwd", async () => {
+    const root = await grokHome(JSON.stringify([row(RESUMED)]));
+    const src = new GrokTranscriptSource(root, alive);
+    expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: RESUMED });
+  });
+
+  test("a reported id grok still lists is kept", async () => {
+    const root = await grokHome(JSON.stringify([row(STALE), row(RESUMED, "/elsewhere")]));
+    const src = new GrokTranscriptSource(root, alive);
+    expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
+  });
+
+  test("two live sessions in the same cwd are ambiguous, so the reported id is kept", async () => {
+    const root = await grokHome(JSON.stringify([row(RESUMED), row(OTHER, CWD, 4343)]));
+    const src = new GrokTranscriptSource(root, alive);
+    expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
+  });
+
+  test("a session in another cwd is never borrowed", async () => {
+    const root = await grokHome(JSON.stringify([row(RESUMED, "/elsewhere")]));
+    const src = new GrokTranscriptSource(root, alive);
+    expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
+  });
+
+  test("a row whose process is gone is ignored", async () => {
+    const root = await grokHome(JSON.stringify([row(RESUMED)]));
+    const src = new GrokTranscriptSource(root, () => false);
+    expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
+  });
+
+  test("no active_sessions.json, or an unreadable one, keeps the reported id quietly", async () => {
+    for (const active of [null, "not json", '{"session_id":"x"}', JSON.stringify([{ pid: "1" }])]) {
+      const root = await grokHome(active);
+      const src = new GrokTranscriptSource(root, alive);
+      expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
+    }
+  });
+
+  test("a row naming something other than a session uuid is never handed on", async () => {
+    const root = await grokHome(JSON.stringify([row("../../etc")]));
+    const src = new GrokTranscriptSource(root, alive);
+    expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
+  });
+});

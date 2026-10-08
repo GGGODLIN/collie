@@ -47,6 +47,25 @@ jobs:
           fi
           echo "Tag $TAG points at commit $SHA."
 
+          # Fork-only (CLAUDE.md, "Fork branches and releases"): main's release commit is built with
+          # `git commit-tree` from a dev commit's tree, and that dev commit must pass CI before main is
+          # pushed. Same tree, same files, so a green push run on dev already proves this commit, and
+          # waiting for main's own run only repeats it (about 12 minutes). Without a dev branch, or
+          # with no green dev commit on this tree, nothing matches and the wait below runs as before.
+          TREE="$(gh api "repos/$REPO/git/commits/$SHA" --jq .tree.sha)"
+          dev_runs="$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?branch=dev&event=push&status=success&per_page=30" \
+            --jq '.workflow_runs[] | "\(.head_sha) \(.html_url)"' 2>/dev/null || true)"
+          while read -r dev_sha dev_url; do
+            [ -n "$dev_sha" ] || continue
+            dev_tree="$(gh api "repos/$REPO/git/commits/$dev_sha" --jq .tree.sha 2>/dev/null)" || continue
+            if [ "$dev_tree" = "$TREE" ]; then
+              echo "CI is green on dev commit $dev_sha, whose tree $TREE is this commit's."
+              echo "  $dev_url"
+              exit 0
+            fi
+          done <<<"$dev_runs"
+          echo "No green dev commit carries tree $TREE; waiting for CI on $SHA itself."
+
           # `git push --follow-tags` sends main and the tag in one push, so CI is normally still
           # running when this starts. Waiting is the design: the release queues behind CI rather
           # than racing it. 40 minutes is well past a full CI run and well short of a stuck one.

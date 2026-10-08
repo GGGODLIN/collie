@@ -23,6 +23,17 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.17.204] - 2026-10-08
+
+### Changed
+
+- **Built on upstream Collie 1.17.2.** AltanS/collie v1.17.2, commit 3d562ae5, unchanged since fork 1.17.0. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+
+### Fixed
+
+- **Grok's chat view follows a session reopened with `/resume`.** Herdr keeps the first session id a Grok pane reported, so a session resumed inside a running Grok showed an empty or outdated chat. Collie now reads the session Grok itself lists for that pane's live process and folder, and keeps Herdr's id when that match is missing or ambiguous. Found by charliie on Discord. ([63c860b5](https://github.com/GGGODLIN/collie/commit/63c860b5))
+- **Grok's phone mirror keeps coloured blanks that are content.** Trimming a row's right padding no longer drops trailing blanks in a colour no text on that row uses, such as a swatch; the canvas, unstyled blanks and a code block's fill are still trimmed. ([62ee815e](https://github.com/GGGODLIN/collie/commit/62ee815e))
+
 ## [1.17.203] - 2026-10-08
 
 ### Changed

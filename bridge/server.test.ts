@@ -26,6 +26,7 @@ import {
   deviceAuth,
   guard,
   historyParams,
+  journalRefOf,
   isHostAllowed,
   isLoopbackPeer,
   isReservedAuthPath,
@@ -93,6 +94,8 @@ import { selectView } from "./sessions.ts";
 import { DEFAULT_MAX_UPLOAD_BYTES } from "./uploads.ts";
 import { MAX_STT_AUDIO_BYTES } from "./stt/http.ts";
 import { computeEtag } from "./http-cache.ts";
+import { grokJournal } from "./journal/grok.ts";
+import type { JournalAdapter } from "./journal/types.ts";
 import {
   MUX_LOGO_PATH,
   type AgentView,
@@ -3885,5 +3888,55 @@ describe("an input written to a pane makes its engine hot", () => {
     expect(src).toContain("const input = isPaneInput(pathname, req.method);");
     expect(src).toContain("return input && own !== undefined ? afterPaneInput(own, forwarded) : forwarded;");
     expect([...src.matchAll(/afterPaneInput\(/g)]).toHaveLength(4); // the definition and three calls
+  });
+});
+
+describe("journalRefOf — which session the history and chat routes read", () => {
+  const reported = { kind: "id" as const, value: "01a11b46-1e64-74d0-991e-aad07d14bf76" };
+  const resumed = { kind: "id" as const, value: "01a11b44-fac4-7833-9c3f-42e41c346195" };
+  const pane = (overrides: Partial<AgentView>): AgentView => ({
+    paneId: "w1:p1",
+    workspaceId: "w1",
+    workspaceLabel: "Main",
+    workspaceNumber: 1,
+    tabId: "w1:t1",
+    agent: "grok",
+    status: "idle",
+    cwd: "/home/op/proj",
+    focused: false,
+    ...overrides,
+  });
+  // journalRefOf reads only agent, discover and reconcile; the rest never runs here.
+  const adapter = (extra: Partial<JournalAdapter>): JournalAdapter => ({
+    ...grokJournal([]),
+    discover: undefined,
+    reconcile: undefined,
+    ...extra,
+  });
+
+  test("a live grok pane reads the session the adapter reconciles to", async () => {
+    const seen: string[] = [];
+    const a = adapter({
+      reconcile: async (ref, cwd) => {
+        seen.push(`${ref.value}@${cwd}`);
+        return resumed;
+      },
+    });
+    expect(await journalRefOf(a, pane({ agentSession: reported }))).toEqual(resumed);
+    expect(seen).toEqual([`${reported.value}@/home/op/proj`]);
+  });
+
+  test("a pane whose grok exited keeps the reported ref: nothing live to move to", async () => {
+    const a = adapter({ reconcile: async () => resumed });
+    expect(await journalRefOf(a, pane({ agent: "shell", agentSession: reported }))).toEqual(reported);
+  });
+
+  test("a pane with no reported ref still falls back to discovery", async () => {
+    const a = adapter({ reconcile: async () => resumed, discover: async () => resumed });
+    expect(await journalRefOf(a, pane({}))).toEqual(resumed);
+  });
+
+  test("an adapter without reconcile reads the reported ref as before", async () => {
+    expect(await journalRefOf(adapter({}), pane({ agentSession: reported }))).toEqual(reported);
   });
 });
