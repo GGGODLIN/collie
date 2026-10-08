@@ -9,6 +9,7 @@ import {
   whenLocaleReady,
 } from "./index";
 import { LOCALES } from "./locale";
+import type { MessageKey } from "./messages/en";
 
 // The translation runtime. What is pinned here is everything that fails SILENTLY in production:
 // a value that carries regex punctuation, a plural that reads the wrong language's grammar, the
@@ -57,6 +58,21 @@ describe("interpolation", () => {
 
   it("accepts a number and leaves an unknown slot alone", () => {
     expect(tn("space.overview.paneCount", 3)).toBe("3 panes");
+  });
+});
+
+// Fork-only (FORK.md, "Gaddi brand").
+describe("the fork's name", () => {
+  it("swaps Collie for Gaddi on the way out", () => {
+    expect(t("tour.title")).toContain("Gaddi");
+    expect(t("tour.title")).not.toContain("Collie");
+  });
+
+  // A key built at run time from a value the dictionary does not know, as the cache sheet builds
+  // `cache.confidence.<value>`, must read empty as it does upstream, not throw mid-render.
+  it("reads a key the dictionary lacks as nothing rather than throwing", () => {
+    const missing: MessageKey = JSON.parse('"cache.confidence.high"');
+    expect(t(missing)).toBeUndefined();
   });
 });
 

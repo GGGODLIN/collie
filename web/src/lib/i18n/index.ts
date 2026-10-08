@@ -147,8 +147,11 @@ function activeLocale(): Locale {
 // filled, so a pane or file name that happens to say Collie is shown as it is.
 const BRAND = /\bCollie\b/g;
 
+// The `?.` is for a key built at run time that the dictionary lacks (a cache confidence a newer
+// bridge sends, say): upstream's `t()` returns undefined there and the cell renders empty, and a
+// throw here would take the whole route down instead.
 function message(key: MessageKey): string {
-  return activeDictionary()[key].replace(BRAND, "Gaddi");
+  return activeDictionary()[key]?.replace(BRAND, "Gaddi");
 }
 
 /** Translate one key into the active language, filling any `{slot}`s. */
