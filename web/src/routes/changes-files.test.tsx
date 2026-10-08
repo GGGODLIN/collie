@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { asJsonBoolean, asJsonObject } from "@/lib/json";
 import { resetChangesListCache } from "@/lib/changes-list-cache";
+import { t } from "@/lib/i18n";
 import { en } from "@/lib/i18n/messages/en";
 import { ROOT_ROUTE_ID, type HomeData } from "@/lib/loaders";
 import { clearNotPaired, isNotPaired } from "@/lib/pairing";
@@ -164,7 +165,7 @@ describe("Changes: the folder tree is the default body", () => {
       http.get(/\/api\/pane\/[^/]+\/changes/, () => HttpResponse.json({ paneId: "w1:p1", available: false, reason: "no-folder" })),
     );
     renderAt([CHANGES]);
-    expect(await screen.findByText(en["changes.unavailable.noFolder"])).toBeTruthy();
+    expect(await screen.findByText(t("changes.unavailable.noFolder"))).toBeTruthy();
     expect(screen.queryByRole("button", { name: en["files.showChangesOnly"] })).toBeNull();
   });
 
@@ -175,7 +176,7 @@ describe("Changes: the folder tree is the default body", () => {
       http.get(/\/api\/pane\/[^/]+\/files/, () => HttpResponse.json({ available: false, reason: "no-folder" })),
     );
     renderAt([CHANGES]);
-    expect(await screen.findByText(en["files.noFolder"])).toBeTruthy();
+    expect(await screen.findByText(t("files.noFolder"))).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: en["files.showChangesOnly"] }));
     expect(await screen.findByRole("button", { name: /checkout\.tsx/ })).toBeTruthy();
     expect(storedPref("changesOnly")).toBe(true);
@@ -526,7 +527,7 @@ describe("Changes tree: what a refusal reads as", () => {
       http.get(/\/api\/pane\/[^/]+\/files/, () => HttpResponse.json({ error: "not found" }, { status: 404 })),
     );
     renderAt([FILES]);
-    expect(await screen.findByText(en["files.stale.member"])).toBeTruthy();
+    expect(await screen.findByText(t("files.stale.member"))).toBeTruthy();
     expect(screen.queryByText(en["files.unknown.folder"])).toBeNull();
   });
 
@@ -535,7 +536,7 @@ describe("Changes tree: what a refusal reads as", () => {
       http.get(/\/api\/pane\/[^/]+\/files/, () => new HttpResponse("not found", { status: 404 })),
     );
     renderAt([FILES]);
-    expect(await screen.findByText(en["files.stale.member"])).toBeTruthy();
+    expect(await screen.findByText(t("files.stale.member"))).toBeTruthy();
   });
 
   it("an unpaired device is refused with the same body a write gets, and is shown the way to pair", async () => {

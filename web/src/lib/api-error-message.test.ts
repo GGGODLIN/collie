@@ -22,7 +22,7 @@ describe("describeApiError", () => {
         code: "upload.bad_type",
         detail: { type: "image/tiff" },
       }),
-    ).toBe("Collie can't send that kind of file: image/tiff");
+    ).toBe("Gaddi can't send that kind of file: image/tiff");
   });
 
   it("frames a passthrough reason without translating the reason itself", () => {

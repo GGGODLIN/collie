@@ -23,6 +23,13 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Changed
+
+- **This fork is now called Gaddi, with its own dog.** Upstream's trademark policy keeps the
+  ColliePWA name and dog mark out of a fork, so the app, the iPhone app and the README say Gaddi and
+  show a pixel-art Gaddi dog. The `collie` command and the Herdr plugin keep their names, so an
+  install updates as before.
+
 ## [1.17.201] - 2026-10-07
 
 ### Added

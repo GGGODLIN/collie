@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 
 import { TourSection } from "./tour";
+import { t } from "@/lib/i18n";
 import { en } from "@/lib/i18n/messages/en";
 
 // The section is how Altan reads the first-run screen before anything mounts in the app, so the test
@@ -48,7 +49,7 @@ describe("First run section", () => {
     expect(card("first-run-unpaired").textContent).toContain(en["tour.pair.title"]);
     expect(card("first-run-crew").textContent).toContain("3 machines in your crew");
     expect(card("first-run-push-blocked").textContent).toContain(en["tour.setup.pushOff"]);
-    expect(card("first-run-installed").textContent).toContain(en["tour.install.title"]);
+    expect(card("first-run-installed").textContent).toContain(t("tour.install.title"));
     expect(card("settings-row").textContent).toContain(en["settings.tour.title"]);
   });
 });

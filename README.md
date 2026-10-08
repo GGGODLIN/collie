@@ -1,20 +1,13 @@
-# ColliePWA
+# Gaddi
 
 <p align="center">
-  <!-- Baked by collie-brand's logo-ship.ts (collie-social-card-dark.png) and copied in whole, the
-       same file colliepwa.dev serves as its social card. Do not retouch it here: regenerate it there. -->
-  <img src="assets/social-card.png" alt="The Collie mark beside the ColliePWA wordmark and the line: your agent herd, from your phone." width="640">
+  <img src="assets/social-card.png" alt="A pixel-art Gaddi dog watching a flock on a Himalayan slope, beside the name Gaddi and the line: your agent herd, from your phone." width="640">
 </p>
 
-<p align="center">
-  <a href="https://colliepwa.dev/demo?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=collie&amp;utm_content=hero"><b>Try it in your browser — no install</b></a> ·
-  <a href="https://colliepwa.dev/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=collie&amp;utm_content=hero">colliepwa.dev</a><br>
-  <sub>A real Collie build running in the page against faked data.</sub>
-</p>
-
-> **Note.** This is [GGGODLIN's fork](https://github.com/GGGODLIN/collie) of
-> [AltanS/collie](https://github.com/AltanS/collie). It installs from source and publishes its own
-> releases. Everything below the fork section is upstream's README, unchanged.
+> **Note.** Gaddi is [GGGODLIN's fork](https://github.com/GGGODLIN/collie) of
+> [ColliePWA](https://github.com/AltanS/collie) (AltanS/collie). It is not an official ColliePWA
+> project. It installs from source and publishes its own releases. Everything below the fork section
+> is upstream's README, unchanged, so it still says Collie.
 
 ## This fork
 
@@ -28,7 +21,7 @@ release's. Day-to-day work happens on `dev`, which is not tested for anyone else
 ### Your agents on the iPhone's Dynamic Island
 
 The fork's main addition is an iPhone app, in [`ios/`](./ios/README.md), that puts your agents'
-state on the Dynamic Island and the lock screen, and opens Collie when you tap it. Build it, or
+state on the Dynamic Island and the lock screen, and opens Gaddi when you tap it. Build it, or
 sideload the `.ipa` each release carries; either way it is signed with your own Apple ID. A free one
 is enough, and nothing goes through a push service or a third-party server.
 
@@ -51,7 +44,7 @@ The screenshots use made-up agents. The second line, what the pane is doing, sho
 `ISLAND_SHOW_DETAIL = YES`, because it can be your newest prompt word for word; by default the
 island shows the pane's name and the counts.
 
-In Collie itself, each pane says in one line what its agent is doing, and a tool permission can be
+In Gaddi itself, each pane says in one line what its agent is doing, and a tool permission can be
 answered from the list without opening the pane:
 
 <table>
@@ -98,7 +91,7 @@ cd ~/.local/share/collie && git fetch --tags && git checkout v1.14.0 &&
 ```
 
 The checkout is then detached at that release. To return to the latest, switch back to `main` and
-update; checking out `main` alone changes the source, not the running Collie.
+update; checking out `main` alone changes the source, not the running Gaddi.
 
 ```bash
 cd ~/.local/share/collie && git checkout main && bin/collie update
@@ -111,7 +104,7 @@ cd ~/.local/share/collie && git checkout main && bin/collie update
 ### Optional companions
 
 Two features read the output of the maintainer's own Claude Code tools. Both are off until you
-install the tool, and Collie runs the same without them.
+install the tool, and Gaddi runs the same without them.
 
 | Feature | Needs | Without it |
 | --- | --- | --- |
