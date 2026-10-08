@@ -29,7 +29,7 @@ const STYLE =
 
 const vars = (loading: boolean, paper: string): CSSProperties => {
   const set = {
-    "--cm-a1": loading ? "oklch(0.8 0.17 75)" : "oklch(0.95 0.05 85)",
+    "--cm-a1": loading ? "oklch(0.68 0 0)" : "oklch(0.96 0 0)",
     "--cm-paper": paper,
   };
   // SAFETY: every key is a CSS custom property and every value is a string. React passes unknown
