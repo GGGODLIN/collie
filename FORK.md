@@ -29,14 +29,21 @@ that brings it back.
 
 Each entry says what it is, where it lives, and what it assumes.
 
-### The title bar reads COLLIE-GGGODLIN (2026-09-22)
+### Gaddi brand: the fork's own name and pixel-art dog (2026-10-08)
 
-- **What.** The header shows `COLLIE-GGGODLIN` instead of `Collie`, so this build is told apart
-  from an upstream install on the same phone.
-- **Where.** [`web/src/components/app-header.tsx`](/web/src/components/app-header.tsx) and the
-  tests pinning it, `app-header.test.tsx` and `alpha-bar.test.tsx`.
-- **Assumes.** This fork's name.
-- **To upstream.** Leave it out. A per-install title would be an operator setting instead.
+- **What.** The fork is published as Gaddi, with a pixel-art Gaddi dog as its mark, because
+  upstream's [`TRADEMARKS.md`](/TRADEMARKS.md) keeps the ColliePWA name and dog mark out of a fork.
+  It replaces the 2026-09-22 `COLLIE-GGGODLIN` title bar.
+- **Where.** The UI strings keep upstream's dictionaries as they are: `t()` and `tn()` in
+  [`web/src/lib/i18n/index.ts`](/web/src/lib/i18n/index.ts) swap the word Collie for Gaddi on the
+  way out. The mark is [`web/src/components/collie-mark.tsx`](/web/src/components/collie-mark.tsx)
+  (upstream's name and props, new drawing in `gaddi-mark-art.ts`). Names: the header wordmark,
+  `web/index.html`, the manifest names in `web/vite-icons.ts`, the idle lock, the default push
+  title, the iPhone app's display names and strings. Images: the icons under `web/public/`, the
+  iPhone app icon and Island mark, `assets/social-card.png` and `assets/gaddi-banner.png`.
+- **Assumes.** Nothing outside the repo. Internal names stay upstream's: the `collie` command, the
+  plugin id `herdr.collie`, file names and identifiers, so an existing install updates in place.
+- **To upstream.** Leave it out. An upstream PR takes no file from this list.
 
 ### The pane description reads a recap cc-mod-waitwhat writes (2026-09-24)
 

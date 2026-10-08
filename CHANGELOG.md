@@ -23,6 +23,13 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Changed
+
+- **This fork is now called Gaddi, with its own dog.** Upstream's trademark policy keeps the
+  ColliePWA name and dog mark out of a fork, so the app, the iPhone app and the README say Gaddi and
+  show a pixel-art Gaddi dog. The `collie` command and the Herdr plugin keep their names, so an
+  install updates as before.
+
 ### Fixed
 
 - **Grok's multiline input scrollbar no longer blocks verified replies.** The draft reader ignores the separately styled scrollbar at the composer's right edge in the captured Grok Build 1.0.46 layout, while preserving literal block glyphs. Reply verification and modal refusal stay unchanged.

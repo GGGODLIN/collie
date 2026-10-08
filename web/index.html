@@ -32,12 +32,12 @@
       name="apple-mobile-web-app-status-bar-style"
       content="default"
     />
-    <meta name="apple-mobile-web-app-title" content="Collie" />
+    <meta name="apple-mobile-web-app-title" content="Gaddi" />
     <!-- Where this document is mounted (ADR 0052). `/` as built; the bridge rewrites it, and every
          root-absolute reference in this file, to the path a proxy gave Collie when it serves the
          file. One build serves any mount, so the value is not known here. lib/base-path.ts reads it. -->
     <meta name="collie-base" content="/" />
-    <title>Collie</title>
+    <title>Gaddi</title>
     <!-- The UI typeface, fetched in parallel with the CSS that asks for it rather than after it.
          index.css already guarantees no layout shift with a metric-matched fallback, so this is not
          load-bearing — it just means the swap usually never happens at all. `crossorigin` is
@@ -217,7 +217,7 @@
   </head>
   <body>
     <div id="root">
-      <div class="boot-splash" role="status" aria-label="Loading Collie">
+      <div class="boot-splash" role="status" aria-label="Loading Gaddi">
         <span class="boot-splash__mark" aria-hidden="true"></span>
         <span>Connecting to the herd…</span>
       </div>

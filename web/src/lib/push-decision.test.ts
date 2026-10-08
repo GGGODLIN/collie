@@ -69,7 +69,7 @@ describe("decidePush", () => {
   test("falls back to a per-pane tag, default title, empty body, and renotify off", () => {
     expect(decidePush({ data: { paneId: "test" } }, false)).toEqual({
       kind: "show",
-      title: "Collie",
+      title: "Gaddi",
       body: "",
       tag: "collie:test",
       paneId: "test",
@@ -89,7 +89,7 @@ describe("decidePush", () => {
     expect(
       decidePush(
         {
-          title: "Collie 0.12.0 available",
+          title: "Gaddi 0.12.0 available",
           body: "collie-ctl.sh update",
           data: { target: "settings" },
         },
@@ -97,7 +97,7 @@ describe("decidePush", () => {
       ),
     ).toMatchObject({
       kind: "show",
-      title: "Collie 0.12.0 available",
+      title: "Gaddi 0.12.0 available",
       target: "settings",
       paneId: undefined,
     });

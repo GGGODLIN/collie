@@ -141,9 +141,19 @@ function activeLocale(): Locale {
 }
 
 
+// Fork-only (FORK.md, "Gaddi brand"): the dictionaries stay upstream's, word for word, so a sync
+// never conflicts on them; the product name is swapped on the way out instead. Every language
+// writes the name in Latin letters, and it is swapped in the template before any `{slot}` is
+// filled, so a pane or file name that happens to say Collie is shown as it is.
+const BRAND = /\bCollie\b/g;
+
+function message(key: MessageKey): string {
+  return activeDictionary()[key].replace(BRAND, "Gaddi");
+}
+
 /** Translate one key into the active language, filling any `{slot}`s. */
 export function t(key: MessageKey, vars?: TemplateVars): string {
-  return interpolate(activeDictionary()[key], vars);
+  return interpolate(message(key), vars);
 }
 
 const pluralRules = new Map<Locale, Intl.PluralRules>();
@@ -167,7 +177,7 @@ function pluralSuffix(locale: Locale, count: number): "one" | "other" {
  */
 export function tn(keyBase: PluralKey, count: number, vars?: TemplateVars): string {
   const key: MessageKey = `${keyBase}.${pluralSuffix(activeLocale(), count)}`;
-  return interpolate(activeDictionary()[key], { ...vars, count });
+  return interpolate(message(key), { ...vars, count });
 }
 
 /** Switch languages: persist, stamp `<html lang>`, repaint now in whatever is available, and start
