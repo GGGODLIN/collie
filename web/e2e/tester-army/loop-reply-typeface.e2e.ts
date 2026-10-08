@@ -4,6 +4,7 @@ import type { Screen } from "e2e";
 import { expect } from "e2e";
 
 import { DESIGN_STORAGE_KEY } from "../../src/lib/design.ts";
+import { t } from "../../src/lib/i18n/index.ts";
 import { en } from "../../src/lib/i18n/messages/en.ts";
 import { asJsonString, parseJsonObject } from "../../src/lib/json.ts";
 import type { AgentView, SnapshotResponse } from "../../src/lib/types.ts";
@@ -189,7 +190,7 @@ test("SET-FACE/reload — Appearance offers the three shipped faces, Aldrich is 
 
   await family.selectOption({ value: typefaceGroteskValue });
   await expect(family).toHaveValue(typefaceGroteskValue);
-  await expect(screen.getByText(en["settings.typeface.note.grotesk"], { exact: true })).toBeVisible();
+  await expect(screen.getByText(t("settings.typeface.note.grotesk"), { exact: true })).toBeVisible();
   expect(await designStore(browser)).toEqual({ ...typefaceGroteskStore });
 
   await page().reload();
@@ -197,6 +198,6 @@ test("SET-FACE/reload — Appearance offers the three shipped faces, Aldrich is 
   const reloaded = typefaceFamily(screen);
   await expect(reloaded).toHaveValue(typefaceGroteskValue);
   await expect(reloaded.getByRole("option")).toHaveText([...shippedTypefaceOptionLabels]);
-  await expect(screen.getByText(en["settings.typeface.note.grotesk"], { exact: true })).toBeVisible();
+  await expect(screen.getByText(t("settings.typeface.note.grotesk"), { exact: true })).toBeVisible();
   expect(await designStore(browser)).toEqual({ ...typefaceGroteskStore });
 });

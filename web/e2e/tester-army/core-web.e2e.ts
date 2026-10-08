@@ -99,7 +99,7 @@ test("title-dash/v3 — fork wordmark is visible with the published mux identity
   try {
     await app.open("/");
     await expect(screen.getByText("on reference", { exact: true })).toBeVisible();
-    await expect(screen.getByText("COLLIE-GGGODLIN")).toBeVisible();
+    await expect(screen.getByText("GADDI")).toBeVisible();
     expect(watched.escapedOrigins).toEqual([]);
   } finally {
     writeEvidence("title-dash-v3", { origin, escapedOrigins: watched.escapedOrigins });

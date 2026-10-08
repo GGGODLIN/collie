@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { t } from "@/lib/i18n";
 import { en } from "@/lib/i18n/messages/en";
 import { SERVER_BUILD_HEADER } from "@/lib/server-build";
 import { fixtureSnapshot } from "@/test/handlers";
@@ -436,7 +437,7 @@ function watchTheWire(page: Page) {
  *  test of "did it come back": a dog that never stops galloping is the bug. */
 async function expectReactBooted(page: Page): Promise<void> {
   await expect(page.getByRole("main")).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByLabel("Loading Collie")).toHaveCount(0);
+  await expect(page.getByLabel("Loading Gaddi")).toHaveCount(0);
 }
 
 // ── The seven cases ─────────────────────────────────────────────────────────────────────────────
@@ -558,7 +559,7 @@ test("a denylisted navigation with a query string reaches the server, not the pr
   await expect(page.getByText(SERVER_ONLY_MARKER).first()).toBeVisible();
   await expect(page.getByText("/auth?rd=%2Fpane%2Fw1")).toBeVisible();
   // Not the precached shell. The app's own header button is mounted on every route it renders.
-  await expect(page.getByRole("button", { name: en["nav.home.aria.default"] })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: t("nav.home.aria.default") })).toHaveCount(0);
   // And a worker WAS in charge of this navigation, so the denylist is what let it through rather
   // than an origin that happened to have no worker.
   expect(await page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);

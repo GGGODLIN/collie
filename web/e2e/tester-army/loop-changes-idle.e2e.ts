@@ -2,6 +2,7 @@ import { surfaceOf } from "@e2e-dev/web";
 import type { Screen } from "e2e";
 import { expect } from "e2e";
 
+import { t } from "../../src/lib/i18n/index.ts";
 import { en } from "../../src/lib/i18n/messages/en.ts";
 import { fixtureChanges, fixtureWorkspaces } from "../../src/test/handlers.ts";
 import { engine } from "./engine.ts";
@@ -120,9 +121,9 @@ test("IDLE/visible — an open visible pane pauses at the real deadline and resu
   await expect(field).toHaveValue(DRAFT);
   const visibility = await page().evaluate(() => document.visibilityState);
   expect(visibility).toBe("visible");
-  await expect(screen.getByRole("dialog", en["idle.dialogAria"])).toHaveCount(0);
+  await expect(screen.getByRole("dialog", t("idle.dialogAria"))).toHaveCount(0);
   await page().clock.fastForward(DEADLINE_MS);
-  const cover = screen.getByRole("dialog", en["idle.dialogAria"]);
+  const cover = screen.getByRole("dialog", t("idle.dialogAria"));
   await expect(cover).toBeVisible();
   await expect(cover.getByText(en["idle.paused.title"])).toBeVisible();
   await expect(cover.getByText(en["idle.paused.body"])).toBeVisible();

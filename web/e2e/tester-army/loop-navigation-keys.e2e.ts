@@ -2,6 +2,7 @@ import type { Screen } from "e2e";
 import { expect } from "e2e";
 import { surfaceOf } from "@e2e-dev/web";
 
+import { t } from "../../src/lib/i18n/index.ts";
 import { en } from "../../src/lib/i18n/messages/en.ts";
 import { fixtureSnapshot } from "../../src/test/handlers.ts";
 import { focusFilterOrderAgents } from "../../src/test/sweep-loop-navigation-data.ts";
@@ -67,7 +68,7 @@ async function openKeys(app: Openable, screen: Screen): Promise<void> {
 test("NAV-BACK/down — a pane opened from the dashboard is one browser back from it", async ({ app, screen, browser }) => {
   await openClaudePane(app, screen);
   await expect(browser).toHaveURL(PANE_A);
-  await expect(screen.getByRole("button", en["nav.home.aria.default"])).toBeVisible();
+  await expect(screen.getByRole("button", t("nav.home.aria.default"))).toBeVisible();
   await browser.back();
   await expect(browser).toHaveURL(DASHBOARD);
   await expect(footer(screen).getByRole("button", new RegExp(`^${en["home.tabs.dashboard"]}(?:\\s*,|$)`, "u"))).toBeVisible();
@@ -89,7 +90,7 @@ test("NAV-BACK/side — switching panes replaces, so browser back is not the pan
 test("NAV-BACK/up — the home control steps back and a further browser back does not re-enter the pane", async ({ app, screen, browser }) => {
   await openClaudePane(app, screen);
   await expect(browser).toHaveURL(PANE_A);
-  await screen.getByRole("button", en["nav.home.aria.default"]).tap();
+  await screen.getByRole("button", t("nav.home.aria.default")).tap();
   await expect(browser).toHaveURL(DASHBOARD);
   try {
     await browser.back();

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { en } from "@/lib/i18n/messages/en";
+import { t } from "@/lib/i18n";
 import { fixtureWorkspaces } from "@/test/handlers";
 
 import { installApiStub } from "./fixtures/api";
@@ -23,7 +23,7 @@ test("the app shell renders on /", async ({ page }) => {
   // whose aria-label IS this string) and the route's main region. Both are mounted once for the
   // life of the app, so this is the handle that says "the bundle booted", not "home happened to
   // render".
-  await expect(page.getByRole("button", { name: en["nav.home.aria.default"] })).toBeVisible();
+  await expect(page.getByRole("button", { name: t("nav.home.aria.default") })).toBeVisible();
   await expect(page.getByRole("main")).toBeVisible();
 
   // And the shell is showing FIXTURE data, so the stub was reached and `rootLoader` resolved. A
