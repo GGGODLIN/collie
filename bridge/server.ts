@@ -58,7 +58,7 @@ import type { StateEngine } from "./state-engine.ts";
 import { adapterFor, buildJournalRegistry } from "./journal/registry.ts";
 import { chatParams, LiveWindows } from "./journal/live.ts";
 import { TranscriptStore } from "./journal/store.ts";
-import type { JournalAdapter } from "./journal/types.ts";
+import type { AgentSessionRef, JournalAdapter } from "./journal/types.ts";
 import { isBlobHash, resolveBlobPath } from "./journal/pi.ts";
 import { containedRealpath, statFile } from "./journal/files.ts";
 import { isSessionId } from "./journal/claude.ts";
@@ -2595,6 +2595,17 @@ export function historyParams(url: URL): HistoryParams {
 }
 
 /**
+ * The session a pane's journal routes read: the reported ref (corrected by an adapter that knows its
+ * multiplexer can keep a stale one, while the pane still runs that harness), else a discovered one.
+ */
+export async function journalRefOf(adapter: JournalAdapter, pane: AgentView): Promise<AgentSessionRef | null> {
+  const reported = pane.agentSession;
+  if (reported === undefined) return (await adapter.discover?.(pane.cwd)) ?? null;
+  if (adapter.reconcile === undefined || pane.agent !== adapter.agent) return reported;
+  return adapter.reconcile(reported, pane.cwd);
+}
+
+/**
  * GET /api/pane/:id/history — the conversation history the pane's terminal cannot provide.
  *
  * The session ref is resolved HERE, from the live snapshot, keyed by pane id — the client never sends
@@ -2632,7 +2643,7 @@ async function paneHistory(
   // discovery widens WHICH panes answer, never how an answer is read. A shell, or a harness whose
   // integration isn't installed, still names nothing discoverable: no-session, an ordinary answer
   // rather than an error.
-  const ref = pane.agentSession ?? (await adapter.discover?.(pane.cwd)) ?? null;
+  const ref = await journalRefOf(adapter, pane);
   if (ref === null) return unavailable("no-session");
 
   try {
@@ -2690,7 +2701,7 @@ async function paneChat(
   // The reported ref, or the discovered one — the history route's rule, word for word. Discovery
   // runs per poll here, a bounded newest-first walk that costs milliseconds in the common case;
   // the resolved path below is what the live window holds.
-  const ref = pane.agentSession ?? (await adapter.discover?.(pane.cwd)) ?? null;
+  const ref = await journalRefOf(adapter, pane);
   if (ref === null) return unavailable("no-session");
 
   const params = chatParams(url);

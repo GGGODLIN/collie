@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Fixed
+
+- **Grok's chat view follows a session reopened with `/resume`.** Herdr keeps the first session id a Grok pane reported, so a session resumed inside a running Grok showed an empty or outdated chat. Collie now reads the session Grok itself lists for that pane's live process and folder, and keeps Herdr's id when that match is missing or ambiguous. Found by charliie on Discord.
+
 ## [1.17.203] - 2026-10-08
 
 ### Changed
