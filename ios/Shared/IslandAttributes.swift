@@ -15,7 +15,7 @@ struct IslandAttributes: ActivityAttributes {
     var offline: Bool
 
     static let calm = ContentState(
-      needs: 0, ready: 0, working: 0, headline: "Collie", detail: "", paneId: nil, bucket: .recent,
+      needs: 0, ready: 0, working: 0, headline: "Gaddi", detail: "", paneId: nil, bucket: .recent,
       offline: false)
   }
 }

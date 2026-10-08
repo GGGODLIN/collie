@@ -73,8 +73,8 @@ describe("TourSheet — the claim", () => {
     renderScreen();
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("aria-modal", "true");
-    expect(dialog).toHaveAccessibleName(en["tour.title"]);
-    expect(screen.getByRole("heading", { name: en["tour.title"] })).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleName(t("tour.title"));
+    expect(screen.getByRole("heading", { name: t("tour.title") })).toBeInTheDocument();
   });
 
   it("names this install's multiplexer and machine", () => {
@@ -169,7 +169,7 @@ describe("TourSheet — do this next", () => {
     expect(screen.getByText(en["tour.pair.title"])).toBeInTheDocument();
     expect(screen.getByText(en["tour.space.title"])).toBeInTheDocument();
     expect(screen.queryByText(en["tour.pushCard.title"])).not.toBeInTheDocument();
-    expect(screen.queryByText(en["tour.install.title"])).not.toBeInTheDocument();
+    expect(screen.queryByText(t("tour.install.title"))).not.toBeInTheDocument();
   });
 
   it("reports which card was tapped instead of navigating itself", () => {

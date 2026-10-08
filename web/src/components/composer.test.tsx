@@ -183,7 +183,7 @@ describe("Composer — send", () => {
 
     // The status names the key the way the Keys keypad names it, and the card is where it is.
     await waitFor(() =>
-      expect(screen.getByTestId("status")).toHaveTextContent(/Collie cannot read this dialog/i),
+      expect(screen.getByTestId("status")).toHaveTextContent(/Gaddi cannot read this dialog/i),
     );
     expect(screen.getByTestId("status")).toHaveTextContent(/Esc is on the card/);
     expect(calls).toEqual([]);
@@ -203,7 +203,7 @@ describe("Composer — send", () => {
     await user.type(box, "carry on");
     await user.click(screen.getByRole("button", { name: "Send" }));
     await waitFor(() =>
-      expect(screen.getByTestId("status")).toHaveTextContent(/Collie cannot read this dialog/i),
+      expect(screen.getByTestId("status")).toHaveTextContent(/Gaddi cannot read this dialog/i),
     );
 
     await user.click(screen.getByRole("button", { name: /type anyway/i }));
@@ -2165,7 +2165,7 @@ describe("Composer — attachment limits published by this bridge", () => {
     const fileInput = screen.getByTestId("attach-files") as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("Collie can't attach app.rb."));
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("Gaddi can't attach app.rb."));
     expect(uploadCalls).toBe(0);
   });
 });

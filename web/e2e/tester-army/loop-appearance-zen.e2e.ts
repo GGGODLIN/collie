@@ -3,6 +3,7 @@ import { expect } from "e2e";
 import type { Browser } from "@e2e-dev/web";
 import { surfaceOf } from "@e2e-dev/web";
 
+import { t } from "../../src/lib/i18n/index.ts";
 import { en } from "../../src/lib/i18n/messages/en.ts";
 import type { LaunchersResponse } from "../../src/lib/types.ts";
 import { engine } from "./engine.ts";
@@ -89,7 +90,7 @@ async function enterZen(app: Openable, screen: Screen): Promise<void> {
 
 async function expectChromeRestored(screen: Screen): Promise<void> {
   await expect(screen.getByRole("textbox")).toBeVisible();
-  await expect(screen.getByRole("button", en["nav.home.aria.default"])).toBeVisible();
+  await expect(screen.getByRole("button", t("nav.home.aria.default"))).toBeVisible();
   await expect(screen.getByRole("button", en["chat.zen.exitAria"])).toHaveCount(0);
 }
 

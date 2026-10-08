@@ -6,7 +6,7 @@ import AppIntents
 // the widget extension only needs the type so its Control Center button can name it.
 struct RestartIslandIntent: LiveActivityIntent {
   static let title: LocalizedStringResource = "重啟靈動島"
-  static let description = IntentDescription("重新開啟 Collie 的靈動島，並繼續更新。")
+  static let description = IntentDescription("重新開啟 Gaddi 的靈動島，並繼續更新。")
 
   func perform() async throws -> some IntentResult {
     #if !WIDGET_EXTENSION

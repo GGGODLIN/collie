@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { t } from "@/lib/i18n";
 import { en } from "@/lib/i18n/messages/en";
 
 import { installApiStub } from "./fixtures/api";
@@ -20,7 +21,7 @@ test("a fresh origin is shown the first-run screen once the first snapshot lands
 
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  await expect(dialog).toHaveAccessibleName(en["tour.title"]);
+  await expect(dialog).toHaveAccessibleName(t("tour.title"));
   await expect(dialog.getByRole("button", { name: en["tour.skip"] })).toBeVisible();
   // The six lines are the part that is the same on every install, so they are what a browser case
   // can assert without pinning this fixture's own pane count.

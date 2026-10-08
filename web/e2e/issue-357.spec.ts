@@ -21,7 +21,7 @@ test("failed member-scoped snapshot does not infer a mux failure from lead confi
   await expect(page.getByRole("button", { name: "Retry", exact: true })).not.toBeVisible();
   unavailable = true;
   await expect(page.getByRole("button", { name: "Retry", exact: true })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("alert").filter({ hasText: "Can't reach Collie" })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "Can't reach Gaddi" })).toBeVisible();
 });
 
 test("member pane outage with a muxless lead names the member, not the mux", async ({ page }) => {
