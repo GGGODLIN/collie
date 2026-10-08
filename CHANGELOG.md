@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Fixed
+
+- **A long Grok reply ending in a table gets its full-reply card again.** Once a reply outgrows the pane, Grok draws a scrollbar cell at the end of every row, and the table's divider rows stopped reading as table frame. The reply's last row then stayed interleaved and the terminal view showed the broken table instead of the card. Found by charliie on Discord.
+
 ## [1.17.204] - 2026-10-08
 
 ### Changed
