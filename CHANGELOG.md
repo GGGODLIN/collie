@@ -26,6 +26,7 @@ Running a crew? Update the lead first; members follow on their own. Details:
 ### Fixed
 
 - **Grok's multiline input scrollbar no longer blocks verified replies.** The draft reader ignores the separately styled scrollbar at the composer's right edge in the captured Grok Build 1.0.46 layout, while preserving literal block glyphs. Reply verification and modal refusal stay unchanged.
+- **Grok's fractional scrollbar no longer stalls long replies.** The draft reader also recognises lower partial-block scrollbar cells at the same captured position and style. A live bridge send exposed the missing `▁` cell; literal typed blocks remain unchanged, and submit still waits for verified message text.
 
 ## [1.17.201] - 2026-10-07
 
