@@ -37,22 +37,12 @@ import type { Scope } from "@/lib/scope";
 interface HeaderClaim {
   /** Show the stacked identity beside the mark: the "Collie" brand line over the "on <mux>" line. */
   wordmark: boolean;
-  /** `column` = the header is as wide as the route's own `max-w-screen-sm` content column (640px),
-   *  which is what the dashboard, space, Settings, Crew and Updates screens have always been;
-   *  `wide` = a LADDER rather than one number: 768px from `md`, then 1024, 1280 and 1400px at `lg`,
-   *  `xl` and `2xl`, which is what the pane and history screens claim — they were `full` until
-   *  landscape on a tablet showed what that costs, then flat at 768px until a desktop showed what
-   *  THAT costs (#166); `full` = edge to edge, the default, which the unclaimed shell and any route
-   *  that names no width get. Invisible on a portrait phone, where the viewport is narrower than
-   *  either column; on a desktop it is the difference between a 640px rule under the header and a
-   *  1400px one, so it is a real property of the route and not a default.
-   *
-   *  The pane pair grow and the other five do not, because what sits under the pane pair is a
-   *  terminal mirror with a column count of its own: a 640px column minus its 16px gutters clips an
-   *  80-column mirror, and a 768px one clips a 120-column mirror. A dashboard row has no such
-   *  number. AgentChat's wrapper carries the measurement and the same four classes; the two must
-   *  not drift, or the header and the mirror stop sharing a right edge. */
-  width: "column" | "wide" | "full";
+  /** 頁首由 shell 承載，不會繼承 route 的欄寬，因此必須與內容採用相同限制。
+   *  `column` 保留 Settings、Crew、Updates 的窄欄；`wide` 保留終端頁的寬度梯度。
+   *  `responsive-column` 讓首頁與空間頁從 md 才套用梯度；短視窗仍維持窄欄，
+   *  避免手機橫向超過 md 時也被放寬。
+   *  `full` 不限制寬度，供未宣告欄寬的 route 使用。 */
+  width: "column" | "responsive-column" | "wide" | "full";
   /** The route has taken the whole row (Settings, Crew, and either find bar). The shell then draws
    *  no mark, no caption and no slots — see `RouteHeader`. */
   override: boolean;
@@ -240,6 +230,8 @@ export function AppHeaderHost({ bridge, error, children }: AppHeaderHostProps) {
           // when it comes back.
           claim.hidden ? "border-transparent" : "border-rule",
           claim.width === "column" && "mx-auto w-full max-w-screen-sm",
+          claim.width === "responsive-column" &&
+            "mx-auto w-full max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl 2xl:max-w-[1400px] [@media(max-height:40rem)]:max-w-screen-sm",
           claim.width === "wide" &&
             "mx-auto w-full max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl 2xl:max-w-[1400px]",
         )}
@@ -444,10 +436,8 @@ interface RouteHeaderProps {
    *  inside a pane: the breadcrumb in `children` carries the context there, and the mark stands alone
    *  to save width. */
   wordmark?: boolean;
-  /** Whether this route's header is as wide as its `max-w-screen-sm` content column (`column`), as
-   *  the pane pair's growing 768-to-1400px one (`wide`), or edge to edge (`full`). See
-   *  `HeaderClaim.width`. Defaults to `full`, which is the plainest of the three. */
-  width?: "column" | "wide" | "full";
+  /** shell 不會繼承 route 的寬度；此宣告讓頁首與內容共用左右邊界。 */
+  width?: HeaderClaim["width"];
 
   /** Route-specific center content — the pane's `space › tab` breadcrumb. Rendered in a `flex-1
    *  min-w-0` region so a long breadcrumb truncates instead of pushing the pill off the row. Empty on

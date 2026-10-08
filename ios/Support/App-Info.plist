@@ -12,6 +12,13 @@
 	<string>$(COLLIE_URL)</string>
 	<key>CollieShowDetail</key>
 	<string>$(ISLAND_SHOW_DETAIL)</string>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

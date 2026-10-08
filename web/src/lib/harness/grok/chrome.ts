@@ -101,6 +101,32 @@ export function stripCanvasBackground(lines: StyledLine[]): StyledLine[] {
   });
 }
 
+// 只整理已識別後的顯示列：右側黑色軌道和終端補白不是回覆內容。
+// 不送回 grammar 或 guard，否則壓縮空列會破壞原始畫面座標與送出核對。
+export function prepareGrokDisplay(lines: StyledLine[]): StyledLine[] {
+  const out: StyledLine[] = [];
+  let previousTrackOnly = false;
+  for (const line of lines) {
+    const tail = line.segments.at(-1);
+    const rail = tail?.text === "█" &&
+      tail.style.color === "rgb(25,25,25)" &&
+      tail.style.backgroundColor === "rgb(25,25,25)" &&
+      line.segments.at(-2)?.style.backgroundColor === "rgb(20,20,20)" &&
+      line.segments.at(-2)?.style.color === undefined &&
+      line.segments.at(-2)?.text.endsWith("  ") === true;
+    const content = rail ? { ...line, segments: line.segments.slice(0, -1) } : line;
+    const text = lineText(content);
+    const end = text.replace(/ +$/, "").length;
+    const trimmed = end === text.length
+      ? content
+      : { ...content, segments: sliceStyledLine(content, 0, end).segments };
+    const trackOnly = rail && end === 0;
+    if (!trackOnly || !previousTrackOnly) out.push(trimmed);
+    previousTrackOnly = trackOnly;
+  }
+  return stripCanvasBackground(out);
+}
+
 export function locateComposer(lines: StyledLine[]): ComposerBox | null {
   const texts = lines.map((l) => rstrip(lineText(l)));
   const end = lastNonBlankIndex(texts);
@@ -211,6 +237,23 @@ export function extractStatusLines(lines: StyledLine[]): StyledLine[] {
   return sliced.segments.length === 0 ? [] : [sliced];
 }
 
+// Grok 的長草稿在右框線內畫捲動條；把它當成文字會讓送出核對失敗。
+// 只接受真實截取中的位置、獨立字元與灰色樣式，不刪使用者輸入的同形字元。
+function draftLineText(line: StyledLine): string {
+  const text = lineText(line);
+  const rail = / {2,}[▁-█] (?=│\s*$)/.exec(text);
+  if (rail === null) return text;
+  const position = rail.index + rail[0].length - 2;
+  let offset = 0;
+  for (const segment of line.segments) {
+    if (offset === position && segment.text === text[position] && segment.style.color === "rgb(60,60,65)") {
+      return text.slice(0, position) + text.slice(position + 1);
+    }
+    offset += segment.text.length;
+  }
+  return text;
+}
+
 /**
  * The user's draft stranded in the composer. Grok writes it on the `│ ❯ … │` row and wraps onto
  * indented continuation rows below. Fragments join with a single space (soft wrap). Empty box → null.
@@ -226,14 +269,12 @@ export function extractInputDraft(lines: StyledLine[]): string | null {
   if (detectPermissionRegion(lines) !== null) return null;
   const box = locateComposer(lines);
   if (box === null) return null;
-  const texts = lines.map((l) => rstrip(lineText(l)));
-
   const parts: string[] = [];
-  const prompt = composerPromptText(texts[box.firstDraftRow]!);
+  const prompt = composerPromptText(draftLineText(lines[box.firstDraftRow]!));
   if (prompt === null) return null;
   parts.push(prompt.trim());
   for (let i = box.firstDraftRow + 1; i < box.bottom; i++) {
-    parts.push(composerInnerText(texts[i]!)!.trim());
+    parts.push(composerInnerText(draftLineText(lines[i]!))!.trim());
   }
 
   const draft = parts.filter((p) => p.length > 0).join(" ");
