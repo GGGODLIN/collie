@@ -873,7 +873,9 @@ Upstream reuses numbers this fork has published (both have a `v1.14.0`), so its 
 4. Check it before it is public: its tree equals the `dev` release commit's, its first parent is
    `origin/main`, and `scripts/check-version.sh` reads the version you meant.
 5. Tag it (`git tag -a vX.Y.Z <sha>`), then push the commit and the tag together:
-   `git push --atomic origin <sha>:main vX.Y.Z`. The release workflow waits for CI on that commit.
+   `git push --atomic origin <sha>:main vX.Y.Z`. The release workflow's gate accepts the green
+   push run of step 2's `dev` commit, because that commit has the same tree, and starts building at
+   once; only when no green `dev` commit carries the tree does it wait for CI on the `main` commit.
 
 **Screenshots only for a large UI change, and only when the operator asks.** Before step 3 of a
 release whose changes reshape a screen, ask the operator whether they can tell what changed from the
