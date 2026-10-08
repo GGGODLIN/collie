@@ -44,6 +44,9 @@ enum IslandAddress {
     do {
       let (data, resp) = try await URLSession.shared.data(for: req)
       let status = (resp as? HTTPURLResponse)?.statusCode ?? -1
+      // From Collie 1.18.0 a device that is not paired yet gets Collie's own 403 body, and a new
+      // address never has a token here: that answer proves the address, and pairing comes next.
+      if status == 403, isPairingRefusal(data) { return .success(url) }
       guard status == 200, (try? JSONDecoder().decode(Snapshot.self, from: data)) != nil else {
         return .failure(.notCollie(status))
       }
@@ -51,6 +54,11 @@ enum IslandAddress {
     } catch {
       return .failure(.unreachable(error.localizedDescription))
     }
+  }
+
+  private static func isPairingRefusal(_ data: Data) -> Bool {
+    let body = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+    return body == "device not paired" || body == "device expired"
   }
 
   /// `window.collieIsland.openAddress()` for Collie's settings page

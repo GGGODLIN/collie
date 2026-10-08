@@ -137,12 +137,12 @@ export function SessionSwitcher({ sessions, scope, viewAll }: SessionSwitcherPro
         // 1.31:1 (dark) smudge suddenly visible — a fill too weak to be a surface and too present to
         // be nothing. A component's edge is --border (1.16:1 light / 1.33:1 dark), which is the
         // treatment the sibling trigger already used.
-        className="flex shrink-0 items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent active:scale-95"
+        className="flex min-w-0 items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent active:scale-95"
       >
         <span className="flex size-3.5 shrink-0 items-center justify-center">
           <StatusDot status={currentState} label={currentStateText} />
         </span>
-        <span className="max-w-[7rem] truncate">{currentName}</span>
+        <span className="min-w-0 max-w-[7rem] truncate">{currentName}</span>
       </button>
 
       {/* Portal to document.body so the sheet's `fixed inset-0` always resolves against the viewport,

@@ -302,6 +302,29 @@ describe("locateReply — a reply that ends in a wrapped table", () => {
     // The last source row spans two painted rows; the reply ends on the lower one, above the frame.
     expect(endLine).toBe(7);
   });
+  // The table's floor ends it. Prose under the table and the next prompt each hold one `│`, the
+  // count a one-column-boundary row carries, and must stay where they were painted: joined onto the
+  // prompt row, the reply's end would move onto the operator's next message.
+  it("stops at the table's floor, so a line holding a vertical below it keeps its own row", () => {
+    const tail = "The final printed delimiter uses the box drawing vertical separator shown here │";
+    const screen = ["├───────┼─────┤", "│ Ready │ Yes │", "└───────┴─────┘", tail, "❯ 下一題：請說明 │ 與 | 的差異"];
+    const reply = `${source}\n\n| State | Result |\n|---|---|\n| Ready | Yes |\n\n${tail}`;
+    expect(locateReply(screen.join("\n"), turn("assistant", reply))).toEqual({ fit: "clipped", endLine: 3 });
+  });
+
+  // Painted lines of one logical row that disagree on their vertical count are not one row of this
+  // table. Joining them by the first line's columns dropped the extra text, so a different ending
+  // passed as this reply.
+  it("leaves a row whose painted lines disagree on their columns as painted", () => {
+    const screen = [
+      "├────────────────┼───────────────────────────┤",
+      "│ left one │ The unique ending │",
+      "│ left two │ explains the intended │ final state │ ACTUAL ENDING DIFFERS │",
+      "└────────────────┴───────────────────────────┘",
+    ];
+    const reply = `${source}\n\n| left one left two | The unique ending explains the intended final state |`;
+    expect(locateReply(screen.join("\n"), turn("assistant", reply)).fit).toBe("off-screen");
+  });
 });
 
 // A real Claude pane, 2026-09-27 (paths shortened): the reply's last table linked each row to a file.
@@ -346,7 +369,7 @@ describe("locateReply — a reply whose tail holds Markdown links", () => {
 // More source that Claude does not paint as written. Each case pairs the journal's Markdown with the
 // rows Claude drew for it, and each would have missed with the raw text alone.
 describe("locateReply — source spelled differently on screen", () => {
-  const lead = "開頭已經捲出畫面的一段很長的前文，只是為了讓這則回覆被判定成 clipped。";
+  const lead = "開頭已經捲出畫面的一段很長的前文，只是為了讓這則回覆被判定成 clipped，也讓整則回覆長過短回覆的門檻。";
 
   // A real Claude pane, 2026-09-27: the fence's info string is not painted.
   it("a code block's language tag", () => {
@@ -379,6 +402,61 @@ describe("locateReply — source spelled differently on screen", () => {
     const source = `${lead}\n\n這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：分工寫在 [分工說明](file:///tmp/split.md)，路徑是 \`<repo>/wt\``;
     const painted = ["  這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：分工寫在 分工說明，路徑是 <repo>/wt"];
     expect(locateReply(painted.join("\n"), turn("assistant", source)).fit).toBe("clipped");
+  });
+  // An autolink is printed as its address. Read as a tag and dropped, a different address on screen
+  // passed as this reply, and the right one ended the reply a row too early.
+  it("keeps an autolink's address, so a different one on screen is not this reply", () => {
+    const visible =
+      "Review the implementation carefully and compare the handling of all supported spellings before opening the documentation.";
+    const source = `${lead}\n\n${visible}\n<https://example.com/new-release>`;
+    expect(locateReply(`${visible}\nhttps://example.com/old-release`, turn("assistant", source)).fit).toBe("off-screen");
+    expect(locateReply(`${visible}\nhttps://example.com/new-release`, turn("assistant", source))).toEqual({
+      fit: "clipped",
+      endLine: 1,
+    });
+  });
+
+  // A three-backtick block shown inside a four-backtick one is code, and so is everything in it: the
+  // inner fence must not close the outer one and expose its body to the tag rule.
+  it("keeps a fence shown inside a longer fence as code", () => {
+    const code = "Please print this entire code example literally and retain each part of the following file path: <private>/config";
+    const source = [lead, "````markdown", "```sh", code, "```", "````"].join("\n");
+    const without = ["```sh", code.replace("<private>", ""), "```"].join("\n");
+    expect(locateReply(without, turn("assistant", source)).fit).toBe("off-screen");
+    expect(locateReply(["```sh", code, "```"].join("\n"), turn("assistant", source)).fit).toBe("clipped");
+  });
+
+  it("reduces a link whose label is a code span to that label", () => {
+    const visible =
+      "Review the implementation carefully and compare the handling of all supported spellings before opening the documentation.";
+    const source = `${lead}\n\n${visible} [\`latest-reply.ts\`](https://example.com/src/latest-reply.ts)`;
+    expect(locateReply(`${visible} latest-reply.ts`, turn("assistant", source)).fit).toBe("clipped");
+  });
+
+  // The short-reply rule judged the raw text. A spelling that dropped a long target can fall under two
+  // probes, and then a common closing line, or nothing at all, would pass as the reply.
+  it("does not let a painted spelling shorter than two probes decide", () => {
+    const label = "Report for the newest release: All tasks completed successfully and all output files are ready";
+    const target = `https://example.com/${"a".repeat(100)}`;
+    const common = "All tasks completed successfully and all output files are ready";
+    expect(locateReply(common, turn("assistant", `[${label}](${target})`)).fit).toBe("off-screen");
+    expect(locateReply("", turn("assistant", `[ ](${target})`)).fit).toBe("off-screen");
+  });
+
+  it("decodes a numeric entity rather than dropping it", () => {
+    const tail = "這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：&#65;&#x4E2D;BC";
+    const pad = "前面再多墊一行夠長的文字，確保比對範圍不會伸進畫面外的前文。";
+    const painted = [`  ${pad}`, "  這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：A中BC"];
+    expect(locateReply(painted.join("\n"), turn("assistant", `${lead}\n\n${pad}\n${tail}`)).fit).toBe("clipped");
+  });
+
+  // The raw spelling is tried second, so a painted spelling that wrongly dropped the out-of-range
+  // references would be rescued by it in the case above. Here the tail also holds a link the screen
+  // paints as its label, so only a painted spelling that keeps the references as written matches.
+  it("keeps an out-of-range entity as written where only the painted spelling can match", () => {
+    const tail = `${"只供比對的尾段".repeat(8)}[文件](https://example.com/hidden) &#x110000; 和 &#1114112; END`;
+    const screen = tail.replace("[文件](https://example.com/hidden)", "文件");
+    expect(locateReply(screen, turn("assistant", `${lead}\n\n${tail}`)).fit).toBe("clipped");
   });
 });
 

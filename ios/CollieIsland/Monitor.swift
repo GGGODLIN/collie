@@ -120,18 +120,29 @@ final class Monitor: ObservableObject {
     guard Config.configuredURL != nil else { return nil }
     var req = URLRequest(url: Config.collieURL.appending(path: "api/snapshot"))
     req.timeoutInterval = 8
+    // Collie 1.18.0 refuses every read without the pairing token. The page inside this app holds
+    // it, and the Keychain backup of that page's storage is where this side can read it, already
+    // scoped to this Collie's origin (WebStateBackup.swift).
+    let token = Pairing.token()
+    if let token { req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
     let began = Date()
     // Slow or failed polls are logged because on the home Wi-Fi the phone reached Collie badly
     // while cellular was fine; the log is where that shows up from the phone's side.
     do {
       let (data, resp) = try await URLSession.shared.data(for: req)
       let ms = Int(Date().timeIntervalSince(began) * 1000)
-      guard (resp as? HTTPURLResponse)?.statusCode == 200 else {
-        DiagLog.write("poll http \((resp as? HTTPURLResponse)?.statusCode ?? -1) in \(ms)ms")
+      let status = (resp as? HTTPURLResponse)?.statusCode ?? -1
+      if status == 403, let issue = Pairing.issue(refusal: data, hadToken: token != nil) {
+        DiagLog.write("poll refused: \(issue) in \(ms)ms")
+        return Pairing.state(issue)
+      }
+      guard status == 200 else {
+        DiagLog.write("poll http \(status) in \(ms)ms")
         return nil
       }
       if ms > 2000 { DiagLog.write("poll slow \(ms)ms") }
       guard let snap = try? JSONDecoder().decode(Snapshot.self, from: data) else { return nil }
+      Pairing.forget()
       return summarize(snap.agents, showDetail: Config.showDetail)
     } catch {
       let ms = Int(Date().timeIntervalSince(began) * 1000)
@@ -153,7 +164,8 @@ final class Monitor: ObservableObject {
     }
     let sinceSent = Date().timeIntervalSince(lastSent)
     let changed = next != last
-    let urgent = changed && next.needs > (last?.needs ?? 0)
+    // A pairing problem appearing or clearing goes out at once: the counts it replaces were wrong.
+    let urgent = changed && (next.needs > (last?.needs ?? 0) || next.pairing != last?.pairing)
     // `last` is the last state SHOWN, so a change held back by the gap is retried next poll.
     guard sinceSent >= Config.heartbeatSeconds || (changed && (urgent || sinceSent >= Config.minUpdateGapSeconds))
     else { return }
