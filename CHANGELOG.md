@@ -23,12 +23,12 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.17.202] - 2026-10-08
+
 ### Changed
 
-- **This fork is now called Gaddi, with its own dog.** Upstream's trademark policy keeps the
-  ColliePWA name and dog mark out of a fork, so the app, the iPhone app and the README say Gaddi and
-  show a pixel-art Gaddi dog. The `collie` command and the Herdr plugin keep their names, so an
-  install updates as before.
+- **Built on upstream Collie 1.17.2.** AltanS/collie v1.17.2, commit 3d562ae5, unchanged since fork 1.17.0. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+- **This fork is now called Gaddi, with its own dog.** Upstream's trademark policy keeps the ColliePWA name and dog mark out of a fork, so the app, the iPhone app and the README say Gaddi and show a grey pixel-art Gaddi dog. The `collie` command and the Herdr plugin keep their names, so an install updates as before. ([334a7284](https://github.com/GGGODLIN/collie/commit/334a7284)), ([e936e9dd](https://github.com/GGGODLIN/collie/commit/e936e9dd)), ([afd98582](https://github.com/GGGODLIN/collie/commit/afd98582)), ([59630274](https://github.com/GGGODLIN/collie/commit/59630274)), ([67c38878](https://github.com/GGGODLIN/collie/commit/67c38878))
 
 ### Fixed
 
