@@ -29,6 +29,7 @@ Running a crew? Update the lead first; members follow on their own. Details:
 - **Grok's fractional scrollbar no longer stalls long replies.** The draft reader also recognises lower partial-block scrollbar cells at the same captured position and style. A live bridge send exposed the missing `▁` cell; literal typed blocks remain unchanged, and submit still waits for verified message text.
 - **Grok's phone mirror drops empty scrollbar rows and right padding.** The wrapped normal view removes the captured right-edge track and compacts its empty viewport rows after screen-row hiding. Message text, meaningful backgrounds, Find, raw-terminal mode, and reply guards keep their existing contracts.
 - **Grok's model picker offers native choices on the phone.** The captured model, context-window, and reasoning-effort stages use verified arrow walks and one bound Enter per selection. Ordinary reply typing remains blocked while the picker is open; changed or incomplete screens stay raw.
+- **Chat stops replaying messages after Chinese or emoji text.** File-backed journal cursors count UTF-8 bytes before decoding, so a later append starts at the correct row boundary instead of reading old messages again. A real Grok conversation exposed the duplicate turn.
 
 ## [1.17.202] - 2026-10-08
 

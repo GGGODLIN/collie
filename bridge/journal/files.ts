@@ -274,8 +274,9 @@ export async function readSinceFile(
   if (from >= st.size)
     return { lines: [], cursor: encodeCursor("bytes", path, st.size), reset, fromStart };
 
-  const text = await Bun.file(path).slice(from, st.size).text();
-  const end = text.lastIndexOf("\n");
+  // 游標以位元組計數；先解碼會把中文字元索引錯當成檔案位置。
+  const bytes = new Uint8Array(await Bun.file(path).slice(from, st.size).arrayBuffer());
+  const end = bytes.lastIndexOf(0x0a);
   if (end === -1) {
     // No row boundary in the window at all, which means two different things:
     //  - resuming: we are inside a row the agent is still writing. Hold the position. Its newline
@@ -291,7 +292,7 @@ export async function readSinceFile(
   }
 
   // Everything before the last newline is whole rows; everything after it is the fragment.
-  const rows = text.slice(0, end).split("\n");
+  const rows = new TextDecoder().decode(bytes.subarray(0, end)).split("\n");
   // A reset that did not start at byte 0 begins mid-object, because the bound cut the window out of
   // the middle of a row. Every parser skips an unparseable line, but handing one over would put a
   // fragment in the `lines` this function promises never carries one.
