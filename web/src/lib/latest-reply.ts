@@ -72,6 +72,19 @@ const BOX_FRAME = /^[─-╿\s]+$/;
 // reply outgrows the pane (harness/grok/chrome.ts). Left on a frame row, it hides the row's frame and
 // the table's last row stays interleaved, which is the reply's tail.
 const TRAILING_RAIL = /[▁-█]\s*$/;
+// Grok prints the reply's time at the right end of its first row ("8:48 PM"), or alone on the next
+// row when the first is full (live captures, 2026-10-08). It is not the reply's text, and a short reply
+// is probed whole, so left in it splits the probe. Only a clock time that ends its row, after a gap of
+// two spaces or at the row's start, is taken: prose does not end a row that way. A highlighted message
+// closes the row with its box's vertical, which stays.
+const GROK_TIME = new RegExp(
+  `(?:^\\s*|\\s{2,})\\d{1,2}:\\d{2}\\s?[AP]M(?=\\s*[${BOX_VERTICAL_GLYPH_CLASS}]?\\s*$)`,
+);
+
+/** A mirror row without the cells Grok paints round a reply: the scrollbar, then the time. */
+function withoutGrokMarks(row: string): string {
+  return row.replace(TRAILING_RAIL, "").replace(GROK_TIME, "");
+}
 
 /**
  * The mirror's rows with every wrapped box-table row put back in SOURCE order.
@@ -216,7 +229,7 @@ export function locateReply(mirrorText: string, entry: TranscriptEntry): ReplyPl
   const prose = replyProse(entry);
   if (fold(prose) === "" || proseTruncated(entry)) return elsewhere("off-screen");
 
-  const rows = sourceOrderRows(plain(mirrorText).split("\n"));
+  const rows = sourceOrderRows(plain(mirrorText).split("\n").map(withoutGrokMarks));
   // Folding each row and concatenating is the same string as folding the whole screen — the fold
   // drops the separators either way — so these offsets index into one folded mirror.
   const rowEnds: number[] = [];
