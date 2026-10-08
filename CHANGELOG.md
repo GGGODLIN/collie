@@ -28,6 +28,7 @@ Running a crew? Update the lead first; members follow on their own. Details:
 - **Grok's multiline input scrollbar no longer blocks verified replies.** The draft reader ignores the separately styled scrollbar at the composer's right edge in the captured Grok Build 1.0.46 layout, while preserving literal block glyphs. Reply verification and modal refusal stay unchanged.
 - **Grok's fractional scrollbar no longer stalls long replies.** The draft reader also recognises lower partial-block scrollbar cells at the same captured position and style. A live bridge send exposed the missing `▁` cell; literal typed blocks remain unchanged, and submit still waits for verified message text.
 - **Grok's phone mirror drops empty scrollbar rows and right padding.** The wrapped normal view removes the captured right-edge track and compacts its empty viewport rows after screen-row hiding. Message text, meaningful backgrounds, Find, raw-terminal mode, and reply guards keep their existing contracts.
+- **Grok's model picker offers native choices on the phone.** The captured model, context-window, and reasoning-effort stages use verified arrow walks and one bound Enter per selection. Ordinary reply typing remains blocked while the picker is open; changed or incomplete screens stay raw.
 
 ## [1.17.202] - 2026-10-08
 
