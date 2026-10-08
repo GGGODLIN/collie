@@ -25,7 +25,11 @@ for (const size of SIZES) {
         const header = page.getByRole("banner");
         await expect(main).toBeVisible();
         await expect(header).toBeVisible();
-        await expect(page.getByText(fixtureWorkspaces[0]!.label, { exact: false }).first()).toBeVisible();
+        // Visible matches only: from 1.18.0 the dashboard's workspace filter is a select, and its
+        // hidden <option> carrying the same label comes first in the document.
+        await expect(
+          page.getByText(fixtureWorkspaces[0]!.label, { exact: false }).filter({ visible: true }).first(),
+        ).toBeVisible();
 
         const body = (await main.boundingBox())!;
         const top = (await header.boundingBox())!;
