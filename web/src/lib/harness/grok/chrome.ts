@@ -101,6 +101,30 @@ export function stripCanvasBackground(lines: StyledLine[]): StyledLine[] {
   });
 }
 
+// Grok's canvas, and the darker column it ends every row with.
+const GROK_CANVAS = new Set(["rgb(20,20,20)", "rgb(17,17,17)"]);
+
+// Where a row's right padding starts. Trailing blanks are padding on the canvas, unstyled, or in a
+// colour the row's own text sits on (a code block filled out to its width). Blanks in any other
+// colour are content, a swatch for one, so the trim stops there.
+function paddingEnd(line: StyledLine, length: number): number {
+  const textBackgrounds = new Set(
+    line.segments.filter((s) => s.text.trim() !== "").map((s) => s.style.backgroundColor),
+  );
+  let end = length;
+  for (let i = line.segments.length - 1; i >= 0; i--) {
+    const segment = line.segments[i]!;
+    const background = segment.style.backgroundColor;
+    const padding =
+      background === undefined || GROK_CANVAS.has(background) || textBackgrounds.has(background);
+    if (!padding) break;
+    const kept = segment.text.replace(/ +$/, "");
+    end -= segment.text.length - kept.length;
+    if (kept !== "") break;
+  }
+  return end;
+}
+
 // 只整理已識別後的顯示列：右側黑色軌道和終端補白不是回覆內容。
 // 不送回 grammar 或 guard，否則壓縮空列會破壞原始畫面座標與送出核對。
 export function prepareGrokDisplay(lines: StyledLine[]): StyledLine[] {
@@ -116,7 +140,7 @@ export function prepareGrokDisplay(lines: StyledLine[]): StyledLine[] {
       line.segments.at(-2)?.text.endsWith("  ") === true;
     const content = rail ? { ...line, segments: line.segments.slice(0, -1) } : line;
     const text = lineText(content);
-    const end = text.replace(/ +$/, "").length;
+    const end = paddingEnd(content, text.length);
     const trimmed = end === text.length
       ? content
       : { ...content, segments: sliceStyledLine(content, 0, end).segments };

@@ -57,6 +57,26 @@ describe("Grok's phone display", () => {
     )).toBe(true);
   });
 
+  // A run of coloured blanks after text is a swatch, not padding: no text on the row wears that
+  // colour, so it is the content. Only blanks on the canvas, or in a colour the row's own text sits
+  // on (a code block's fill), are padding.
+  it("keeps trailing blanks in a colour no text on the row uses", () => {
+    const text = [
+      `${ESC}[48;2;20;20;20mswatch:${ESC}[48;2;200;30;30m   ${ESC}[48;2;20;20;20m          ${ESC}[0m`,
+      "  ╭────────────────────────────────────────╮",
+      "  │ ❯                                      │",
+      "  ╰──────────────────── Grok 4.7 (high) ─╯",
+      "",
+      "  Shift+Tab:mode  │  Ctrl+.:shortcuts",
+    ].join("\n");
+    const { container } = render(<AnsiOutput text={text} agent="grok" />);
+    const pre = container.querySelector("pre")!;
+    expect(pre.textContent).toBe("swatch:   ");
+    expect([...pre.querySelectorAll("span")].some(
+      (s) => s.style.backgroundColor === "rgb(200, 30, 30)" && s.textContent === "   ",
+    )).toBe(true);
+  });
+
   it("keeps a painted dark block when it belongs to colored message text, not canvas padding", () => {
     const text = [
       `${ESC}[48;2;20;20;20m${ESC}[38;2;225;225;225m literal   ${ESC}[38;2;25;25;25m${ESC}[48;2;25;25;25m█${ESC}[0m`,

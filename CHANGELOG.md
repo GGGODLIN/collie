@@ -26,6 +26,7 @@ Running a crew? Update the lead first; members follow on their own. Details:
 ### Fixed
 
 - **Grok's chat view follows a session reopened with `/resume`.** Herdr keeps the first session id a Grok pane reported, so a session resumed inside a running Grok showed an empty or outdated chat. Collie now reads the session Grok itself lists for that pane's live process and folder, and keeps Herdr's id when that match is missing or ambiguous. Found by charliie on Discord.
+- **Grok's phone mirror keeps coloured blanks that are content.** Trimming a row's right padding no longer drops trailing blanks in a colour no text on that row uses, such as a swatch; the canvas, unstyled blanks and a code block's fill are still trimmed.
 
 ## [1.17.203] - 2026-10-08
 
