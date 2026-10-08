@@ -101,6 +101,32 @@ export function stripCanvasBackground(lines: StyledLine[]): StyledLine[] {
   });
 }
 
+// 只整理已識別後的顯示列：右側黑色軌道和終端補白不是回覆內容。
+// 不送回 grammar 或 guard，否則壓縮空列會破壞原始畫面座標與送出核對。
+export function prepareGrokDisplay(lines: StyledLine[]): StyledLine[] {
+  const out: StyledLine[] = [];
+  let previousTrackOnly = false;
+  for (const line of lines) {
+    const tail = line.segments.at(-1);
+    const rail = tail?.text === "█" &&
+      tail.style.color === "rgb(25,25,25)" &&
+      tail.style.backgroundColor === "rgb(25,25,25)" &&
+      line.segments.at(-2)?.style.backgroundColor === "rgb(20,20,20)" &&
+      line.segments.at(-2)?.style.color === undefined &&
+      line.segments.at(-2)?.text.endsWith("  ") === true;
+    const content = rail ? { ...line, segments: line.segments.slice(0, -1) } : line;
+    const text = lineText(content);
+    const end = text.replace(/ +$/, "").length;
+    const trimmed = end === text.length
+      ? content
+      : { ...content, segments: sliceStyledLine(content, 0, end).segments };
+    const trackOnly = rail && end === 0;
+    if (!trackOnly || !previousTrackOnly) out.push(trimmed);
+    previousTrackOnly = trackOnly;
+  }
+  return stripCanvasBackground(out);
+}
+
 export function locateComposer(lines: StyledLine[]): ComposerBox | null {
   const texts = lines.map((l) => rstrip(lineText(l)));
   const end = lastNonBlankIndex(texts);
