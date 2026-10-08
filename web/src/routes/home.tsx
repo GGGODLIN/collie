@@ -211,12 +211,12 @@ export function HomeRoute() {
   const scrollRef = useScrollMemory<HTMLDivElement>(`home:${scopeKey(data.scope)}`);
 
   return (
-    <div className="mx-auto flex min-h-0 w-full max-w-screen-sm flex-1 flex-col">
+    <div className="mx-auto flex min-h-0 w-full max-w-screen-sm flex-1 flex-col md:max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl 2xl:max-w-[1400px] [@media(max-height:40rem)]:max-w-screen-sm">
       {/* The dashboard header: wordmark + the session switcher (dashboard-only), then the shared pill
           and the Settings gear. The switcher self-hides on a single-session install. */}
       <RouteHeader
         wordmark
-        width="column"
+        width="responsive-column"
         rightLead={
           <>
             {/* Host first, then session — outer dimension first, and the two are deliberately

@@ -644,13 +644,7 @@ describe("the ONE header — hoisted above the outlet", () => {
   });
 
   it("grows the wide claim past md on a desktop, and leaves the sm column flat", async () => {
-    // #166: flat at 768px, a 1920px desktop left 576px of dead margin on each side of a terminal
-    // mirror that had columns to spare. `wide` is a ladder now. The dashboard's `column` is NOT —
-    // a list row has no column count, so widening it only lengthens the line. That asymmetry is the
-    // whole fix, so both halves are asserted here.
-    //
-    // AgentChat's wrapper and history's carry this identical ladder. Nothing can check across the
-    // three files, so the string is pinned in one place: change it here and grep the other two.
+    // Settings 的窄欄不跟終端頁一起放寬；兩種 claim 必須保留不同限制。
     const LADDER = ["max-w-screen-md", "lg:max-w-screen-lg", "xl:max-w-screen-xl", "2xl:max-w-[1400px]"];
     const { container, go } = renderHoisted();
     const header = container.querySelector("header");

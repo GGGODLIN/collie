@@ -31,6 +31,7 @@ Running a crew? Update the lead first; members follow on their own. Details:
 - **Gaddi's iOS app uses the iPad's available window space.** Both the app and its embedded widget declare iPad support, removing the enlarged iPhone compatibility view. iPad declares portrait and landscape orientations; iPhone stays portrait-only.
 - **Grok's model picker offers native choices on the phone.** The captured model, context-window, and reasoning-effort stages use verified arrow walks and one bound Enter per selection. Ordinary reply typing remains blocked while the picker is open; changed or incomplete screens stay raw.
 - **Chat stops replaying messages after Chinese or emoji text.** File-backed journal cursors count UTF-8 bytes before decoding, so a later append starts at the correct row boundary instead of reading old messages again. A real Grok conversation exposed the duplicate turn.
+- **Dashboard and space lists use more of the tablet window.** Their single-column layouts and shared headers follow the existing wider breakpoint limits in tablet-sized windows. Narrow and short windows keep their original column widths, including phones in landscape.
 
 ## [1.17.202] - 2026-10-08
 
