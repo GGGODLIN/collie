@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Fixed
+
+- **Grok's multiline input scrollbar no longer blocks verified replies.** The draft reader ignores the separately styled scrollbar at the composer's right edge in the captured Grok Build 1.0.46 layout, while preserving literal block glyphs. Reply verification and modal refusal stay unchanged.
+
 ## [1.17.201] - 2026-10-07
 
 ### Added

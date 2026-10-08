@@ -211,6 +211,23 @@ export function extractStatusLines(lines: StyledLine[]): StyledLine[] {
   return sliced.segments.length === 0 ? [] : [sliced];
 }
 
+// Grok 的長草稿在右框線內畫捲動條；把它當成文字會讓送出核對失敗。
+// 只接受真實截取中的位置、獨立字元與灰色樣式，不刪使用者輸入的同形字元。
+function draftLineText(line: StyledLine): string {
+  const text = lineText(line);
+  const rail = / {2,}█ (?=│\s*$)/.exec(text);
+  if (rail === null) return text;
+  const position = rail.index + rail[0].length - 2;
+  let offset = 0;
+  for (const segment of line.segments) {
+    if (offset === position && segment.text === "█" && segment.style.color === "rgb(60,60,65)") {
+      return text.slice(0, position) + text.slice(position + 1);
+    }
+    offset += segment.text.length;
+  }
+  return text;
+}
+
 /**
  * The user's draft stranded in the composer. Grok writes it on the `│ ❯ … │` row and wraps onto
  * indented continuation rows below. Fragments join with a single space (soft wrap). Empty box → null.
@@ -226,14 +243,12 @@ export function extractInputDraft(lines: StyledLine[]): string | null {
   if (detectPermissionRegion(lines) !== null) return null;
   const box = locateComposer(lines);
   if (box === null) return null;
-  const texts = lines.map((l) => rstrip(lineText(l)));
-
   const parts: string[] = [];
-  const prompt = composerPromptText(texts[box.firstDraftRow]!);
+  const prompt = composerPromptText(draftLineText(lines[box.firstDraftRow]!));
   if (prompt === null) return null;
   parts.push(prompt.trim());
   for (let i = box.firstDraftRow + 1; i < box.bottom; i++) {
-    parts.push(composerInnerText(texts[i]!)!.trim());
+    parts.push(composerInnerText(draftLineText(lines[i]!))!.trim());
   }
 
   const draft = parts.filter((p) => p.length > 0).join(" ");

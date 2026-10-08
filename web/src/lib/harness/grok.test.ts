@@ -40,6 +40,7 @@ const PINNED = [
   "grok--ask-z-parked.txt",
   "grok--ask-z-typed.txt",
   "grok--done.txt",
+  "grok--draft-scrollbar.txt",
   "grok--draft-single.txt",
   "grok--draft-wrapped.txt",
   "grok--fresh-idle.txt",
@@ -87,6 +88,8 @@ describeAdapterConformance(grokAdapter, {
   ownFixtures,
   foreignFixtures: [...allClaudeFixtures, ...allOmpFixtures, ...allCodexFixtures, ...allOpencodeFixtures],
   neutralFixtures,
+  // 長草稿的提示列不在 bridge 的尾端綁定範圍內，不能把它當成可綁定的短輸入框。
+  unboundComposerFixtures: ["grok--draft-scrollbar.txt"],
 });
 
 describe("the grok corpus", () => {
