@@ -28,7 +28,7 @@ struct IslandLiveActivity: Widget {
     ActivityConfiguration(for: IslandAttributes.self) { context in
       LockScreenView(state: context.state, stale: context.isStale)
         .padding()
-        .widgetURL(Deeplink.url(paneId: context.state.paneId))
+        .widgetURL(tapURL(context.state))
     } dynamicIsland: { context in
       let s = context.state
       let stale = context.isStale
@@ -55,9 +55,14 @@ struct IslandLiveActivity: Widget {
       } minimal: {
         StatusMark(state: s, stale: stale, size: 18)
       }
-      .widgetURL(Deeplink.url(paneId: s.paneId))
+      .widgetURL(tapURL(s))
     }
   }
+}
+
+// A pairing problem sends the tap to the pair form: a pane cannot be read until it is fixed.
+private func tapURL(_ s: IslandAttributes.ContentState) -> URL {
+  s.pairing == nil ? Deeplink.url(paneId: s.paneId) : Deeplink.pairURL
 }
 
 struct LockScreenView: View {
@@ -97,7 +102,9 @@ struct StatusMark: View {
 }
 
 private func markColor(_ s: IslandAttributes.ContentState, stale: Bool) -> Color {
-  if s.offline || stale { return .gray }
+  if stale { return .gray }
+  if s.pairing != nil { return .orange }
+  if s.offline { return .gray }
   switch s.bucket {
   case .needs: return .red
   case .ready: return .green
@@ -108,6 +115,12 @@ private func markColor(_ s: IslandAttributes.ContentState, stale: Bool) -> Color
 
 private func compactLabel(_ s: IslandAttributes.ContentState, stale: Bool) -> String {
   if stale { return "已停止" }
+  switch s.pairing {
+  case .unpaired: return "未配對"
+  case .revoked: return "已失效"
+  case .expired: return "已到期"
+  case nil: break
+  }
   if s.offline { return "離線" }
   if s.needs > 0 { return "\(s.needs) 等你" }
   if s.ready > 0 { return "\(s.ready) 完成" }
@@ -117,6 +130,9 @@ private func compactLabel(_ s: IslandAttributes.ContentState, stale: Bool) -> St
 
 private func countsLine(_ s: IslandAttributes.ContentState, stale: Bool) -> String {
   if stale { return "Gaddi app 已停止更新" }
+  // Nothing: the expanded island's rounded trailing corner clipped even a four-character label, and
+  // the detail line under the headline already says to tap.
+  if s.pairing != nil { return "" }
   if s.offline { return "連不到 Gaddi" }
   return "等你 \(s.needs) · 完成 \(s.ready) · 工作中 \(s.working)"
 }

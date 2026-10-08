@@ -131,12 +131,16 @@ screen; the page never hands the app an address. An address saved in the app win
 iPhone (Tailscale on)
   Collie Island
     ├─ WKWebView ── loads Collie; its settings and pairing are also kept in the Keychain
-    ├─ GET /api/snapshot every 5 s → "needs you / done / working"
+    ├─ GET /api/snapshot every 5 s, with the pairing token → "needs you / done / working"
     │     └─ Activity.update() updates the Live Activity locally (no push)
     └─ background location ("Always", 100 m accuracy) keeps the app from being suspended
 ```
 
 - It works with any Collie, this fork's or upstream's: it only reads `/api/snapshot`.
+- From Collie 1.18.0 every read needs a paired device, so the poll sends the token the Collie inside
+  the app was paired with, read from the Keychain backup of that page. Until the app is paired the
+  island says so: "未配對" (never paired), "已失效" (revoked) or "已到期" (expired), and a tap opens
+  the pair form in Settings → System instead of a pane.
 - The buckets copy Collie's `web/src/lib/triage.ts` (`bucketOf`) in
   [Shared/Triage.swift](./Shared/Triage.swift). When the island and Collie disagree, check that
   copy first.

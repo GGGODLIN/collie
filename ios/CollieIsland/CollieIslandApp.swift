@@ -94,7 +94,10 @@ struct CollieIslandApp: App {
       return
     }
     var target = Config.collieURL
-    if let pane = Deeplink.paneId(from: link) {
+    if Deeplink.isPair(link) {
+      // The pair form lives in Settings → System, where `collie pair`'s QR also lands.
+      target = URL(string: Config.collieURL.absoluteString + "/settings/system") ?? target
+    } else if let pane = Deeplink.paneId(from: link) {
       // Same encoding as Collie's paneHref (web/src/lib/nav.ts): encodeURIComponent on the id.
       let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_.!~*'()"))
       let encoded = pane.addingPercentEncoding(withAllowedCharacters: allowed) ?? pane

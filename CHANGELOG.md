@@ -26,6 +26,7 @@ Running a crew? Update the lead first; members follow on their own. Details:
 ### Fixed
 
 - **The full-reply card no longer takes another reply, or your next message, for this one.** In the terminal view, a table's own border now ends the table the card reads, so a line under it that holds a `│` keeps its own row. An autolink keeps its address, a code block shown inside a longer one stays code, and the way Claude paints a reply is trusted only while it still holds two whole probes. Found by the review of AltanS/collie#380.
+- **The iPhone island keeps working now that every read needs pairing.** The island app reads with the pairing token of the Collie inside it, and says whether that app was never paired, was revoked or has expired; a tap then opens the pair form. If you use the island, install this release's CollieIsland.ipa and pair inside the app once.
 
 ## [1.17.206] - 2026-10-08
 
