@@ -23,10 +23,16 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.17.206] - 2026-10-08
+
+### Changed
+
+- **Built on upstream Collie 1.17.2.** AltanS/collie v1.17.2, commit 3d562ae5, unchanged since fork 1.17.0. ([23484c95](https://github.com/GGGODLIN/collie/commit/23484c95))
+
 ### Fixed
 
-- **A Grok reply's full-reply card also survives a highlighted message.** Grok draws a box round a message it highlights, which adds a vertical line at each end of every table row, and those rows stopped counting as the table. The reply's last row then stayed interleaved and the card withheld itself, as 1.17.205's scrollbar case did.
-- **A short Grok reply gets its full-reply card.** Grok prints the time at the end of a reply's first row, and a short reply is compared whole, so the time sat inside the comparison and no short Grok reply ever got its card in the terminal view.
+- **A Grok reply's full-reply card also survives a highlighted message.** Grok draws a box round a message it highlights, which adds a vertical line at each end of every table row, and those rows stopped counting as the table. The reply's last row then stayed interleaved and the card withheld itself, as 1.17.205's scrollbar case did. ([182ae587](https://github.com/GGGODLIN/collie/commit/182ae587))
+- **A short Grok reply gets its full-reply card.** Grok prints the time at the end of a reply's first row, and a short reply is compared whole, so the time sat inside the comparison and no short Grok reply ever got its card in the terminal view. ([a179e5ff](https://github.com/GGGODLIN/collie/commit/a179e5ff))
 
 ## [1.17.205] - 2026-10-08
 
