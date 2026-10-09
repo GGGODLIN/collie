@@ -15,7 +15,12 @@ describe("IslandBuildNotice", () => {
     expect(within(container).getByText("A newer iPhone app is available")).toBeInTheDocument();
     expect(within(container).getByText(url)).toBeInTheDocument();
     expect(container.querySelector('a[href*="github.com"]')).toBeNull();
-    await user.click(within(container).getByRole("button", { name: "Copy" }));
+    const copy = within(container).getByRole("button", { name: "Copy" });
+    expect(copy).toHaveAttribute("title", "Copy");
+    expect(copy.textContent).toBe("");
+    expect(copy.className).toContain("absolute");
+    expect(copy.parentElement?.className).toContain("pr-12");
+    await user.click(copy);
     await expect(navigator.clipboard.readText()).resolves.toBe(url);
   });
 

@@ -31,6 +31,22 @@ describe("CopyableBlock", () => {
     expect(container.querySelector("pre")?.textContent).toBe("short preview");
   });
 
+  it("floats a small icon in a reserved corner without adding an action row", () => {
+    const { container } = render(<CopyableBlock text="raw"><pre>rendered</pre></CopyableBlock>);
+    const button = within(container).getByRole("button", { name: "Copy" });
+    const block = button.parentElement!;
+    expect(block.className).toContain("relative");
+    expect(block.className).toContain("pr-12");
+    expect(block.className).toContain("min-h-11");
+    expect(block.children).toHaveLength(2);
+    expect(block.querySelector("pre")?.parentElement).toBe(block);
+    for (const utility of ["absolute", "top-2.5", "right-2.5", "size-6", "before:absolute", "before:-inset-[11px]", "before:content-['']", "bg-card", "text-card-foreground"]) {
+      expect(button.className.split(" ")).toContain(utility);
+    }
+    expect(button.textContent).toBe("");
+    expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("waits for the clipboard instead of announcing a pending write as success", async () => {
     let accept: () => void = () => {};
     writeText.mockImplementation(() => new Promise<void>((resolve) => { accept = resolve; }));
@@ -40,8 +56,9 @@ describe("CopyableBlock", () => {
     expect(setStatus).not.toHaveBeenCalled();
     accept();
     await waitFor(() => expect(setStatus).toHaveBeenCalledWith("Copied to clipboard", "success"));
-    expect(button.textContent).toBe("Copy");
-    expect(button.className).toContain("h-11");
+    expect(button.textContent).toBe("");
+    expect(button).toHaveAttribute("aria-label", "Copy");
+    expect(button).toHaveAttribute("title", "Copy");
   });
 
   it("announces a rejected write as failure and never as success", async () => {
@@ -58,12 +75,17 @@ describe("CopyableBlock", () => {
     const { container } = render(<CopyableBlock text="raw"><pre>rendered</pre></CopyableBlock>);
     expect(within(container).queryByRole("button")).toBeNull();
     expect(container.querySelector("pre")?.textContent).toBe("rendered");
+    expect(container.firstElementChild?.className).not.toContain("pr-12");
+    expect(container.firstElementChild?.className).not.toContain("min-h-11");
     expect(writeText).not.toHaveBeenCalled();
   });
 
   it("lets a caller name the action without changing its copied text", async () => {
     const { container } = render(<CopyableBlock text="ls -la" label="Copy command"><code>ls</code></CopyableBlock>);
-    fireEvent.click(within(container).getByRole("button", { name: "Copy command" }));
+    const button = within(container).getByRole("button", { name: "Copy command" });
+    expect(button).toHaveAttribute("title", "Copy command");
+    expect(button.textContent).toBe("");
+    fireEvent.click(button);
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("ls -la"));
   });
 });

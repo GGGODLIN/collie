@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Changed
+
+- **Copy actions move to small, always-visible top-right icons.** Code blocks, tables, diffs, commands, output and IPA URLs keep their accessible names and clipboard feedback without an extra action row; a reserved right gutter keeps text clear of each 44px tap target, including at the end of horizontal scrolling.
+
 ## [1.18.102] - 2026-10-09
 
 ### Changed
