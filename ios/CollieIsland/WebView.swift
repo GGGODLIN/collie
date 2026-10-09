@@ -50,13 +50,116 @@ struct WebView: UIViewRepresentable {
     view.load(URLRequest(url: navigation.url))
   }
 
-  final class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate {
+  @MainActor
+  final class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate, UIDocumentPickerDelegate {
+    private var downloads: [ObjectIdentifier: URL] = [:]
+    private var exportFile: URL?
     var loaded: Navigation?
     let backup = WebStateBackupHandler()
     let address = IslandAddressHandler()
     var onLoadFailed: (String) -> Void = { _ in }
     var onLoaded: () -> Void = {}
     weak var view: WKWebView?
+
+    // 網頁已帶配對憑證取回 bytes。只接自己的主頁 Blob，不讓預覽 iframe 或外站借原生 app 下載。
+    private func isLocalDownload(_ action: WKNavigationAction) -> Bool {
+      let origin = action.sourceFrame.securityOrigin
+      return action.shouldPerformDownload && action.sourceFrame.isMainFrame
+        && action.request.url?.scheme == "blob"
+        && Config.isCollie(scheme: origin.protocol, host: origin.host, port: origin.port)
+    }
+
+    func webView(
+      _ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
+      decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+      guard action.shouldPerformDownload else { decisionHandler(.allow); return }
+      guard isLocalDownload(action) else { decisionHandler(.cancel); return }
+      guard downloads.isEmpty, exportFile == nil else {
+        decisionHandler(.cancel)
+        downloadFailed("請先完成目前的檔案儲存。")
+        return
+      }
+      decisionHandler(.download)
+    }
+
+    func webView(_ webView: WKWebView, navigationAction action: WKNavigationAction, didBecome download: WKDownload) {
+      guard isLocalDownload(action) else { download.cancel { _ in }; return }
+      download.delegate = self
+    }
+
+    func download(
+      _ download: WKDownload, decideDestinationUsing response: URLResponse,
+      suggestedFilename: String, completionHandler: @escaping (URL?) -> Void
+    ) {
+      let name = (suggestedFilename as NSString).lastPathComponent
+      guard !name.isEmpty, name != ".", name != "..", name != "/" else {
+        completionHandler(nil)
+        downloadFailed("檔案名稱無效。")
+        return
+      }
+      let directory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("collie-download-\(UUID().uuidString)", isDirectory: true)
+      do {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        let destination = directory.appendingPathComponent(name)
+        downloads[ObjectIdentifier(download)] = destination
+        completionHandler(destination)
+      } catch {
+        completionHandler(nil)
+        downloadFailed(error.localizedDescription)
+      }
+    }
+
+    func downloadDidFinish(_ download: WKDownload) {
+      guard let file = downloads.removeValue(forKey: ObjectIdentifier(download)) else { return }
+      guard let presenter = presenter else {
+        removeDownload(file)
+        DiagLog.write("download failed: no export presenter")
+        return
+      }
+      exportFile = file
+      let picker = UIDocumentPickerViewController(forExporting: [file], asCopy: true)
+      picker.delegate = self
+      presenter.present(picker, animated: true)
+      DiagLog.write("download ready for export")
+    }
+
+    func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
+      if let file = downloads.removeValue(forKey: ObjectIdentifier(download)) { removeDownload(file) }
+      downloadFailed(error.localizedDescription)
+    }
+
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+      finishExport()
+      DiagLog.write("download exported")
+    }
+
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+      finishExport()
+    }
+
+    private func finishExport() {
+      if let file = exportFile { removeDownload(file) }
+      exportFile = nil
+    }
+
+    private func removeDownload(_ file: URL) {
+      try? FileManager.default.removeItem(at: file.deletingLastPathComponent())
+    }
+
+    private var presenter: UIViewController? {
+      var controller = view?.window?.rootViewController
+      while let presented = controller?.presentedViewController { controller = presented }
+      return controller
+    }
+
+    private func downloadFailed(_ reason: String) {
+      DiagLog.write("download failed: \(reason)")
+      let alert = UIAlertController(title: "下載失敗", message: reason, preferredStyle: .alert)
+      alert.addAction(UIAlertAction(title: "好", style: .default))
+      presenter?.present(alert, animated: true)
+    }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
       failed(error)

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useLoaderData, useLocation, useParams } from "react-router";
 
 import { AgentChat } from "@/components/agent-chat";
+import { DeliverableLinks } from "@/components/deliverable-links";
 import { FileLinksProvider, usePaneFileLinks } from "@/components/file-links";
 import { useDashPrefs } from "@/hooks/use-dash-prefs";
 import { useLoadingStalled } from "@/hooks/use-loading-stalled";
@@ -90,14 +91,21 @@ export function DetailRoute() {
     }
   }, [gone, root.bridge, root.error, nav, scope, paneId]);
 
+  // A deliverable sheet sits on this screen, so Back closes it before leaving the pane. The composer
+  // stays mounted either way (ADR 9006).
+  const dismissDeliverable = useRef<(() => boolean) | null>(null);
   // Up one level: to the space or the dashboard the pane was opened from (ADR 0067).
-  const up = () => nav.up(homePath(scope));
+  const up = () => {
+    if (dismissDeliverable.current?.() === true) return;
+    nav.up(homePath(scope));
+  };
   // The back arrow glides the header's dot, tile and name back down into the row this pane was
   // opened from (lib/glide.ts, the `pane` pair, rule 1), when the arrow lands where such a row can
   // be: the dashboard's Panes or Focus list, or a space. Not the dashboard's Changes tab, which lists
   // workspaces, so the arrow slides there as it always did. Where the row is gone or off screen, the
   // engine crossfades. The landing is the same resolution `nav.up` runs (`upTarget`).
   const backArrow = () => {
+    if (dismissDeliverable.current?.() === true) return;
     const lands = upTarget(location.pathname, readFrom(location.state), homePath(scope), canStepBack());
     const rowsThere = GLIDE_PAIRS.pane.origin(lands) && (lands !== "/" || dashView !== "changes");
     if (rowsThere) glideBack("pane", panePath(paneId, scope), up);
@@ -110,6 +118,7 @@ export function DetailRoute() {
   const fileLinks = usePaneFileLinks({ paneId, scope, pane: agent, panes: herd, workspaces: root.workspaces });
 
   return (
+    <DeliverableLinks paneId={paneId} scope={scope} dismissRef={dismissDeliverable}>
     <FileLinksProvider value={fileLinks}>
       <AgentChat
         // Keyed by the pane's FULL address, not its id. The key exists to remount the composer on a
@@ -156,5 +165,6 @@ export function DetailRoute() {
         }
       />
     </FileLinksProvider>
+    </DeliverableLinks>
   );
 }

@@ -1,9 +1,12 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { MarkdownText, type LinkResolver } from "./markdown-text";
+import { DeliverableContext, MarkdownText, type LinkResolver } from "./markdown-text";
 
 afterEach(cleanup);
+
+const openDeliverable = vi.fn();
+const deliverableOpener = () => ({ kind: "local" as const, href: "#", onOpen: openDeliverable });
 
 // What a link looks like once the parser has said what it is. The transcript has no resolver, so a
 // link that is not a web address reads as its label; a screen that knows what a path is relative to
@@ -29,6 +32,18 @@ describe("a link in the transcript, with no resolver", () => {
     const { container } = render(<MarkdownText text={source} />);
     expect(container.querySelector("a")).toBeNull();
     expect(container.textContent).toBe("the guide");
+  });
+
+  it.each(["", "#L16", "#L16-L20"])("a file URL the bridge named is a button, never an anchor (%s)", (fragment) => {
+    openDeliverable.mockClear();
+    const { container } = render(
+      <DeliverableContext.Provider value={deliverableOpener}>
+        <MarkdownText text={`[report](file:///tmp/roadmap-validation.json${fragment})`} />
+      </DeliverableContext.Provider>,
+    );
+    expect(container.querySelector("a")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "report" }));
+    expect(openDeliverable).toHaveBeenCalledOnce();
   });
 
   it.each([

@@ -14,7 +14,7 @@ import {
 } from "./connection-health";
 import { markDead as markPaneDead, markLive as markPaneLive } from "./liveness";
 import { abortSignalAfter, abortSignalAny } from "./env";
-import { asJsonString, parseJsonObject, type JsonObject } from "./json";
+import { asJsonNumber, asJsonObject, asJsonString, parseJsonObject, type JsonObject, type JsonValue } from "./json";
 import { authHeader, clearNotPaired, EXPIRED_BODY, markExpired, markNotPaired, NOT_PAIRED_BODY } from "./pairing";
 import { pairingRefused } from "./wipe";
 import { fileVersionOf } from "./file-image-cache";
@@ -1080,6 +1080,116 @@ export async function fetchFilesExist(
   const asked = new Set(paths);
   const exists = Array.isArray(got.exists) ? got.exists : [];
   return exists.map(asJsonString).filter((p): p is string => p !== undefined && asked.has(p));
+}
+
+/** One file a reply named. `href` is the link text; `id` is what a later read sends. Never a path. */
+export interface DeliverableListItem {
+  id: string;
+  href: string;
+  title: string;
+  filesPath?: string;
+}
+
+export type DeliverableListAnswer =
+  | { available: true; items: DeliverableListItem[]; truncated: boolean }
+  | { available: false; reason: string };
+
+/** The preview of one deliverable. `text` is empty when `binary`. A cut file is not downloadable. */
+export interface DeliverablePreview {
+  name: string;
+  size: number;
+  binary: boolean;
+  truncated: boolean;
+  text: string;
+  downloadable: boolean;
+}
+
+function deliverableItem(value: JsonValue | undefined): DeliverableListItem | null {
+  const row = asJsonObject(value);
+  if (row === undefined) return null;
+  const id = asJsonString(row.id);
+  const href = asJsonString(row.href);
+  const title = asJsonString(row.title);
+  if (id === undefined || href === undefined || title === undefined) return null;
+  const item: DeliverableListItem = { id, href, title };
+  const filesPath = asJsonString(row.filesPath);
+  if (filesPath !== undefined) item.filesPath = filesPath;
+  return item;
+}
+
+/**
+ * The files this pane's current reply named (ADR 9006). Quiet `{ available: false }` means there is
+ * no journal to ask: the caller leaves the link as its title. A 501 (a crew member, this round) throws.
+ */
+export async function fetchDeliverables(
+  paneId: string,
+  scope?: Scope,
+  signal?: AbortSignal,
+): Promise<DeliverableListAnswer> {
+  const got = await doReq<JsonObject>(withScope(`/api/pane/${encodeURIComponent(paneId)}/deliverables`, scope), {
+    signal,
+    timeoutMs: GET_TIMEOUT_MS,
+  });
+  if (asJsonBooleanSafe(got.available) !== true) {
+    return { available: false, reason: asJsonString(got.reason) ?? "no-session" };
+  }
+  const raw = Array.isArray(got.items) ? got.items : [];
+  return {
+    available: true,
+    items: raw.map((row) => deliverableItem(row)).filter((row): row is DeliverableListItem => row !== null),
+    truncated: asJsonBooleanSafe(got.truncated) === true,
+  };
+}
+
+function asJsonBooleanSafe(value: JsonValue | undefined): boolean | undefined {
+  return value === true || value === false ? value : undefined;
+}
+
+/** The text preview of one deliverable. Throws on a fault, including a file that is no longer there. */
+export async function fetchDeliverablePreview(
+  paneId: string,
+  id: string,
+  scope?: Scope,
+  signal?: AbortSignal,
+): Promise<DeliverablePreview> {
+  const got = await doReq<JsonObject>(deliverablePath(paneId, id, scope, false), { signal, timeoutMs: GET_TIMEOUT_MS });
+  const name = asJsonString(got.name);
+  const size = asJsonNumber(got.size);
+  if (got.available !== true || name === undefined || size === undefined) {
+    throw new ApiError("deliverable preview", 404);
+  }
+  return {
+    name,
+    size,
+    binary: got.binary === true,
+    truncated: got.truncated === true,
+    text: asJsonString(got.text) ?? "",
+    downloadable: got.downloadable === true,
+  };
+}
+
+/**
+ * The whole file, as bytes. The pairing token rides the `Authorization` header, never this URL.
+ * A file over the cap is a 413, not a short blob with a success status.
+ */
+export async function fetchDeliverableBytes(paneId: string, id: string, scope?: Scope, signal?: AbortSignal): Promise<Blob> {
+  const res = await apiFetch(deliverablePath(paneId, id, scope, true), {
+    signal: withTimeout(signal, GET_TIMEOUT_MS),
+    headers: { [XHR_HEADER]: XHR_HEADER_VALUE, ...authHeader() },
+  });
+  captureBuild(res);
+  if (!res.ok) {
+    const detail = await errorDetail(res);
+    notePairing("GET", res.status, detail);
+    notePairingAnswer(res.status, detail);
+    throw new ApiError(`${paneId} deliverable → ${res.status} ${detail}`, res.status, parseApiErrorFields(detail));
+  }
+  return res.blob();
+}
+
+function deliverablePath(paneId: string, id: string, scope: Scope | undefined, download: boolean): string {
+  const path = `/api/pane/${encodeURIComponent(paneId)}/deliverables/${encodeURIComponent(id)}${download ? "?download=1" : ""}`;
+  return withScope(path, scope);
 }
 
 /**

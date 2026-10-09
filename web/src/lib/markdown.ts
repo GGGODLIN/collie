@@ -42,7 +42,17 @@ export type MdSpan =
    * the screen that shows the text can, so the renderer asks a resolver and, with none, shows the
    * label as plain text.
    */
-  | { kind: "link"; href: string; spans: MdSpan[]; rel?: true }
+  | {
+      kind: "link";
+      href: string;
+      spans: MdSpan[];
+      rel?: true;
+      /**
+       * A local `file:` URL. Never an `<a href>`: the screen opens it only when the bridge named
+       * this exact link in the current session's reply (ADR 9006). Absent means an ordinary link.
+       */
+      file?: true;
+    }
   /**
    * `![alt](src)`, kept as an image only when the caller asked for images (`parseMarkdown`'s
    * `images`), which the Files preview does and the transcript does not. `src` is the address AS
@@ -67,9 +77,10 @@ export type MdBlock =
 
 export type MdAlign = "left" | "center" | "right" | null;
 
-// Only these schemes may become a real link. Everything else (javascript:, data:, file:, vbscript:,
-// or a made-up one) renders as its label, never as an anchor and never as its raw source: a link is
-// the one place this view could otherwise hand a URL straight to the browser.
+// Only these schemes may become an anchor. Everything else (javascript:, data:, vbscript:, or a
+// made-up one) renders as its label, never as an anchor and never as its raw source: a link is the
+// one place this view could otherwise hand a URL straight to the browser. A local file: URL is not
+// an anchor either. It is a `file` link the screen may open through the session's reply (ADR 9006).
 const SAFE_SCHEME = /^(https?:|mailto:)/i;
 // Any scheme at all: letters first, then letters, digits, `+`, `-`, `.`, then the colon.
 const ANY_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
@@ -93,6 +104,40 @@ export function classifyHref(raw: string): { href: string; rel: boolean } | null
   return { href, rel: true };
 }
 
+/**
+ * Whether `raw` is a local file URL the screen may ask the bridge about.
+ *
+ * Not a path, and not an `<a href>`. Another host, a query, a non-line fragment, a control, or a
+ * `.` / `..` segment stays ordinary text. A Windows drive URL is included: the phone does not know the host,
+ * and the bridge is what accepts or refuses it (ADR 9006).
+ */
+export function isLocalFileHref(raw: string): boolean {
+  const written = raw.trim();
+  const hash = written.indexOf("#");
+  if (hash !== -1 && !/^#L\d+(?:-L\d+)?$/.test(written.slice(hash))) return false;
+  const href = hash === -1 ? written : written.slice(0, hash);
+  if (href === "" || CONTROL_CHAR.test(written) || href.includes("?")) return false;
+  if (!/^file:/i.test(href) || !href.slice(5).startsWith("//")) return false;
+  const after = href.slice(7);
+  let path = after;
+  if (!after.startsWith("/")) {
+    const slash = after.indexOf("/");
+    if (slash <= 0) return false;
+    const host = after.slice(0, slash);
+    if (host.toLowerCase() !== "localhost") return false;
+    path = after.slice(slash);
+  }
+  let decoded = path;
+  try {
+    decoded = decodeURI(path);
+  } catch {
+    return false;
+  }
+  const segments = decoded.split("/");
+  if (segments[0] !== "") return false;
+  return segments.slice(1).every((segment) => segment !== "" && segment !== "." && segment !== "..");
+}
+
 /** The href of an EXTERNAL link (http, https, mailto), or null for anything else. */
 function externalHref(raw: string): string | null {
   const target = classifyHref(raw);
@@ -109,7 +154,7 @@ function externalHref(raw: string): string | null {
 // a URL this alternative already took. The tail class is what stops "see http://x." from swallowing
 // the full stop, and "(http://x)" from swallowing the bracket — a URL may not END on sentence
 // punctuation, though it may contain it.
-const BARE_URL = "(?<![\\w@/.-])((?:https?://|mailto:)[^\\s<>`\"']*[^\\s<>`\"'.,:;!?)\\]}])";
+const BARE_URL = "(?<![\\w@/.-])((?:https?://|mailto:|file://)[^\\s<>`\"']*[^\\s<>`\"'.,:;!?)\\]}])";
 
 // The pieces of a link, each bounded, each with a branch that cannot match what the other can:
 //  - LABEL holds anything but a bracket, or ONE image (`![alt](src)`), which is how a badge is
@@ -135,7 +180,7 @@ const INLINE_RE = new RegExp(
     String.raw`\[(${LABEL})\]${DEST}`, // 6,7   [label](url "title")
     String.raw`\[(${LABEL})\]\[([^\[\]\n]{0,200})\]`, // 8,9   [label][ref] and [label][]
     String.raw`\[([^\[\]\n]{1,200})\]`, // 10    [ref], when a definition names it
-    "<((?:https?://|mailto:)[^\\s<>]{1,500})>", // 11    <https://x>
+    "<((?:https?://|mailto:|file://)[^\\s<>]{1,500})>", // 11    <https://x> or <file:///>
     BARE_URL, // 12    a bare URL
   ].join("|"),
   "g",
@@ -203,7 +248,18 @@ export function parseInline(text: string, depth = 0, inLink = false, defs?: RefD
    * its LABEL (never the `[a](javascript:...)` source, which would show the address it refused);
    * a label with nothing in it falls back to the address.
    */
+  const pushFile = (href: string, label?: string) => {
+    const shown = label === undefined || label.trim() === "" ? href : label;
+    const body = label === undefined ? [{ kind: "text" as const, text: href }] : parseInline(shown, depth + 1, true, defs);
+    push({ kind: "link", href, file: true, spans: body.length > 0 ? body : [{ kind: "text", text: href }] });
+  };
   const pushLink = (label: string, rawHref: string) => {
+    // A file URL is not a browser navigation. It stays a link the screen may open through the
+    // session's own reply, and with no such screen it is only its label (ADR 9006).
+    if (isLocalFileHref(rawHref)) {
+      pushFile(rawHref.trim(), label);
+      return;
+    }
     const target = classifyHref(rawHref);
     const body = parseInline(label, depth + 1, true, defs);
     if (target === null) {
@@ -254,16 +310,23 @@ export function parseInline(text: string, depth = 0, inLink = false, defs?: RefD
         last = re.lastIndex = m.index + 1;
       }
     } else if (m[11] !== undefined) {
-      // `<https://x>` reads as the address itself, without the angle brackets.
-      const href = inLink ? null : externalHref(m[11]);
-      if (href) push({ kind: "link", href, spans: [{ kind: "text", text: m[11] }] });
-      else push({ kind: "text", text: m[11] });
+      // `<https://x>` reads as the address itself, without the angle brackets. A file URL is the
+      // same shape and is not an anchor.
+      if (!inLink && isLocalFileHref(m[11])) pushFile(m[11]);
+      else {
+        const href = inLink ? null : externalHref(m[11]);
+        if (href) push({ kind: "link", href, spans: [{ kind: "text", text: m[11] }] });
+        else push({ kind: "text", text: m[11] });
+      }
     } else if (m[12] !== undefined) {
       // Its own text is its label, so the reader sees the address they would tap. Through the same
       // gate as every other link, even though the pattern already limited the scheme: one gate.
-      const href = inLink ? null : externalHref(m[12]);
-      if (href) push({ kind: "link", href, spans: [{ kind: "text", text: m[12] }] });
-      else push({ kind: "text", text: m[12] });
+      if (!inLink && isLocalFileHref(m[12])) pushFile(m[12]);
+      else {
+        const href = inLink ? null : externalHref(m[12]);
+        if (href) push({ kind: "link", href, spans: [{ kind: "text", text: m[12] }] });
+        else push({ kind: "text", text: m[12] });
+      }
     }
   }
   push({ kind: "text", text: text.slice(last) });

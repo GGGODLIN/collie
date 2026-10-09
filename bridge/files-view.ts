@@ -247,7 +247,7 @@ export const NODE_FILES_FS: FilesFs = {
         names.push(entry.name);
       }
     } finally {
-      await handle.close().catch(() => {});
+      await Promise.resolve(handle.close()).catch(() => {});
     }
     return { names, more };
   },

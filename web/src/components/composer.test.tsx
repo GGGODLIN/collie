@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import * as api from "@/lib/api";
 import { clearStatus, useStatus } from "@/lib/status";
 import { isReloadHeld, __resetReloadGuard } from "@/lib/reload-guard";
 import { loadDraft, loadDraftEntry, saveDraft } from "@/lib/drafts";
@@ -22,6 +23,68 @@ vi.mock("@/lib/liveness", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/liveness")>()),
   isLive: () => true,
   useLive: () => true,
+}));
+
+// The real editor loads Konva. These cases pin the composer's decision to upload, not the canvas.
+// `mode: "auto"` confirms immediately so existing chip tests still reach an upload; the image-edit
+// describe below sets `manual` and clicks. jsdom has no 2D context, so canvasAvailable is stubbed
+// here; image-edit.test.ts covers the real check.
+const canvasGate = vi.hoisted(() => ({ available: true }));
+
+vi.mock("@/lib/image-edit", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/image-edit")>();
+  return { ...actual, canvasAvailable: () => canvasGate.available };
+});
+interface ImageEditHarness {
+  mode: "auto" | "manual";
+  seen: WeakSet<File>;
+  lastConfirm: ((file: File) => void) | null;
+}
+
+const imageEditHarness = vi.hoisted(() => {
+  const harness: ImageEditHarness = {
+    mode: "auto",
+    seen: new WeakSet<File>(),
+    lastConfirm: null,
+  };
+  return harness;
+});
+
+vi.mock("@/components/image-editor", () => ({
+  ImageEditor: (props: {
+    file: File;
+    onConfirm: (file: File) => void;
+    onCancel: () => void;
+    onFail: (reason: "unavailable" | "failed") => void;
+  }) => {
+    imageEditHarness.lastConfirm = props.onConfirm;
+    if (imageEditHarness.mode === "auto" && !imageEditHarness.seen.has(props.file)) {
+      imageEditHarness.seen.add(props.file);
+      queueMicrotask(() => {
+        props.onConfirm(new File(["edited"], props.file.name, { type: props.file.type || "image/png" }));
+      });
+    }
+    if (imageEditHarness.mode !== "manual") return null;
+    return (
+      <div role="dialog" aria-label="Edit image">
+        <button
+          type="button"
+          onClick={() => props.onConfirm(new File(["EDITED-BYTES"], "edited.png", { type: "image/png" }))}
+        >
+          Use this image
+        </button>
+        <button type="button" onClick={() => props.onConfirm(new File([], "empty.png", { type: "image/png" }))}>
+          Save empty
+        </button>
+        <button type="button" onClick={() => props.onFail("failed")}>
+          Fail edit
+        </button>
+        <button type="button" onClick={props.onCancel}>
+          Cancel edit
+        </button>
+      </div>
+    );
+  },
 }));
 
 // A guarded send is TWO reply calls: type (submit:false), then — once the text is verified on the
@@ -64,7 +127,12 @@ function expectLeaving(el: HTMLElement | null) {
 beforeAll(() => {
   if (!Element.prototype.scrollTo) Element.prototype.scrollTo = () => {};
 });
-beforeEach(() => clearStatus());
+beforeEach(() => {
+  clearStatus();
+  imageEditHarness.mode = "auto";
+  imageEditHarness.lastConfirm = null;
+  canvasGate.available = true;
+});
 
 function renderComposer(overrides: Partial<ComponentProps<typeof Composer>> = {}) {
   const props: ComponentProps<typeof Composer> = {
@@ -3887,5 +3955,275 @@ describe("Composer — a draft that holds masked text", () => {
     renderComposerWithStatus();
     fireEvent.change(screen.getByPlaceholderText(/type a reply/i), { target: { value: "ghp_••••••••" } });
     expect(screen.getByRole("button", { name: "Send" })).not.toBeDisabled();
+  });
+});
+
+describe("Composer — an image is edited before it uploads", () => {
+  beforeEach(() => {
+    __resetOperatorCommands();
+    imageEditHarness.mode = "manual";
+  });
+
+  function pick(file: File, id = "attach-photos") {
+    // SAFETY: getByTestId throws when the element is absent, and this id is on an <input>.
+    const input = screen.getByTestId(id) as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [file] } });
+  }
+
+  /** The File the composer handed to uploadFile. jsdom's multipart writer drops the part body, so the
+   *  bytes are read here, before FormData, which is the same object api.uploadFile appends. */
+  function watchUploads() {
+    const spy = vi.spyOn(api, "uploadFile");
+    return spy;
+  }
+
+  const png = (name: string, bytes: number[] = [1, 2, 3, 4]) =>
+    new File([Uint8Array.from(bytes)], name, { type: "image/png" });
+
+  it("uploads nothing until confirm, then uploads the edited file and leaves the original bytes", async () => {
+    const user = userEvent.setup();
+    const uploads = watchUploads();
+    server.use(
+      http.post(/\/api\/pane\/[^/]+\/upload$/, () => HttpResponse.json({ ok: true, path: "/tmp/edited.png" })),
+    );
+    try {
+      renderComposerWithStatus();
+      const original = png("shot.png");
+      pick(original);
+
+      expect(await screen.findByRole("dialog", { name: "Edit image" })).toBeInTheDocument();
+      expect(uploads).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("button", { name: "Use this image" }));
+
+      await waitFor(() => expect(uploads).toHaveBeenCalledTimes(1));
+      const sent = uploads.mock.calls[0]?.[1];
+      expect(sent?.name).toBe("edited.png");
+      expect(sent?.type).toBe("image/png");
+      expect(await sent?.text()).toBe("EDITED-BYTES");
+      expect(Array.from(new Uint8Array(await original.arrayBuffer()))).toEqual([1, 2, 3, 4]);
+      expect(screen.getByRole("button", { name: "Remove edited.png" })).toBeInTheDocument();
+    } finally {
+      uploads.mockRestore();
+    }
+  });
+
+  it("cancel adds no chip and does not upload or change the original file", async () => {
+    const user = userEvent.setup();
+    let uploads = 0;
+    server.use(
+      http.post(/\/api\/pane\/[^/]+\/upload$/, () => {
+        uploads += 1;
+        return HttpResponse.json({ ok: true, path: "/tmp/nope.png" });
+      }),
+    );
+    renderComposerWithStatus();
+    const original = png("shot.png");
+    pick(original);
+    await screen.findByRole("dialog", { name: "Edit image" });
+    await user.click(screen.getByRole("button", { name: "Cancel edit" }));
+
+    expect(screen.queryByRole("dialog", { name: "Edit image" })).not.toBeInTheDocument();
+    expect(uploads).toBe(0);
+    expect(screen.queryByRole("list", { name: "Attachments" })).toBeNull();
+    expect(Array.from(new Uint8Array(await original.arrayBuffer()))).toEqual([1, 2, 3, 4]);
+  });
+
+  it("a pasted image waits the same way, and a non-image still uploads immediately", async () => {
+    const user = userEvent.setup();
+    const uploads = watchUploads();
+    server.use(
+      http.get("/api/config", () =>
+        HttpResponse.json({
+          push: false,
+          vapidPublicKey: "",
+          upload: { maxBytes: 10 * 1024 * 1024, imageTypes: ["png"], textTypes: ["md"] },
+        }),
+      ),
+      http.post(/\/api\/pane\/[^/]+\/upload$/, () => HttpResponse.json({ ok: true, path: "/tmp/notes.md" })),
+    );
+    try {
+      renderComposerWithStatus();
+      await waitFor(() => expect(screen.getByTestId("attach-files")).toHaveAttribute("accept", "image/*,.png,.md"));
+      const box = screen.getByPlaceholderText(/type a reply/i);
+      const image = png("pasted.png");
+      fireEvent.paste(box, {
+        clipboardData: { items: [{ kind: "file", type: "image/png", getAsFile: () => image }] },
+      });
+      expect(await screen.findByRole("dialog", { name: "Edit image" })).toBeInTheDocument();
+      expect(uploads).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("button", { name: "Cancel edit" }));
+
+      pick(new File(["# hi"], "notes.md", { type: "text/markdown" }), "attach-files");
+      await waitFor(() => expect(uploads).toHaveBeenCalledTimes(1));
+      const sent = uploads.mock.calls[0]?.[1];
+      expect(sent?.name).toBe("notes.md");
+      expect(await sent?.text()).toBe("# hi");
+      expect(screen.queryByRole("dialog", { name: "Edit image" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Remove notes.md" })).toBeInTheDocument();
+    } finally {
+      uploads.mockRestore();
+    }
+  });
+
+  it("says the browser cannot edit and still uploads a non-image", async () => {
+    canvasGate.available = false;
+    const uploads = watchUploads();
+    try {
+      server.use(
+        http.get("/api/config", () =>
+          HttpResponse.json({
+            push: false,
+            vapidPublicKey: "",
+            upload: { maxBytes: 10 * 1024 * 1024, imageTypes: ["png"], textTypes: ["md"] },
+          }),
+        ),
+        http.post(/\/api\/pane\/[^/]+\/upload$/, () => HttpResponse.json({ ok: true, path: "/tmp/notes.md" })),
+      );
+      renderComposerWithStatus();
+      await waitFor(() => expect(screen.getByTestId("attach-files")).toHaveAttribute("accept", "image/*,.png,.md"));
+      pick(png("shot.png"));
+      await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent(/can't edit images/));
+      expect(screen.queryByRole("dialog", { name: "Edit image" })).not.toBeInTheDocument();
+      expect(uploads).not.toHaveBeenCalled();
+
+      pick(new File(["# hi"], "notes.md", { type: "text/markdown" }), "attach-files");
+      await waitFor(() => expect(uploads).toHaveBeenCalledTimes(1));
+      expect(uploads.mock.calls[0]?.[1].name).toBe("notes.md");
+    } finally {
+      canvasGate.available = true;
+      uploads.mockRestore();
+    }
+  });
+
+  it("does not upload an empty save or a failed prepare, and reports the failure", async () => {
+    const user = userEvent.setup();
+    let uploads = 0;
+    server.use(
+      http.post(/\/api\/pane\/[^/]+\/upload$/, () => {
+        uploads += 1;
+        return HttpResponse.json({ ok: true, path: "/tmp/nope.png" });
+      }),
+    );
+    renderComposerWithStatus();
+    pick(png("shot.png"));
+    await screen.findByRole("dialog", { name: "Edit image" });
+    await user.click(screen.getByRole("button", { name: "Save empty" }));
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent(/nothing was attached/));
+    expect(uploads).toBe(0);
+    expect(screen.getByRole("dialog", { name: "Edit image" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Fail edit" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Edit image" })).not.toBeInTheDocument());
+    expect(uploads).toBe(0);
+    expect(screen.queryByRole("list", { name: "Attachments" })).toBeNull();
+  });
+
+  it("reports an upload error and adds no chip", async () => {
+    const user = userEvent.setup();
+    server.use(http.post(/\/api\/pane\/[^/]+\/upload$/, () => new HttpResponse("nope", { status: 500 })));
+    renderComposerWithStatus();
+    pick(png("shot.png"));
+    await user.click(await screen.findByRole("button", { name: "Use this image" }));
+    await waitFor(() => expect(screen.getByTestId("status").textContent ?? "").not.toBe(""));
+    expect(screen.queryByRole("button", { name: /Remove / })).not.toBeInTheDocument();
+  });
+
+  it("edits a multi-image pick one at a time and uploads each only after its confirm", async () => {
+    const user = userEvent.setup();
+    const uploads = watchUploads();
+    server.use(
+      http.post(/\/api\/pane\/[^/]+\/upload$/, () => HttpResponse.json({ ok: true, path: "/tmp/one.png" })),
+    );
+    try {
+      renderComposer();
+      // SAFETY: getByTestId throws when the element is absent, and this id is on an <input>.
+      const input = screen.getByTestId("attach-photos") as HTMLInputElement;
+      fireEvent.change(input, { target: { files: [png("a.png"), png("b.png", [9])] } });
+      expect(await screen.findByRole("dialog", { name: "Edit image" })).toBeInTheDocument();
+      expect(uploads).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("button", { name: "Use this image" }));
+      await waitFor(() => expect(uploads).toHaveBeenCalledTimes(1));
+      expect(await uploads.mock.calls[0]?.[1].text()).toBe("EDITED-BYTES");
+      expect(await screen.findByRole("dialog", { name: "Edit image" })).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Use this image" }));
+      await waitFor(() => expect(uploads).toHaveBeenCalledTimes(2));
+      expect(await uploads.mock.calls[1]?.[1].text()).toBe("EDITED-BYTES");
+    } finally {
+      uploads.mockRestore();
+    }
+  });
+
+  it("drops an open edit on a pane change, and a late confirm does not upload to the new pane", async () => {
+    let uploads = 0;
+    server.use(
+      http.post(/\/api\/pane\/[^/]+\/upload$/, () => {
+        uploads += 1;
+        return HttpResponse.json({ ok: true, path: "/tmp/late.png" });
+      }),
+    );
+    let swap: ((id: string) => void) | null = null;
+    function Harness() {
+      const [paneId, setPaneId] = useState("w1:p1");
+      swap = setPaneId;
+      return (
+        <Composer
+          paneId={paneId}
+          agent="claude"
+          isShell={false}
+          gone={false}
+          readOnly={false}
+          dialogPresent={false}
+          text="pane output"
+          terminalDraft={null}
+          rawTerminalDraft={null}
+          prefs={{ wrap: true, fontSize: 11, draftFontSize: 14, chatFontSize: 14, fontFamily: "system", rawTerminal: false, tapToFocus: true, expandClippedReply: true }}
+          display={{ open: false, onToggle: vi.fn() }}
+          onSent={vi.fn()}
+        />
+      );
+    }
+    render(
+      <RouterProvider router={createMemoryRouter([{ path: "/", element: <Harness /> }])} />,
+    );
+    pick(png("shot.png"));
+    await screen.findByRole("dialog", { name: "Edit image" });
+    act(() => swap?.("w1:p2"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Edit image" })).not.toBeInTheDocument());
+    imageEditHarness.lastConfirm?.(new File(["LATE"], "late.png", { type: "image/png" }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(uploads).toBe(0);
+    expect(screen.queryByRole("list", { name: "Attachments" })).toBeNull();
+  });
+
+  it("does not open the editor for a read-only, gone, or stale composer", async () => {
+    let uploads = 0;
+    server.use(
+      http.post(/\/api\/pane\/[^/]+\/upload$/, () => {
+        uploads += 1;
+        return HttpResponse.json({ ok: true, path: "/tmp/nope.png" });
+      }),
+    );
+    renderComposerWithStatus({ readOnly: true });
+    pick(png("shot.png"));
+    expect(screen.queryByRole("dialog", { name: "Edit image" })).not.toBeInTheDocument();
+    expect(uploads).toBe(0);
+
+    cleanup();
+    renderComposerWithStatus({ gone: true });
+    // SAFETY: getByTestId throws when the element is absent, and this id is on an <input>.
+    const goneInput = screen.getByTestId("attach-photos") as HTMLInputElement;
+    fireEvent.change(goneInput, { target: { files: [png("other.png")] } });
+    expect(screen.queryByRole("dialog", { name: "Edit image" })).not.toBeInTheDocument();
+
+    cleanup();
+    renderComposerWithStatus({ stale: true });
+    // SAFETY: getByTestId throws when the element is absent, and this id is on an <input>.
+    const staleInput = screen.getByTestId("attach-photos") as HTMLInputElement;
+    fireEvent.change(staleInput, { target: { files: [png("stale.png")] } });
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent(/Reconnect to send/));
+    expect(screen.queryByRole("dialog", { name: "Edit image" })).not.toBeInTheDocument();
+    expect(uploads).toBe(0);
   });
 });

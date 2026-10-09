@@ -628,6 +628,7 @@ describe("solo zero-tax — routes", () => {
       // gated on an authorised device and forwarded to the owning member like `changes`.
       "/^\\/api\\/pane\\/([^/]+)(?:\\/(reply|keys|upload|close|rename|history|chat|changes|files|focus))?$/",
       "/^\\/api\\/pane\\/([^/]+)\\/(switch-account|retell)$/",
+      "/^\\/api\\/pane\\/([^/]+)\\/deliverables(?:\\/([^/]+))?$/",
       // Which paths exist under the Files root (ADR 0088), asked in one batch for the pane view's
       // links: a read with the Files gate, one `lstat` per path, not forwarded across a crew link.
       "/^\\/api\\/pane\\/([^/]+)\\/files\\/exist$/",

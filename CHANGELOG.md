@@ -23,6 +23,22 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.18.1] - 2026-10-09
+
+### Added
+
+- **A file link in a reply opens that file.** Tapping a file link in the agent's own reply opens or downloads that file, including one outside the workspace. Only a file that reply named can be opened. Not yet checked inside the iPhone app: the too-large notice at the end of a preview, and the HTML preview's sandbox. ([322ac373](https://github.com/GGGODLIN/collie/commit/322ac373))
+- **The phone can crop and mark a photo before sending it.** Picking or pasting an image opens an editor. Nothing is uploaded until you confirm, and cancel leaves the original file untouched. Known issue: right after the editor opens, the first tap on Cancel can do nothing; tap it again. ([6e0a7951](https://github.com/GGGODLIN/collie/commit/6e0a7951))
+
+### Changed
+
+- **Built on upstream Collie 1.18.0.** AltanS/collie v1.18.0, commit 2ab62eaa, unchanged since fork 1.18.0. ([1f783295](https://github.com/GGGODLIN/collie/commit/1f783295))
+
+### Fixed
+
+- **Files lists survive a synchronous directory close.** Bun versions whose directory close returns no promise no longer turn folder listings into unknown-path errors. ([6a7ff9d1](https://github.com/GGGODLIN/collie/commit/6a7ff9d1))
+- **The iPhone app saves files from agent replies.** Download opens the native file picker after the paired web page fetches the file. Install this release's CollieIsland.ipa to use it; a web update alone does not update the native app. ([deb2c161](https://github.com/GGGODLIN/collie/commit/deb2c161))
+
 ## [1.18.0] - 2026-10-08
 
 ### Added

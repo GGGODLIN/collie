@@ -1,6 +1,6 @@
 # 0088: Paths the agent prints are links, inside the Changes root only
 
-- **Status:** Accepted
+- **Status:** Accepted. Amended in scope by [ADR 9006](./9006-a-reply-file-is-read-by-its-own-id.md): a local `file:` URL in the agent's own reply is not the client path point 4 refuses. Point 4 stands for every other reading.
 - **Date:** 2026-10-07
 - **Shipped in:** pending
 - **Relates to:** [ADR 0083](./0083-the-files-view-reads-the-changes-root.md) (the Files view reads

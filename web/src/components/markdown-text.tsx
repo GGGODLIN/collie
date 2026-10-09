@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, type ReactNode } from "react";
 
 import { useFileLinks, type FileLinkTarget } from "@/components/file-links";
 import { codeSpanPath, findFilePaths } from "@/lib/file-paths";
-import { headingAnchors, parseMarkdown, spansText, type MdBlock, type MdSpan } from "@/lib/markdown";
+import { headingAnchors, isLocalFileHref, parseMarkdown, spansText, type MdBlock, type MdSpan } from "@/lib/markdown";
 import { splitHighlight } from "@/lib/transcript-search";
 
 // Renders the Markdown AST as React elements. Every string from the log reaches the DOM as a TEXT
@@ -33,6 +33,20 @@ export type LinkResolver = (href: string) => LinkTarget;
 // The resolver, threaded the way the find query is. With none (the transcript) a `rel` link is its
 // label as plain text: a dead anchor would be worse than none, and raw Markdown worse still.
 const LinkContext = createContext<LinkResolver | null>(null);
+
+/**
+ * A local file URL the bridge has named in this pane's current reply, or null to leave the label.
+ * The screen sets it. The renderer never puts `file:` on an `<a>`.
+ */
+export const DeliverableContext = createContext<((href: string) => LinkTarget | null) | null>(null);
+
+/** A reply link the deliverable route can own: a file URL, a home path, or a POSIX absolute path. */
+function isDeliverableHref(href: string): boolean {
+  if (isLocalFileHref(href)) return true;
+  const trimmed = href.trim();
+  if (trimmed.startsWith("~/")) return !trimmed.includes("..");
+  return trimmed.startsWith("/") && !trimmed.startsWith("//") && !trimmed.startsWith("/\\") && !trimmed.split("/").includes("..");
+}
 
 /**
  * What the screen draws for one `![alt](src)` (ADR 0090), or null to draw the alt text, as an image
@@ -172,7 +186,16 @@ function TextRun({ text }: { text: string }) {
 /** A code span: a chip, and a tappable one when the whole span is a path that resolves and exists. */
 function CodeSpan({ text }: { text: string }) {
   const open = useFileLinks();
+  const deliver = useContext(DeliverableContext);
   const inLink = useContext(InLinkContext);
+  const file = !inLink && deliver !== null && isLocalFileHref(text.trim()) ? deliver(text.trim()) : null;
+  if (file !== null && file.kind === "local") {
+    return (
+      <button type="button" onClick={file.onOpen} className={`${CHIP_CLASS} ${LINK_CLASS}`}>
+        <Hit text={text} />
+      </button>
+    );
+  }
   const found = open === null || inLink ? null : codeSpanPath(text);
   const target = found === null || open === null ? null : open(found);
   if (target !== null) return <PathChip target={target} text={text} />;
@@ -185,11 +208,25 @@ function CodeSpan({ text }: { text: string }) {
 
 function LinkSpan({ span }: { span: Extract<MdSpan, { kind: "link" }> }) {
   const resolve = useContext(LinkContext);
+  const deliver = useContext(DeliverableContext);
   const label = (
     <InLinkContext.Provider value>
       <Spans spans={span.spans} />
     </InLinkContext.Provider>
   );
+  // A file URL, and a root or home path the reply named, open through the session. They are a
+  // button, never an anchor: `file:` must not become a browser navigation.
+  if (span.file === true || (span.rel === true && isDeliverableHref(span.href))) {
+    const target = deliver?.(span.href) ?? null;
+    if (target !== null && target.kind === "local") {
+      return (
+        <button type="button" onClick={target.onOpen} className={`${LINK_CLASS} ${breakClass(flatten(span.spans))}`}>
+          {label}
+        </button>
+      );
+    }
+    if (span.file === true) return label;
+  }
   if (!span.rel) {
     // `href` was scheme-checked in the parser. noreferrer/noopener because these URLs come from
     // agent output, and target=_blank keeps the PWA shell alive behind the tap.

@@ -57,6 +57,13 @@ interface BottomSheetProps {
    * bottom edge), which is what every caller but the switcher handle wants.
    */
   pullFrom?: number;
+  /**
+   * Pull-down on the panel closes the sheet. Default true, so every existing caller keeps that
+   * gesture. The image editor turns it off: Konva's drag listens for `touchmove` on `window` in
+   * the bubble phase, and stopping the event on the canvas would keep the sheet still by also
+   * keeping that listener from ever seeing the stroke.
+   */
+  dragToDismiss?: boolean;
 }
 
 export function BottomSheet({
@@ -67,6 +74,7 @@ export function BottomSheet({
   className,
   pull = 0,
   pullFrom = 0,
+  dragToDismiss = true,
 }: BottomSheetProps) {
   useLocale();
   const panelRef = React.useRef<HTMLDivElement>(null);
@@ -115,7 +123,7 @@ export function BottomSheet({
   // scrolling; only a pull that begins at the top engages the dismiss.
   React.useEffect(() => {
     const panel = panelRef.current;
-    if (!open || !panel) return;
+    if (!open || !panel || !dragToDismiss) return;
     setDragY(0);
     const SLOP = 6; // ignore taps / tiny jitter before engaging the drag
     const CLOSE = 90; // px past which release closes instead of snapping back
@@ -156,7 +164,7 @@ export function BottomSheet({
       panel.removeEventListener("touchend", onEnd);
       panel.removeEventListener("touchcancel", onEnd);
     };
-  }, [open, onClose]);
+  }, [open, onClose, dragToDismiss]);
 
   // Read BEFORE updating: this render's "did the one before me peek" answer, which is what tells a
   // fresh open from a drag continuing into one. Updated for the NEXT render right after.

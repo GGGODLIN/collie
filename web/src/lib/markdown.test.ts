@@ -450,12 +450,36 @@ describe("relative and fragment links", () => {
   it.each([
     ["javascript:", "javascript:alert(1)"],
     ["data:", "data:text/html,x"],
-    ["file:", "file:///etc/passwd"],
     ["vbscript:", "vbscript:x"],
     ["an unknown scheme", "zzz:thing"],
     ["a protocol-relative host", "//evil.example/x"],
   ])("%s shows the label only", (_label, href) => {
     expect(parseInline(`[label](${href})`)).toEqual([text("label")]);
+  });
+
+  // A local file URL is not handed to the browser (no external href). It stays a link the screen
+  // can open only after the bridge names it as this session's deliverable.
+  it("a local file URL stays a file link, not an address", () => {
+    expect(parseInline("[report](file:///tmp/roadmap-validation.json)")).toEqual([
+      { kind: "link", href: "file:///tmp/roadmap-validation.json", file: true, spans: [text("report")] },
+    ]);
+  });
+
+  it.each(["#L16", "#L16-L20"])("a file URL keeps its line reference %s", (fragment) => {
+    const href = `file:///tmp/report.md${fragment}`;
+    expect(parseInline(`[report](${href})`)).toEqual([
+      { kind: "link", href, file: true, spans: [text("report")] },
+    ]);
+    expect(parseInline(`<${href}>`)).toEqual([
+      { kind: "link", href, file: true, spans: [text(href)] },
+    ]);
+    expect(parseInline(href)).toEqual([
+      { kind: "link", href, file: true, spans: [text(href)] },
+    ]);
+  });
+
+  it.each(["#other", "?download=1", "#L16?x=1"])("a file URL refuses %s", (suffix) => {
+    expect(parseInline(`[report](file:///tmp/report.md${suffix})`)).toEqual([text("report")]);
   });
 
   it("a refused link inside a paragraph never leaks its source", () => {
