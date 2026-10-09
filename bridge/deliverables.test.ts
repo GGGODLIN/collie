@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
@@ -16,11 +17,12 @@ import {
   sessionBind,
 } from "./deliverables.ts";
 import { MAX_FILES_READ_BYTES, NODE_FILES_FS, type FilesFs } from "./files-view.ts";
-import { hostFor } from "./host.ts";
+import { HOST, hostFor } from "./host.ts";
 import type { TranscriptEntry } from "./journal/types.ts";
 
 const posix = hostFor("darwin");
 const win = hostFor("win32");
+const nativeHome = homedir();
 const session = sessionBind({ kind: "id", value: "sess-1" });
 const dirs: string[] = [];
 
@@ -176,16 +178,16 @@ describe("openDeliverable", () => {
     const file = join(dir, "roadmap-validation.json");
     const bytes = new TextEncoder().encode('{"ok":true,"via":"bash"}\n');
     writeFileSync(file, bytes);
-    const entries = [reply(`wrote [it](file://${file})`)];
-    const id = listDeliverables(entries, session, posix, "/Users/me", false).items[0]!.id;
+    const entries = [reply(`wrote [it](${pathToFileURL(file).href})`)];
+    const id = listDeliverables(entries, session, HOST, nativeHome, false).items[0]!.id;
     const preview = await openDeliverable({
       entries,
       session,
       token: id,
       mode: "preview",
       privateFolders: [],
-      home: "/Users/me",
-      host: posix,
+      home: nativeHome,
+      host: HOST,
     });
     expect(preview.ok).toBe(true);
     if (!preview.ok) return;
@@ -197,8 +199,8 @@ describe("openDeliverable", () => {
       token: id,
       mode: "download",
       privateFolders: [],
-      home: "/Users/me",
-      host: posix,
+      home: nativeHome,
+      host: HOST,
     });
     expect(downloaded.ok && downloaded.bytes !== undefined && Buffer.from(downloaded.bytes).equals(Buffer.from(bytes))).toBe(true);
   });
@@ -209,10 +211,12 @@ describe("openDeliverable", () => {
     writeFileSync(secret, "nope");
     const alias = join(dir, "notes");
     symlinkSync(secret, alias);
-    const named = reply(`secret [s](file://${alias}) and [g](file:///tmp/repo/.git/config)`);
-    const list = listDeliverables([named], session, posix, "/Users/me", false);
-    const secretId = list.items.find((item) => item.href === `file://${alias}`)?.id;
-    const gitId = list.items.find((item) => item.href === "file:///tmp/repo/.git/config")?.id;
+    const aliasHref = pathToFileURL(alias).href;
+    const gitHref = pathToFileURL(join(dir, ".git", "config")).href;
+    const named = reply(`secret [s](${aliasHref}) and [g](${gitHref})`);
+    const list = listDeliverables([named], session, HOST, nativeHome, false);
+    const secretId = list.items.find((item) => item.href === aliasHref)?.id;
+    const gitId = list.items.find((item) => item.href === gitHref)?.id;
     expect(secretId).toBeDefined();
     const denied = await openDeliverable({
       entries: [named],
@@ -220,8 +224,8 @@ describe("openDeliverable", () => {
       token: secretId!,
       mode: "preview",
       privateFolders: [],
-      home: "/Users/me",
-      host: posix,
+      home: nativeHome,
+      host: HOST,
     });
     expect(denied).toEqual({ ok: false, fault: "unavailable" });
     const git = await openDeliverable({
@@ -230,36 +234,32 @@ describe("openDeliverable", () => {
       token: gitId!,
       mode: "preview",
       privateFolders: [],
-      home: "/Users/me",
-      host: posix,
+      home: nativeHome,
+      host: HOST,
     });
     expect(git).toEqual({ ok: false, fault: "unavailable" });
+    const missing = reply(pathToFileURL(join(dir, "does-not-exist-collie-deliverable.txt")).href);
     const gone = await openDeliverable({
-      entries: [reply("file:///tmp/does-not-exist-collie-deliverable.txt")],
+      entries: [missing],
       session,
-      token: listDeliverables(
-        [reply("file:///tmp/does-not-exist-collie-deliverable.txt")],
-        session,
-        posix,
-        "/Users/me",
-        false,
-      ).items[0]!.id,
+      token: listDeliverables([missing], session, HOST, nativeHome, false).items[0]!.id,
       mode: "download",
       privateFolders: [],
-      home: "/Users/me",
-      host: posix,
+      home: nativeHome,
+      host: HOST,
     });
     expect(gone).toEqual({ ok: false, fault: "unavailable" });
     const inside = join(dir, "plain.txt");
     writeFileSync(inside, "x");
+    const insideReply = reply(pathToFileURL(inside).href);
     const hidden = await openDeliverable({
-      entries: [reply(`file://${inside}`)],
+      entries: [insideReply],
       session,
-      token: listDeliverables([reply(`file://${inside}`)], session, posix, "/Users/me", false).items[0]!.id,
+      token: listDeliverables([insideReply], session, HOST, nativeHome, false).items[0]!.id,
       mode: "preview",
       privateFolders: [dir],
-      home: "/Users/me",
-      host: posix,
+      home: nativeHome,
+      host: HOST,
     });
     expect(hidden).toEqual({ ok: false, fault: "unavailable" });
   });
@@ -327,16 +327,16 @@ describe("openDeliverable", () => {
     writeFileSync(target, "PUBLIC");
     const link = join(dir, "alias.md");
     symlinkSync(target, link);
-    const entries = [reply(`file://${link}`)];
-    const id = listDeliverables(entries, session, posix, "/Users/me", false).items[0]!.id;
+    const entries = [reply(pathToFileURL(link).href)];
+    const id = listDeliverables(entries, session, HOST, nativeHome, false).items[0]!.id;
     const preview = await openDeliverable({
       entries,
       session,
       token: id,
       mode: "preview",
       privateFolders: [],
-      home: "/Users/me",
-      host: posix,
+      home: nativeHome,
+      host: HOST,
     });
     expect(preview.ok).toBe(true);
     if (!preview.ok) return;
@@ -352,14 +352,14 @@ describe("openDeliverable", () => {
     writeFileSync(join(published, "report.md"), "PUBLIC");
     writeFileSync(join(privateConfig, "report.md"), "PRIVATE_FIXTURE");
     const spelled = join(published, "report.md");
-    const entries = [reply(`file://${spelled}`)];
-    const id = listDeliverables(entries, session, posix, "/Users/me", false).items[0]!.id;
+    const entries = [reply(pathToFileURL(spelled).href)];
+    const id = listDeliverables(entries, session, HOST, nativeHome, false).items[0]!.id;
     let swapped = false;
     const fs: FilesFs = {
       ...NODE_FILES_FS,
       readHead: async (path, max, confirm) => {
         renameSync(published, join(dir, "published-old"));
-        symlinkSync(privateConfig, published);
+        symlinkSync(privateConfig, published, "dir");
         swapped = true;
         return NODE_FILES_FS.readHead(path, max, confirm);
       },
@@ -370,8 +370,8 @@ describe("openDeliverable", () => {
       token: id,
       mode: "preview",
       privateFolders: [privateConfig],
-      home: "/Users/me",
-      host: posix,
+      home: nativeHome,
+      host: HOST,
       fs,
     });
     expect(swapped).toBe(true);
@@ -387,8 +387,8 @@ describe("filesPathFor", () => {
     writeFileSync(file, "hi");
     const outside = join(scratch(), "out.txt");
     writeFileSync(outside, "hi");
-    expect(await filesPathFor(file, root, posix)).toBe("docs/a.txt");
-    expect(await filesPathFor(outside, root, posix)).toBeNull();
+    expect(await filesPathFor(file, root, HOST)).toBe("docs/a.txt");
+    expect(await filesPathFor(outside, root, HOST)).toBeNull();
   });
 });
 
