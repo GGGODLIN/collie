@@ -26,6 +26,7 @@ Running a crew? Update the lead first; members follow on their own. Details:
 ### Added
 
 - **A file link in a reply opens that file.** Tapping a file link in the agent's own reply opens or downloads that file, including one outside the workspace. Only a file that reply named can be opened.
+- **The phone can crop and mark a photo before sending it.** Picking or pasting an image opens an editor. Nothing is uploaded until you confirm, and cancel leaves the original file untouched.
 
 ### Fixed
 

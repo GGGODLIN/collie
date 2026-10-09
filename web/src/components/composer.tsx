@@ -52,6 +52,13 @@ import { useAmbientHost, useHostLabel } from "@/components/crew-provider";
 import { fitsDraftStore, loadDraftEntry, saveDraft } from "@/lib/drafts";
 import { wipeDevice } from "@/lib/wipe";
 import { AttachmentChip, type ComposerAttachment } from "@/components/attachment-chip";
+import { ImageEditor } from "@/components/image-editor";
+import {
+  canvasAvailable,
+  isEditableImage,
+  sameEditTarget,
+  type EditTarget,
+} from "@/lib/image-edit";
 import { useHoldReload } from "@/lib/reload-guard";
 import { isSelfEcho, normalizeDraft } from "@/hooks/use-terminal-draft";
 import { adapterFor } from "@/lib/harness";
@@ -421,6 +428,14 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   // object, and an identity compare here would re-run the save/restore below on every poll.
   const scopeId = scopeKey(scope);
   const draftPaneRef = useRef({ scope, scopeId, paneId });
+  // The image editor's open session. Epoch bumps on pane/scope change, lock, or unmount so a confirm
+  // that resolves after the operator has moved on cannot upload into the pane now on screen.
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const editResolveRef = useRef<((result: File | "cancel") => void) | null>(null);
+  const editEpoch = useRef(0);
+  const editTargetRef = useRef<(EditTarget & { epoch: number }) | null>(null);
+  const mountedRef = useRef(true);
+  const abortEditRef = useRef<() => void>(() => {});
   // THE BELT'S X AND ITS UNDO (M40 spec 04, issue #291). The X empties this box in one tap
   // (`clearByHand`); until the operator's next act the same slot is Undo, and this is what Undo puts
   // back. NO TIMER (Altan, 2026-09-27): a slot that left on a clock would narrow the pinned block
@@ -489,6 +504,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     // So does an open Undo window from the belt's X: it held the outgoing pane's draft, and it
     // never outlives that pane's view.
     endUndoWindowRef.current();
+    abortEditRef.current();
     draftPaneRef.current = { scope, scopeId, paneId };
     const restored = loadDraftEntry(scope, paneId);
     inputValueRef.current = restored?.text ?? "";
@@ -1243,8 +1259,61 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   // questions again on arrival, and its answer is the one that counts (it can read the bytes, which
   // is the only way to catch a binary wearing a `.md` name). Spending a phone's uplink on 40 MB to
   // be told 10 is the limit is the thing worth not doing.
-  async function uploadFile(file: File) {
-    if (locked) return;
+  function finishEdit(result: File | "cancel") {
+    const resolve = editResolveRef.current;
+    editResolveRef.current = null;
+    editTargetRef.current = null;
+    if (mountedRef.current) setEditFile(null);
+    resolve?.(result);
+  }
+
+  function abortEdit() {
+    editEpoch.current += 1;
+    finishEdit("cancel");
+  }
+
+  // Epoch stays put while an edit is open. Abort is the only thing that moves it, so a confirm
+  // callback captured by the dialog can see that it no longer belongs to this pane.
+  function requestEdit(file: File): Promise<File | "cancel"> {
+    const epoch = editEpoch.current;
+    const target = draftPaneRef.current;
+    editTargetRef.current = { paneId: target.paneId, scopeId: target.scopeId, epoch };
+    return new Promise((resolve) => {
+      editResolveRef.current = resolve;
+      setEditFile(file);
+    });
+  }
+
+  function confirmEdit(file: File) {
+    const target = editTargetRef.current;
+    if (target === null || target.epoch !== editEpoch.current) return;
+    if (!sameEditTarget(target, draftPaneRef.current)) return;
+    if (lockedRef.current || offlineRef.current) return;
+    if (file.size === 0) {
+      setStatus(translate("composer.imageEdit.failed"), "error");
+      return;
+    }
+    finishEdit(file);
+  }
+
+  useEffect(() => {
+    mountedRef.current = true;
+    // Assigned here, not during render: abort only touches refs, so the first closure stays valid.
+    abortEditRef.current = abortEdit;
+    return () => {
+      mountedRef.current = false;
+      abortEditRef.current();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (editFile !== null && (locked || offline)) abortEditRef.current();
+  }, [editFile, locked, offline]);
+
+  // Upload an attachment. `targetPaneId` is the pane the file was accepted for: an edit confirmed
+  // after the operator switched panes must not follow the closure's latest paneId.
+  async function uploadFile(file: File, targetPaneId = paneId, targetScope = scope) {
+    if (lockedRef.current) return;
     const refusal = rejectAttachment(file, limits);
     if (refusal === "tooLarge") {
       setStatus(translate("composer.upload.tooLarge", { max: limitMb(limits) }), "error");
@@ -1256,7 +1325,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     }
     setUploading(true);
     try {
-      const res = await api.uploadFile(paneId, file, scope);
+      const res = await api.uploadFile(targetPaneId, file, targetScope);
       if (res.ok) {
         direct.deactivateSilently();
         addAttachment(file, res.path);
@@ -1425,12 +1494,49 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     caretRef.current = e.currentTarget.selectionStart;
   }
 
+  // Images wait for the editor. Anything else keeps the old path: refuse locally, then upload.
+  // `announceBadType` is false for a paste, which has always swallowed a file it cannot take so the
+  // textarea can still receive a plain-text paste on the same clipboard.
+  async function presentFiles(files: File[], announceBadType: boolean) {
+    const epoch = editEpoch.current;
+    for (const file of files) {
+      if (!mountedRef.current || epoch !== editEpoch.current) return;
+      if (lockedRef.current) return;
+      const refusal = rejectAttachment(file, limits);
+      if (refusal === "tooLarge") {
+        setStatus(translate("composer.upload.tooLarge", { max: limitMb(limits) }), "error");
+        continue;
+      }
+      if (refusal === "badType") {
+        if (announceBadType) setStatus(translate("composer.upload.badType", { name: file.name }), "error");
+        continue;
+      }
+      if (isEditableImage(file, limits)) {
+        if (offlineRef.current) {
+          setStatus(translate("composer.send.reconnect"), "error");
+          return;
+        }
+        if (!canvasAvailable()) {
+          setStatus(translate("composer.imageEdit.unavailable"), "error");
+          continue;
+        }
+        const edited = await requestEdit(file);
+        if (!mountedRef.current || epoch !== editEpoch.current) return;
+        if (edited === "cancel") continue;
+        if (lockedRef.current || offlineRef.current) return;
+        const target = draftPaneRef.current;
+        await uploadFile(edited, target.paneId, target.scope);
+        continue;
+      }
+      const target = draftPaneRef.current;
+      await uploadFile(file, target.paneId, target.scope);
+    }
+  }
+
   async function onPickFile(e: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     e.target.value = ""; // allow re-picking the same file(s)
-    for (const file of files) {
-      await uploadFile(file);
-    }
+    await presentFiles(files, true);
   }
 
   // Paste a file straight from the clipboard (e.g. a screenshot) the same way the picker does.
@@ -1449,7 +1555,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
       if (!file) continue;
       if (rejectAttachment(file, limits) === "badType") continue;
       e.preventDefault();
-      void uploadFile(file);
+      void presentFiles([file], false);
       return;
     }
   }
@@ -2142,6 +2248,22 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
         mine={operatorCommands}
         onInsert={insertCommand}
       />
+      {editFile !== null && (
+        <ImageEditor
+          key={`${editFile.name}:${editFile.size}:${editFile.lastModified}`}
+          file={editFile}
+          onConfirm={confirmEdit}
+          onCancel={() => finishEdit("cancel")}
+          onFail={(reason) => {
+            setStatus(
+              translate(reason === "unavailable" ? "composer.imageEdit.unavailable" : "composer.imageEdit.failed"),
+              "error",
+            );
+            finishEdit("cancel");
+          }}
+          onReject={() => setStatus(translate("composer.imageEdit.failed"), "error")}
+        />
+      )}
     </>
   );
 });
