@@ -19,8 +19,9 @@ const EFFORT_ROW = /^((?:Extra High|High|Medium|Low)(?: \(active\))?)(?:\s+([\s\
 const PICKER_TOP = /^\s*─+(\d+)─$/;
 const PICKER_BOTTOM = /^\s*─+$/;
 
-// Enter 在這三個階段的效果不同；只接 MODEL_PICKER_NOTES.md 實測過的完整版型，
-// 不把任意指令補全列當成可送出選單，也不將多個階段串成一次未核對的 Enter。
+// Enter does something different at each of the three stages, so only the complete layouts measured
+// in MODEL_PICKER_NOTES.md are taken. Any other command's completion list is not a menu to submit,
+// and the stages are never chained into one unverified run of Enters.
 export function detectModelPickerRegion(lines: StyledLine[]): ModelPickerRegion | null {
   const box = locateComposer(lines);
   if (box === null || box.bottom !== box.top + 2) return null;

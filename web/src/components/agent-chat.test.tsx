@@ -3711,12 +3711,12 @@ describe("AgentChat: a new agent pane draws Chat from the first frame", () => {
   }
 
   /**
-   * Advance in steps, each its own `act` (React holds effects until `act` exits, and a phase's timer
-   * is armed by an effect), and record the frame after every step.
+   * Each phase needs its own `act` to arm the next effect's timer, so transitions keep fine steps.
+   * Settled stretches use larger steps to avoid thousands of identical frame reads.
    */
-  async function advance(view: ReturnType<typeof renderShell>, ms: number) {
-    for (let left = ms; left > 0; left -= 50) {
-      await act(() => vi.advanceTimersByTimeAsync(Math.min(50, left)));
+  async function advance(view: ReturnType<typeof renderShell>, ms: number, step = 50) {
+    for (let left = ms; left > 0; left -= step) {
+      await act(() => vi.advanceTimersByTimeAsync(Math.min(step, left)));
       view.look();
     }
   }
@@ -3830,7 +3830,7 @@ describe("AgentChat: a new agent pane draws Chat from the first frame", () => {
 
     // A long first turn with nothing to read: no clock takes Chat away while it works.
     view.set(agentOf("claude", "working", false));
-    await advance(view, 120_000);
+    await advance(view, 120_000, 10_000);
     expect(view.container.querySelector('[data-slot="session-stream"]')).not.toBeNull();
     expect(screen.getByText("Still working…")).toBeInTheDocument();
 
@@ -3854,7 +3854,7 @@ describe("AgentChat: a new agent pane draws Chat from the first frame", () => {
     const view = renderShell();
     await handOver(view, agentOf("pi", "idle", true));
     view.set(agentOf("pi", "working", true));
-    await advance(view, 120_000);
+    await advance(view, 120_000, 10_000);
     view.poll();
     await advance(view, 100);
     expect(screen.getByText("Still working…")).toBeInTheDocument();
@@ -3862,7 +3862,7 @@ describe("AgentChat: a new agent pane draws Chat from the first frame", () => {
     // The turn ends. The snapshot that says so has a session, so the gate waits for the journal
     // read STARTED AFTER it: every answer so far came from a read that began before the end.
     view.set(agentOf("pi", "done", true));
-    await advance(view, 60_000); // no poll, so no new read: Chat holds, whatever the clock says
+    await advance(view, 60_000, 10_000); // no poll, so no new read: Chat holds, whatever the clock says
     expect(view.container.querySelector('[data-slot="session-stream"]')).not.toBeNull();
     view.poll(); // the next poll's read answers no-log: now the fallback
     await advance(view, 100);

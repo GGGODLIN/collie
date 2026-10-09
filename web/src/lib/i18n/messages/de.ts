@@ -366,6 +366,10 @@ export const de: Dictionary = {
   "chat.strips.show.panes": "Panes anzeigen. {panes} ausgeblendet.",
   "chat.find.label": "In Ausgabe suchen",
   "chat.history.label": "Verlauf",
+  "copyable.copy": "Kopieren",
+  "copyable.command": "Befehl kopieren",
+  "copyable.done": "In die Zwischenablage kopiert",
+  "copyable.failed": "Konnte nicht in die Zwischenablage kopiert werden",
   "chat.copyOutput.label": "Ausgabe kopieren",
   "chat.copyOutput.done": "Ausgabe in die Zwischenablage kopiert",
   "chat.copyOutput.failed": "Ausgabe konnte nicht kopiert werden",
@@ -1071,6 +1075,8 @@ export const de: Dictionary = {
     "Entwurf vor der Eingabe ins Terminal senden oder verwerfen.",
   "directTyping.status.armed": "Direkteingabe im Terminal aktiv. Tastenanschläge werden direkt gesendet.",
   "directTyping.status.disarmed": "Zurück zur regulären Eingabe von Antworten.",
+  "directTyping.status.agentChanged": "Type-Modus aus: Der Agent im Pane hat gewechselt.",
+  "directTyping.status.idleTimeout": "Type-Modus aus: 60 Sekunden keine Taste.",
   "directTyping.status.interrupted":
     "Direkteingabe im Terminal beendet, da die Pane-Ansicht unterbrochen wurde.",
   "directTyping.status.backgrounded":

@@ -278,7 +278,10 @@ export async function readSinceFile(
   if (from >= st.size)
     return { lines: [], cursor: encodeCursor("bytes", path, st.size), reset, fromStart };
 
-  // 游標以位元組計數；先解碼會把中文字元索引錯當成檔案位置。
+  // The newline is found in BYTES, not in decoded text: the cursor is a byte offset, and a string
+  // index counts UTF-16 units, so after any CJK or emoji in the window `from + end + 1` would land
+  // short of the boundary and the next call would hand back rows the caller already holds. A reset
+  // that starts mid-character only damages the first row, which is dropped below anyway.
   const bytes = new Uint8Array(await Bun.file(path).slice(from, st.size).arrayBuffer());
   const end = bytes.lastIndexOf(0x0a);
   if (end === -1) {

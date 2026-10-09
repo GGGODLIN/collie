@@ -37,6 +37,7 @@ afterwards. A copy-paste gives you six places to remember instead.
 | `ui/chip.tsx` | The pill in a strip: label, optional leading glyph and status dot, 44px hit box, and an optional name that says its act (the status words then become its description). Space and tab strips. |
 | `ui/collapse.tsx` | The only sanctioned way an in-flow surface appears or disappears: an eased 240ms height+opacity slide that holds its last child through the exit. Styles nothing. |
 | `ui/collapse.tsx` → `CollapseSwap` | Two surfaces taking turns in ONE band, as one motion: a single-cell grid, one height animation (the tall one's), and the short stand-in pinned in the cell fading over it. The fix for two sibling collapses on opposite gates, where the leaving surface is pushed the height of the band by the arriving one. The stand-in must be the shorter of the two. |
+| `ui/copyable-block.tsx` | Any block with a caller-supplied literal to copy. Owns a 44px Copy action and the success or failure status, never the content's formatting. Without a clipboard API it draws the content alone. |
 | `ui/image-card.tsx` | One journal picture, framed, as an anchor to its bytes, with a caption saying where it came from. The mirror's placeholder clusters, and the newest turn's picture right after the mirror. Every element is a `<span>`, so it may sit inside the mirror's `<pre>`. `surface` picks the frame: dark-space inside the mirror, the app's tokens on the page. |
 | `ui/image-frame.tsx` | One picture shown whole in the content column: at most the column's width and 70% of the screen's height, centred, on a checkerboard of `--card` and `--muted` that shows transparency in both themes, with one caption line under it that is always there, so filling it moves nothing. The Files view's picture and SVG previews (ADR 0090). Not for a journal picture, which is `ImageCard`. |
 | `ui/list-group.tsx` | A run of flat rows drawn as ONE bordered region. Gives a `divide-y` list a first and last edge. |
@@ -298,6 +299,26 @@ NAME is always drawn beside the tint (WCAG 1.4.1), and health still speaks in th
 **The tint lands on the GLYPH ONLY**, never as a wash across a tag or a pill: `ui/address-tag.tsx`
 and `host-chip.tsx`'s name text and border stay the literal untinted classes on every surface, and
 only the leading Server icon carries `text-host-N`. A whole-tag wash was tried and read as too much.
+
+### Red marks harm, never emphasis
+
+Red comes from two tokens, and each has one job.
+
+- **`--destructive` marks an act that can hurt.** That is either an act that destroys or cannot be
+  taken back (Close, Kill, a danger key in the key queue, the `destructive` button), or a control
+  that is ARMED: the next tap or key goes to a live terminal with no review. The harness bar's
+  second-tap confirm is the reference for armed. An armed state wears the tint recipe
+  `border-destructive/40 bg-destructive/10 text-destructive`, never a solid fill, whatever its
+  size: a full-width strip keeps the same tint as a pill. A solid `bg-destructive` belongs only on
+  the button that carries out the act.
+- **`--status-blocked`, through `ui/notice.tsx`'s `danger` tone, marks a notice:** something went
+  wrong, or the operator must act. The tint recipe for it lives in that file's table, not here.
+
+When both meet, for example an error inside an armed strip, the control keeps `--destructive`
+and the message beside it takes the notice's `danger` tone.
+
+Red is never emphasis, a brand accent, or "new". A screen with red on it says that something can
+hurt or has gone wrong. Every other use spends that signal.
 
 ### A raised panel is `--card`, not `--background`
 

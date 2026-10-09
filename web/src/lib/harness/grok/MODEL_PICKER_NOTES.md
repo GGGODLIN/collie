@@ -1,36 +1,40 @@
-# Grok `/model` 選單的實測操作
+# Grok `/model` picker, as measured
 
-實測環境：macOS、Grok Build `1.0.46 (2765805b9442) [stable]`；版本來自
-`grok --version`。日期：2026-10-08。只操作本 session 建立的 Herdr 測試 pane。
+Measured on macOS with Grok Build `1.0.46 (2765805b9442) [stable]` (from `grok --version`), on
+2026-10-08, in a Herdr test pane made for the purpose.
 
-## 一個點按只確認當前階段
+## One tap confirms only the current stage
 
-`/model` 依序顯示模型、視窗大小與思考強度，不是同一個選單一直按 Enter。
+`/model` shows three lists in turn: the model, the context window, then the reasoning effort. It is
+not one menu that takes Enter until it closes.
 
-| 畫面 | 實測按鍵 | 讀回結果 | 原始資料 |
+| Screen | Key pressed | Read back | Capture |
 |---|---|---|---|
-| 模型列表，`❯` 在 Grok 4.7 | Down | `❯` 移到 Grok 4.7 Fast；未改模型 | `grok--model-picker.txt`、`grok--model-picker-moved.txt` |
-| 回到 Grok 4.7 | Enter | 輸入框補上 `/model Grok 4.7`，出現視窗大小列表 | `grok--model-window.txt` |
-| 視窗列表，`❯` 在 256k | Down | `❯` 移到 500k；未提交指令 | `grok--model-window-moved.txt` |
-| 回到 256k | Enter | 輸入框補上 `/model Grok 4.7 256k`，出現思考強度列表 | `grok--model-effort.txt` |
-| 強度列表，`❯` 在 High | Down | `❯` 移到 Medium；未提交指令 | `grok--model-effort-moved.txt` |
-| 回到 High | Enter | 完成指令、選單消失、輸入框清空；狀態仍為 Grok 4.7 (high) | session 的 `grok-model-complete-draft.ansi.txt` |
-| 視窗列表 | Ctrl+C | 選單與指令草稿清除，回到一般輸入框 | 本 session 的實測操作與後續讀回 |
+| Model list, `❯` on Grok 4.7 | Down | `❯` moves to Grok 4.7 Fast; the model is unchanged | `grok--model-picker.txt`, `grok--model-picker-moved.txt` |
+| Back on Grok 4.7 | Enter | The composer fills with `/model Grok 4.7` and the window list appears | `grok--model-window.txt` |
+| Window list, `❯` on 256k | Down | `❯` moves to 500k; nothing is submitted | `grok--model-window-moved.txt` |
+| Back on 256k | Enter | The composer fills with `/model Grok 4.7 256k` and the effort list appears | `grok--model-effort.txt` |
+| Effort list, `❯` on High | Down | `❯` moves to Medium; nothing is submitted | `grok--model-effort-moved.txt` |
+| Back on High | Enter | The command completes, the picker closes, the composer is empty; status still reads Grok 4.7 (high) | read back at the time, not kept as a fixture |
+| Window list | Ctrl+C | The picker and the command draft are cleared, back to the plain composer | read back at the time, not kept as a fixture |
 
-完整程式碼與回覆未交給此測試 agent，沒有切換正式工作 pane 的模型。
-測試尾段從列表上框線開始，保留原始 ANSI，不帶入本機路徑或啟動 hook 輸出。
+No working pane's model was switched for this. Each capture starts at the list's top border and keeps
+the raw ANSI, with no local paths and no startup hook output.
 
-## 辨識與送出邊界
+## What is recognised, and what may be sent
 
-只有完整列表、計數上框線、底框線、單列 `/model` 輸入框與 `Enter:send` 提示
-同時成立，才建立原生選項。模型、視窗、強度的指令前綴與選項形狀必須一致；
-可見列數必須等於上框線計數，恰有一個 `❯`，選項不得重複。
+Native choices are built only when all of these hold at once: the complete list, the counted top
+border, the bottom border, a one-row `/model` composer and the `Enter:send` hint. The command prefix
+and the row shape must agree with the stage (model, window or effort); the visible row count must
+equal the top border's count, there is exactly one `❯`, and no choice repeats.
 
-選項沿用 `pointerWalk` 與既有「移動 → 新鮮讀回確認 → Enter」操作，不發明數字鍵，
-也不連按 Enter 跨越階段。`signature` 保留原始區域；`coreSignature` 只把列表的
-游標換成同寬空白，保留模型、描述、視窗、強度、指令草稿與框線。
-三組真正的游標移動截取都列入 `walk-pairs.ts`，不新增例外或略過測試。
+A choice reuses `pointerWalk` and the existing "move → fresh read-back → Enter" sequence. It invents
+no digit keys and never presses Enter across stages. `signature` keeps the raw region; `coreSignature`
+only replaces the list's cursor with a blank of the same width, keeping the models, descriptions,
+windows, efforts, command draft and borders. All three real cursor-move captures are listed in
+`walk-pairs.ts`, with no exception added and no test skipped.
 
-原始資料仍交給送出防護。選單出現時，一般文字 Send 不可輸入；其他指令的補全、
-不完整列表、未知強度與後面出現新輸出的舊選單都不套此操作。
-沒有實測列表兩端是否循環，因此不宣告 `clampedEnds`。
+The raw screen still goes to the send guard. While the picker is open an ordinary Send does not type.
+Another command's completion list, an incomplete list, an unknown effort, and an old picker with new
+output below it do not get this treatment. Whether the list wraps at either end was not measured, so
+`clampedEnds` is not declared.

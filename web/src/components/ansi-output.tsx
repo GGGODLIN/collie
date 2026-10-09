@@ -3,8 +3,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { parseAnsi } from "@/lib/ansi";
-import { buildBlocks, rendersNativeMirror } from "@/lib/harness";
-import { prepareGrokDisplay } from "@/lib/harness/grok/chrome";
+import { adapterFor, buildBlocks, rendersNativeMirror } from "@/lib/harness";
 import {
   dropLeadingLines,
   lineText,
@@ -354,9 +353,11 @@ export const AnsiOutput = memo(function AnsiOutput({
       blocks.filter((b): b is RawBlock => b.kind === "raw"),
       hideLeadingLines,
     );
-    // 先使用原始列座標隱藏已替代的回覆，再整理顯示，讓 Find 和連結共用同一份文字。
-    if (agent !== "grok" || !grammars || !wrap) return visible;
-    return visible.map((block) => ({ kind: block.kind, lines: prepareGrokDisplay(block.lines) }));
+    // Hide the replaced reply by the raw row coordinates first, then tidy for display, so Find and
+    // the links read one and the same text.
+    const prepareDisplay = adapterFor(agent)?.prepareDisplay;
+    if (!prepareDisplay || !grammars || !wrap) return visible;
+    return visible.map((block) => ({ kind: block.kind, lines: prepareDisplay(block.lines) }));
   }, [blocks, hideLeadingLines, agent, grammars, wrap]);
   // The table runs of each raw block, by block index. Only while wrapping: with Wrap off the whole
   // <pre> already pans column-faithfully, and a nested scroller would just trap the gesture — so

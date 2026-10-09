@@ -395,6 +395,10 @@ export const en = {
   "chat.strips.show.panes": "Show panes. {panes} hidden.",
   "chat.find.label": "Find in output",
   "chat.history.label": "Conversation history",
+  "copyable.copy": "Copy",
+  "copyable.command": "Copy command",
+  "copyable.done": "Copied to clipboard",
+  "copyable.failed": "Couldn't copy to clipboard",
   "chat.copyOutput.label": "Copy output",
   "chat.copyOutput.done": "Copied output to clipboard",
   "chat.copyOutput.failed": "Couldn't copy output",
@@ -1137,6 +1141,8 @@ export const en = {
   "directTyping.status.draftPending": "Send or clear the draft before typing into the terminal.",
   "directTyping.status.armed": "Typing into the terminal — keys send as you type.",
   "directTyping.status.disarmed": "Back to sending replies",
+  "directTyping.status.agentChanged": "Type mode off — the pane's agent changed.",
+  "directTyping.status.idleTimeout": "Type mode off — no key for 60 seconds.",
   "directTyping.status.interrupted":
     "Stopped typing into the terminal — the pane view was interrupted.",
   "directTyping.status.backgrounded":

@@ -360,6 +360,10 @@ export const ja: Dictionary = {
   "chat.strips.show.panes": "ペインを表示（非表示: {panes}）",
   "chat.find.label": "出力内を検索",
   "chat.history.label": "会話履歴",
+  "copyable.copy": "コピー",
+  "copyable.command": "コマンドをコピー",
+  "copyable.done": "クリップボードにコピーしました",
+  "copyable.failed": "クリップボードにコピーできませんでした",
   "chat.copyOutput.label": "出力をコピー",
   "chat.copyOutput.done": "出力をクリップボードにコピーしました",
   "chat.copyOutput.failed": "出力をコピーできませんでした",
@@ -1060,6 +1064,8 @@ export const ja: Dictionary = {
     "ターミナルへ入力する前に、下書きを送信または破棄してください。",
   "directTyping.status.armed": "ターミナル直接入力中: キー入力が即座に送信されます。",
   "directTyping.status.disarmed": "通常返信モードに復帰",
+  "directTyping.status.agentChanged": "入力モードをオフにしました。ペインのエージェントが変わりました。",
+  "directTyping.status.idleTimeout": "入力モードをオフにしました。60秒間キー入力がありません。",
   "directTyping.status.interrupted":
     "ターミナル入力を中断しました。ペイン表示が切り替わりました。",
   "directTyping.status.backgrounded":

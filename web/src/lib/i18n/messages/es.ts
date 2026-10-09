@@ -364,6 +364,10 @@ export const es: Dictionary = {
   "chat.strips.show.panes": "Mostrar paneles. {panes} ocultos.",
   "chat.find.label": "Buscar en la salida",
   "chat.history.label": "Historial de conversación",
+  "copyable.copy": "Copiar",
+  "copyable.command": "Copiar comando",
+  "copyable.done": "Copiado al portapapeles",
+  "copyable.failed": "No se pudo copiar al portapapeles",
   "chat.copyOutput.label": "Copiar salida",
   "chat.copyOutput.done": "Salida copiada al portapapeles",
   "chat.copyOutput.failed": "No se pudo copiar la salida",
@@ -1069,6 +1073,8 @@ export const es: Dictionary = {
     "Envía o descarta el borrador antes de escribir en la terminal.",
   "directTyping.status.armed": "Escribiendo en la terminal. Las pulsaciones se envían al instante.",
   "directTyping.status.disarmed": "Restablecido el envío de respuestas.",
+  "directTyping.status.agentChanged": "Modo de escritura desactivado: el agente del panel cambió.",
+  "directTyping.status.idleTimeout": "Modo de escritura desactivado: 60 segundos sin teclas.",
   "directTyping.status.interrupted":
     "Escritura en terminal detenida. Se interrumpió la vista del panel.",
   "directTyping.status.backgrounded":
