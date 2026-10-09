@@ -112,6 +112,7 @@ function samplesOf(source: string): string[] {
     }
   };
   expand(/\(\?:\\\/\(([^()]*)\)\)\?/, (inner) => ["", ...inner.split("|").map((a) => `\\/${a}`)]);
+  expand(/\(\?:([^()]*)\)\?/, (inner) => ["", inner]);
   expand(/\(([^()?]*)\)/, (inner) => inner.split("|"));
   return variants.map((v) => v.replaceAll("\\/", "/").replaceAll("\\.", "."));
 }
@@ -132,6 +133,8 @@ describe("the route table read off server.ts", () => {
       "/api/snapshot",
       "/api/devices/revoke",
       "/api/pane/id1/reply",
+      "/api/pane/id1/deliverables",
+      "/api/pane/id1/deliverables/id1",
       "/api/workspace/id1/worktrees",
       // The Files existence check (ADR 0088): a POST read, refused without a token like every route.
       "/api/pane/id1/files/exist",
