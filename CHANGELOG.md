@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Changed
+
+- **Older iPhone apps now point to the new IPA.** A shell older than build 2 shows the update notice on the home screen and in Settings, with the fork 1.18.101 IPA URL to copy into Safari. Install it over the existing app; deleting the app first loses its pairing.
+
 ## [1.18.101] - 2026-10-09
 
 ### Added
