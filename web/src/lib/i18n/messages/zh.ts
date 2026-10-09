@@ -1607,6 +1607,8 @@ export const zh: Dictionary = {
   "files.pairLink": "配对此设备",
   "files.notAuthorised": "此设备无权浏览文件。",
   "files.binary": "二进制文件，{size}",
+  "deliverable.download": "下载",
+  "deliverable.tooLarge": "这个文件太大，无法下载。",
   "files.fileEmpty": "此文件为空。",
   "files.fileTruncated": "文件到此为止。内容过长，无法完整显示。",
   "files.linesCapped": "显示前 5,000 行。",

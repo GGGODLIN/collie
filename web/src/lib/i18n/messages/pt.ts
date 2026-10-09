@@ -1400,6 +1400,8 @@ export const pt: Dictionary = {
   "files.pairLink": "Parear este dispositivo",
   "files.notAuthorised": "Este dispositivo não está autorizado a navegar pelos arquivos.",
   "files.binary": "Arquivo binário, {size}",
+  "deliverable.download": "Descarregar",
+  "deliverable.tooLarge": "Este ficheiro é demasiado grande para descarregar.",
   "files.fileEmpty": "Este arquivo está vazio.",
   "files.fileTruncated": "O arquivo termina aqui. É longo demais para ser exibido por completo.",
   "files.linesCapped": "Exibindo as primeiras 5.000 linhas.",

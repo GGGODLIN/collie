@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Added
+
+- **A file link in a reply opens that file.** Tapping a file link in the agent's own reply opens or downloads that file, including one outside the workspace. Only a file that reply named can be opened.
+
 ## [1.18.0] - 2026-10-08
 
 ### Added

@@ -1637,6 +1637,8 @@ export const es: Dictionary = {
   "files.pairLink": "Emparejar este dispositivo",
   "files.notAuthorised": "Este dispositivo no está autorizado para explorar archivos.",
   "files.binary": "Archivo binario, {size}",
+  "deliverable.download": "Descargar",
+  "deliverable.tooLarge": "Este archivo es demasiado grande para descargarlo.",
   "files.fileEmpty": "Este archivo está vacío.",
   "files.fileTruncated": "El archivo termina aquí. Es demasiado largo para mostrarlo completo.",
   "files.linesCapped": "Se muestran las primeras 5000 líneas.",

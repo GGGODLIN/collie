@@ -1641,6 +1641,8 @@ export const de: Dictionary = {
   "files.pairLink": "Dieses Gerät koppeln",
   "files.notAuthorised": "Dieses Gerät ist nicht berechtigt, Dateien zu durchsuchen.",
   "files.binary": "Binärdatei, {size}",
+  "deliverable.download": "Herunterladen",
+  "deliverable.tooLarge": "Diese Datei ist zu groß zum Herunterladen.",
   "files.fileEmpty": "Diese Datei ist leer.",
   "files.fileTruncated": "Die Datei endet hier. Sie ist zu lang, um sie vollständig anzuzeigen.",
   "files.linesCapped": "Die ersten 5.000 Zeilen werden angezeigt.",

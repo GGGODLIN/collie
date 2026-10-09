@@ -1620,6 +1620,8 @@ export const ko: Dictionary = {
   "files.pairLink": "이 기기 페어링",
   "files.notAuthorised": "이 기기는 파일을 둘러볼 권한이 없습니다.",
   "files.binary": "바이너리 파일, {size}",
+  "deliverable.download": "다운로드",
+  "deliverable.tooLarge": "이 파일은 너무 커서 다운로드할 수 없습니다.",
   "files.fileEmpty": "이 파일은 비어 있습니다.",
   "files.fileTruncated": "파일이 여기서 끝납니다. 전체를 표시하기에는 너무 깁니다.",
   "files.linesCapped": "처음 5,000줄을 표시합니다.",

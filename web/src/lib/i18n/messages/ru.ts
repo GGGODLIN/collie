@@ -1486,6 +1486,8 @@ export const ru: Dictionary = {
   "files.pairLink": "Сопрячь это устройство",
   "files.notAuthorised": "У этого устройства нет прав на просмотр файлов.",
   "files.binary": "Двоичный файл, {size}",
+  "deliverable.download": "Скачать",
+  "deliverable.tooLarge": "Этот файл слишком большой для скачивания.",
   "files.fileEmpty": "Этот файл пуст.",
   "files.fileTruncated": "Файл обрывается здесь. Он слишком длинный для полного показа.",
   "files.linesCapped": "Показаны первые 5 000 строк.",

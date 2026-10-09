@@ -17,6 +17,15 @@ import {
 } from "./changes.ts";
 import { rootOfWorkspace, type RootSnapshot, withinBound } from "./changes-root.ts";
 import {
+  attachmentDisposition,
+  filesPathFor,
+  listDeliverables,
+  openDeliverable,
+  pathForToken,
+  sessionBind,
+} from "./deliverables.ts";
+import { HOST } from "./host.ts";
+import {
   existingPaths,
   type FilesExistAnswer,
   filesQuery,
@@ -392,6 +401,16 @@ const WORKSPACE_FILES_EXIST_ROUTE = /^\/api\/workspace\/([^/]+)\/files\/exist$/;
  */
 const PANE_FILES_IMAGE_ROUTE = /^\/api\/pane\/([^/]+)\/files\/image$/;
 const WORKSPACE_FILES_IMAGE_ROUTE = /^\/api\/workspace\/([^/]+)\/files\/image$/;
+
+/**
+ * `GET /api/pane/<id>/deliverables` and `GET /api/pane/<id>/deliverables/<id>` (ADR 9006).
+ *
+ * The phone names a pane and, to read, an opaque id. It never names a path. The id is looked up
+ * again in that pane's current session, and only in the assistant's own reply text. Not in
+ * `FORWARDABLE`: a pane on a crew member is another machine's disk, and this round does not extend
+ * the crew wire. The lead answers 501 and the phone keeps the short title.
+ */
+const PANE_DELIVERABLE_ROUTE = /^\/api\/pane\/([^/]+)\/deliverables(?:\/([^/]+))?$/;
 
 /**
  * `GET /api/machines/<id>/history` and `POST /api/machines/<id>/alerts` (ADR 0084). The id is a
@@ -1416,6 +1435,35 @@ export function startServer(opts: {
       }
       const subject = paneImageMatch ? ({ kind: "pane", paneId: id } as const) : ({ kind: "workspace", workspaceId: id } as const);
       return filesImage(rt.engine, subject, url, filesPrivateFolders(cfg), homedir());
+    }
+
+    // A reply's own file (ADR 9006). device-read is checked HERE, before the host resolves, so an
+    // unpaired phone is refused on this collie and never forwarded. The route is absent from
+    // FORWARDABLE, so a pane on a member resolves to the lead's 501 and the phone keeps the title.
+    const deliverableMatch = pathname.match(PANE_DELIVERABLE_ROUTE);
+    if (deliverableMatch) {
+      const denied = caller.gate("device-read");
+      if (denied) return denied;
+      if (req.method !== "GET") return text("method not allowed", 405);
+      const rt = await caller.resolve();
+      if (rt instanceof Response) return rt;
+      let paneId: string;
+      try {
+        paneId = decodeURIComponent(deliverableMatch[1]!);
+      } catch {
+        return text("malformed URL", 400);
+      }
+      const token = deliverableMatch[2];
+      return paneDeliverables(
+        cfg,
+        journals,
+        transcripts,
+        rt.engine,
+        paneId,
+        token === undefined ? null : token,
+        url,
+        req,
+      );
     }
 
     // ── Worktrees: list / create / open / remove, all scoped to a space (ADR 0032) ──
@@ -2926,6 +2974,99 @@ export function historyParams(url: URL): HistoryParams {
  * The session a pane's journal routes read: the reported ref (corrected by an adapter that knows its
  * multiplexer can keep a stale one, while the pane still runs that harness), else a discovered one.
  */
+/**
+ * The files one reply named, or one of them (ADR 9006).
+ *
+ * No journal, no adapter and no session are the history route's quiet answer, not an error: the
+ * phone then leaves the link as its short title. A read re-walks the cached window. The token is
+ * not a path; `pathForToken` drops anything in it that is not the session, the turn and the place.
+ */
+async function paneDeliverables(
+  cfg: Config,
+  journals: Record<string, JournalAdapter> | null,
+  transcripts: TranscriptStore | null,
+  engine: StateEngine,
+  paneId: string,
+  token: string | null,
+  url: URL,
+  req: Request,
+): Promise<Response> {
+  const accept = req.headers.get("accept-encoding");
+  const quiet = () => json({ available: false, reason: "no-session" }, accept);
+  if (!cfg.transcript || transcripts === null || journals === null) return quiet();
+  const { agents, shellPanes } = engine.current();
+  const pane = [...agents, ...shellPanes].find((a) => a.paneId === paneId);
+  if (pane === undefined) return quiet();
+  const adapter = adapterFor(journals, journalAgentOf(pane));
+  if (adapter === undefined) return quiet();
+  const ref = await journalRefOf(adapter, pane);
+  if (ref === null) return quiet();
+  let held: Awaited<ReturnType<TranscriptStore["cached"]>>;
+  try {
+    held = await transcripts.cached(adapter, ref);
+  } catch (err) {
+    return text(`transcript read failed: ${errorText(err)}`, 502);
+  }
+  if (held === null) return quiet();
+  const session = sessionBind(ref);
+  const home = homedir();
+  if (token === null) {
+    const list = listDeliverables(held.entries, session, HOST, home, !held.complete);
+    const root = paneFilesRootOf(rootOfWorkspace(engine.current(), pane.workspaceId, home), pane.cwd, home);
+    const items = [];
+    for (const item of list.items) {
+      const spelled = pathForToken(held.entries, session, item.id, HOST, home);
+      const filesPath = spelled === null ? null : await filesPathFor(spelled, root, HOST);
+      items.push(filesPath === null ? item : { ...item, filesPath });
+    }
+    return json({ available: true, items, truncated: list.truncated }, accept);
+  }
+  let decoded = token;
+  try {
+    decoded = decodeURIComponent(token);
+  } catch {
+    return jsonError({ error: UNKNOWN_PATH }, 404, accept);
+  }
+  const download = url.searchParams.get("download") === "1";
+  const read = await openDeliverable({
+    entries: held.entries,
+    session,
+    token: decoded,
+    mode: download ? "download" : "preview",
+    privateFolders: filesPrivateFolders(cfg),
+    home,
+  });
+  if (!read.ok) {
+    if (read.fault === "too-large") return json({ error: "deliverable.too-large", size: read.size }, accept, 413);
+    if (read.fault === "unavailable") return jsonError({ error: "deliverable.unavailable" }, 404, accept);
+    return jsonError({ error: UNKNOWN_PATH }, 404, accept);
+  }
+  if (download) {
+    if (!read.downloadable || read.bytes === undefined) {
+      return json({ error: "deliverable.too-large", size: read.size }, accept, 413);
+    }
+    const headers = new Headers({
+      "content-type": "application/octet-stream",
+      "cache-control": "no-store",
+      "content-security-policy": "default-src 'none'; sandbox",
+      "content-disposition": attachmentDisposition(read.name),
+    });
+    return secure(new Response(read.bytes.slice(), { headers }));
+  }
+  return json(
+    {
+      available: true,
+      name: read.name,
+      size: read.size,
+      binary: read.binary,
+      truncated: read.truncated,
+      text: read.text,
+      downloadable: read.downloadable,
+    },
+    accept,
+  );
+}
+
 export async function journalRefOf(adapter: JournalAdapter, pane: AgentView): Promise<AgentSessionRef | null> {
   const reported = pane.agentSession;
   if (reported === undefined) return (await adapter.discover?.(pane.cwd)) ?? null;

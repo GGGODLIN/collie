@@ -1601,6 +1601,8 @@ export const zhTW: Dictionary = {
   "files.pairLink": "配對此裝置",
   "files.notAuthorised": "此裝置無權瀏覽檔案。",
   "files.binary": "二進位檔案，{size}",
+  "deliverable.download": "下載",
+  "deliverable.tooLarge": "這個檔案太大，無法下載。",
   "files.fileEmpty": "此檔案是空的。",
   "files.fileTruncated": "檔案到此為止。內容太長，無法完整顯示。",
   "files.linesCapped": "顯示前 5,000 行。",

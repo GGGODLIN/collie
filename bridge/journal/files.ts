@@ -52,6 +52,10 @@
 // target must lie inside the real path of the root — through this function. A `.git` segment, the
 // bridge's own state folder and its config folder are refused on top. A new reader may reuse this
 // function; it may not become a fourth place without an ADR that says why and names its bound.
+//
+// A deliverable read (bridge/deliverables.ts, ADR 9006) is not that fourth place. The client sends
+// a pane id and an opaque id. The path is the one the bridge finds again in that session's assistant
+// reply, and a path carried in the request is never the file that gets opened.
 
 import { realpath as realpathNativeCb } from "node:fs";
 import { realpath, stat } from "node:fs/promises";

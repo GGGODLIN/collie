@@ -1783,6 +1783,8 @@ export const en = {
   "files.pairLink": "Pair this device",
   "files.notAuthorised": "This device is not authorised to browse files.",
   "files.binary": "Binary file, {size}",
+  "deliverable.download": "Download",
+  "deliverable.tooLarge": "This file is too large to download.",
   "files.fileEmpty": "This file is empty.",
   "files.fileTruncated": "The file stops here. It is too long to show in full.",
   "files.linesCapped": "Showing the first 5,000 lines.",

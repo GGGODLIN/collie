@@ -685,7 +685,10 @@ font files under `<config-dir>/fonts`, served read-only through `bridge/operator
 ([ADR 0033](./.adr/0033-the-app-face-is-a-device-preference.md)).
 
 **The law is that a CLIENT-SUPPLIED value becomes a path in three places only: the journal, the
-Changes view, and the Files view** — in the journal it is a pane id, never a path. The Changes view
+Changes view, and the Files view** — in the journal it is a pane id, never a path. A deliverable
+read is not a fourth such place: the phone sends a pane id and an opaque id, and the path is the
+one the bridge finds again in that session's assistant reply
+([ADR 9006](./.adr/9006-a-reply-file-is-read-by-its-own-id.md)). The Changes view
 (`bridge/changes.ts`, [ADR 0065](./.adr/0065-the-changes-view-reads-git-read-only.md)) is bounded by
 a listed-paths rule: a diff is served only for a repo the bridge's own discovery returned and a path
 git listed there, and an untracked read goes through `containedRealpath` too. Its git runs are
@@ -701,9 +704,10 @@ picture's raw bytes, typed by `sniffImageType` from the bytes alone (PNG, JPEG, 
 SVG), with `no-store` and a `default-src 'none'; sandbox` CSP, through the same `readFile` checks. `GET /api/fonts/<basename>` does not become a fourth such place: the request's name is **looked up** in the rows the operator's own
 `theme.toml` declared and that row's path is taken, so a name nobody declared is refused before any path exists. The containment
 rule in [`files.ts`](./bridge/journal/files.ts) then runs anyway, on both surfaces and as an
-independent second check: **every** path about to be read goes through `containedRealpath` — after
-symlink resolution, on the real paths, including paths derived from one already checked. Reuse that
-function; don't write a third answer to the sentence in bold. Run
+independent second check: **every** path on these rooted surfaces goes through `containedRealpath`
+— after symlink resolution, on the real paths, including paths derived from one already checked.
+A reply file instead checks the exact journal-selected file and opened handle under ADR 9006; it
+is not constrained to the Files root. Reuse the containment function for rooted reads. Run
 `bun scripts/journal-probe.ts` against real logs after touching an adapter; unit tests pin the
 grammar, the probe catches on-disk format drift.
 

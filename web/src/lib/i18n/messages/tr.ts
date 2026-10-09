@@ -1400,6 +1400,8 @@ export const tr: Dictionary = {
   "files.pairLink": "Bu cihazı eşleştirin",
   "files.notAuthorised": "Bu cihazın dosyalara göz atma yetkisi yok.",
   "files.binary": "İkili dosya, {size}",
+  "deliverable.download": "İndir",
+  "deliverable.tooLarge": "Bu dosya indirilemeyecek kadar büyük.",
   "files.fileEmpty": "Bu dosya boş.",
   "files.fileTruncated": "Dosya burada bitiyor. Tamamını göstermek için çok uzun.",
   "files.linesCapped": "İlk 5.000 satır gösteriliyor.",

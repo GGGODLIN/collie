@@ -1627,6 +1627,8 @@ export const ja: Dictionary = {
   "files.pairLink": "この端末をペアリング",
   "files.notAuthorised": "この端末にはファイルを参照する権限がありません。",
   "files.binary": "バイナリファイル、{size}",
+  "deliverable.download": "ダウンロード",
+  "deliverable.tooLarge": "このファイルは大きすぎてダウンロードできません。",
   "files.fileEmpty": "このファイルは空です。",
   "files.fileTruncated": "ファイルはここで終わっています。長すぎるため全体は表示できません。",
   "files.linesCapped": "最初の5,000行を表示しています。",

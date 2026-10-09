@@ -3,6 +3,7 @@ import { useLoaderData, useParams } from "react-router";
 import { ArrowUpToLine, ChevronDown, ChevronUp, Loader2, ScrollText, Search, X } from "lucide-react";
 
 import { RouteHeader } from "@/components/app-header";
+import { DeliverableLinks } from "@/components/deliverable-links";
 import { ChatMessageList, type ChatMessageListHandle } from "@/components/ui/chat/chat-message-list";
 import { FindBar } from "@/components/find-bar";
 import { TranscriptView } from "@/components/transcript-view";
@@ -215,6 +216,11 @@ export function HistoryRoute() {
   const title = agent?.paneLabel ?? agent?.sessionName ?? agent?.workspaceLabel ?? paneId;
   const matchCursor = matches.indexOf(cursor);
 
+  const dismissDeliverable = useRef<(() => boolean) | null>(null);
+  const home = () => {
+    if (dismissDeliverable.current?.() === true) return;
+    nav.up(panePath(paneId, scope));
+  };
   return (
     // The same column as the pane this transcript belongs to, because it is the other half of that
     // screen and one navigation away from it: it keeps the pane's width and its left edge, or the
@@ -223,9 +229,10 @@ export function HistoryRoute() {
     // grows past 768px on a desktop and the dashboard's does not (#166).
     // `max-w-[100dvw]` is the phone bound; each step above it only bites from its own breakpoint up,
     // where it is never the wider of the two.
+    <DeliverableLinks paneId={paneId} scope={scope} dismissRef={dismissDeliverable}>
     <div className="mx-auto flex min-h-0 w-full min-w-0 max-w-[100dvw] flex-1 flex-col md:max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl 2xl:max-w-[1400px]">
       <RouteHeader
-        onHome={() => nav.up(panePath(paneId, scope))}
+        onHome={home}
         width="wide"
         override={
           findOpen ? (
@@ -355,5 +362,6 @@ export function HistoryRoute() {
         )}
       </div>
     </div>
+    </DeliverableLinks>
   );
 }
