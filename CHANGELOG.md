@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Added
+
+- **Copyable blocks share one action and honest clipboard feedback.** A common UI wrapper copies the caller's original text and reports success only after the clipboard accepts it; without a clipboard API it leaves the content alone.
+
 ## [1.18.1] - 2026-10-09
 
 ### Added
