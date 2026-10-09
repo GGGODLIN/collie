@@ -30,6 +30,7 @@ Running a crew? Update the lead first; members follow on their own. Details:
 ### Fixed
 
 - **Files lists survive a synchronous directory close.** Bun versions whose directory close returns no promise no longer turn folder listings into unknown-path errors.
+- **The iPhone app saves files from agent replies.** Download opens the native file picker after the paired web page fetches the file. Install this release's CollieIsland.ipa to use it; a web update alone does not update the native app.
 
 ## [1.18.0] - 2026-10-08
 
