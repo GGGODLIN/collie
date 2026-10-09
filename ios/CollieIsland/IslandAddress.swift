@@ -71,10 +71,13 @@ enum IslandAddress {
     let port = url.port.map { $0 == defaultPort ? "" : ":\($0)" } ?? ""
     let origin = "\(url.scheme ?? "https")://\(url.host?.lowercased() ?? "")\(port)"
     let originJSON = (try? JSONEncoder().encode(origin)).flatMap { String(data: $0, encoding: .utf8) } ?? "\"\""
+    let build = (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String).flatMap(Int.init)
+    let buildField = build.map { "build: \($0)," } ?? ""
     let source = """
       (function () {
         if (location.origin !== \(originJSON)) return;
         window.collieIsland = Object.freeze({
+          \(buildField)
           openAddress: function () { window.webkit.messageHandlers.\(handlerName).postMessage({}); },
         });
       })();

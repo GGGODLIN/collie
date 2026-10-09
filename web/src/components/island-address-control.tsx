@@ -8,6 +8,7 @@ import { t } from "@/lib/i18n";
 // What Collie Island (ios/) injects into this page: ios/CollieIsland/IslandAddress.swift defines
 // `window.collieIsland`. Absent in a browser and in the installed PWA.
 export interface IslandApp {
+  build?: number;
   openAddress(): void;
 }
 

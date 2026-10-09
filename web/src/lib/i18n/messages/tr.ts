@@ -1507,5 +1507,11 @@ export const tr: Dictionary = {
   "retell.plain": "Sade",
   "settings.islandAddress.button": "Değiştir",
   "settings.islandAddress.description": "Bu uygulamanın açtığı Collie. Yeni bir adres sıfırdan başlar: orada yeniden eşleştirin.",
+  "islandUpdate.title": "iPhone uygulamasının yeni bir sürümü var",
+  "islandUpdate.download": "IPA’yı indirmek için aşağıdaki URL’yi kopyalayıp Safari’ye yapıştırın.",
+  "islandUpdate.install": "Aynı kurulum aracıyla mevcut uygulamanın üzerine yükleyerek güncelleyin.",
+  "islandUpdate.keepApp": "Önce uygulamayı silmeyin; silmek eşleştirmeyi kaybettirir.",
+  "islandUpdate.dismiss": "Uygulama güncellemesini gizle",
+
   "settings.islandAddress.title": "Collie adresi",
 };

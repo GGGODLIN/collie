@@ -1365,6 +1365,12 @@ export const zhTW: Dictionary = {
   "settings.tour.description": "Collie 的功能，以及此安裝的架構外觀。",
   "settings.tour.button": "顯示",
   // --- settings.islandAddress ---
+  "islandUpdate.title": "iPhone app 有新版",
+  "islandUpdate.download": "複製下面的網址，貼到 Safari 下載 IPA。",
+  "islandUpdate.install": "用原本的安裝工具覆蓋更新現有 app。",
+  "islandUpdate.keepApp": "不要先刪除 app，刪除會讓配對遺失。",
+  "islandUpdate.dismiss": "關閉 app 更新提示",
+
   "settings.islandAddress.title": "Collie 位址",
   "settings.islandAddress.description": "這個 app 打開的 Collie。換成新位址會從頭開始，要在新的 Collie 上重新配對。",
   "settings.islandAddress.button": "更改",

@@ -19,6 +19,7 @@ import { BuildStamp } from "@/components/build-stamp";
 import { CrewFooterLink } from "@/components/crew-footer-link";
 import { useCrew } from "@/components/crew-provider";
 import { CrewTab } from "@/components/crew-tab";
+import { IslandBuildNotice } from "@/components/island-build-notice";
 import { UpdateBanner } from "@/components/update-banner";
 import { TabBar } from "@/components/ui/tab-bar";
 import { WorkspaceChangesList, type WorkspaceChangesRow } from "@/components/workspace-changes-list";
@@ -246,6 +247,7 @@ export function HomeRoute() {
             page gutter, not a full-bleed strip. Full-bleed it ran its left edge 16px outside the
             list it sat on top of — two left edges stacked, the loudest misalignment on the page. */}
         <ReadOnlyBanner device={data.device} />
+        <IslandBuildNotice className="px-4" />
 
         <main className="flex-1">
           {/* One list: every pane under the workspace it lives in, or one ranked list in Activity and

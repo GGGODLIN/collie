@@ -1391,6 +1391,12 @@ export const ja: Dictionary = {
   "settings.tour.description": "Collie の機能と、このインストールの概要。",
   "settings.tour.button": "表示",
   // --- settings.islandAddress ---
+  "islandUpdate.title": "iPhone アプリの新しいバージョンがあります",
+  "islandUpdate.download": "下の URL をコピーし、Safari に貼り付けて IPA をダウンロードしてください。",
+  "islandUpdate.install": "以前と同じインストールツールで、既存のアプリに上書きしてください。",
+  "islandUpdate.keepApp": "先にアプリを削除しないでください。削除するとペアリングが失われます。",
+  "islandUpdate.dismiss": "アプリの更新通知を閉じる",
+
   "settings.islandAddress.title": "Collie のアドレス",
   "settings.islandAddress.description": "このアプリが開く Collie。新しいアドレスでは最初からやり直し、そこで再度ペアリングします。",
   "settings.islandAddress.button": "変更",

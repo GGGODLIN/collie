@@ -886,6 +886,16 @@ Upstream reuses numbers this fork has published (both have a `v1.14.0`), so its 
    push run of step 2's `dev` commit, because that commit has the same tree, and starts building at
    once; only when no green `dev` commit carries the tree does it wait for CI on the `main` commit.
 
+**iPhone app.** Before cutting a release, run `scripts/check-ios-build.sh <previous-tag>`.
+If native inputs changed, raise all four `CURRENT_PROJECT_VERSION` values and say in the
+CHANGELOG that operators must reinstall the IPA over the existing app. Raise only the native
+build in that release, not `RECOMMENDED_ISLAND_BUILD` in
+[web/src/lib/island-build.ts](/web/src/lib/island-build.ts). After confirming that release's
+`CollieIsland.ipa` is downloadable, raise the web recommendation's build and tag in the next
+release. The IPA job runs after the release is public and may fail, so announcing that same
+release's IPA would send an old app to a file that might not exist. Never tell operators to delete
+the app first: that loses their pairing.
+
 **Screenshots only for a large UI change, and only when the operator asks.** Before step 3 of a
 release whose changes reshape a screen, ask the operator whether they can tell what changed from the
 bullets alone; if they can, ship text only. If they want pictures, put a before/after image under

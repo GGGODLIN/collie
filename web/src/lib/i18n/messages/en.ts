@@ -1523,6 +1523,12 @@ export const en = {
   "settings.tour.description": "What Collie does, and what this install looks like.",
   "settings.tour.button": "Show",
   // --- settings.islandAddress ---
+  "islandUpdate.title": "A newer iPhone app is available",
+  "islandUpdate.download": "Copy the URL below and paste it into Safari to download the IPA.",
+  "islandUpdate.install": "Use the same installation tool as before to install over the existing app.",
+  "islandUpdate.keepApp": "Do not delete the app first — deleting it removes your pairing.",
+  "islandUpdate.dismiss": "Dismiss app update",
+
   "settings.islandAddress.title": "Collie address",
   "settings.islandAddress.description": "The Collie this app opens. A new address starts over there: pair again on it.",
   "settings.islandAddress.button": "Change",
