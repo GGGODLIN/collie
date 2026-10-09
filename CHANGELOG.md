@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Changed
+
+- **Built on upstream Collie 1.18.1.** AltanS/collie v1.18.1, commit cfaf95a9. The full-reply card keeps the linear-time link pattern, and still probes a short reply, drops a Grok reply's clock time, and ignores a redrawing statusline.
+
 ## [1.18.1] - 2026-10-09
 
 ### Added

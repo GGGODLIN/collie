@@ -105,7 +105,8 @@ describeAdapterConformance(grokAdapter, {
   ownFixtures,
   foreignFixtures: [...allClaudeFixtures, ...allOmpFixtures, ...allCodexFixtures, ...allOpencodeFixtures],
   neutralFixtures,
-  // 長草稿的提示列不在 bridge 的尾端綁定範圍內，不能把它當成可綁定的短輸入框。
+  // A long draft pushes the hint row out of the tail the bridge binds to, so these captures must
+  // not be read as a short composer that can be bound.
   unboundComposerFixtures: ["grok--draft-scrollbar.txt", "grok--draft-scrollbar-partial.txt"],
 });
 

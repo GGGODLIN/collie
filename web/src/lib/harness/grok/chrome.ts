@@ -125,8 +125,9 @@ function paddingEnd(line: StyledLine, length: number): number {
   return end;
 }
 
-// 只整理已識別後的顯示列：右側黑色軌道和終端補白不是回覆內容。
-// 不送回 grammar 或 guard，否則壓縮空列會破壞原始畫面座標與送出核對。
+// Display only, after every grammar has run: the dark track on the right and the terminal's padding
+// are not reply content. Never hand the result back to a grammar or a guard: collapsing empty rows
+// would break the raw screen coordinates and the send's verification.
 export function prepareGrokDisplay(lines: StyledLine[]): StyledLine[] {
   const out: StyledLine[] = [];
   let previousTrackOnly = false;
@@ -261,8 +262,9 @@ export function extractStatusLines(lines: StyledLine[]): StyledLine[] {
   return sliced.segments.length === 0 ? [] : [sliced];
 }
 
-// Grok 的長草稿在右框線內畫捲動條；把它當成文字會讓送出核對失敗。
-// 只接受真實截取中的位置、獨立字元與灰色樣式，不刪使用者輸入的同形字元。
+// A long draft makes Grok draw a scrollbar just inside the right border, and read as text it fails
+// the send's verification. Only the captured shape is dropped (that position, a segment of its own,
+// that grey), so the same glyph typed by the user stays in the draft.
 function draftLineText(line: StyledLine): string {
   const text = lineText(line);
   const rail = / {2,}[▁-█] (?=│\s*$)/.exec(text);

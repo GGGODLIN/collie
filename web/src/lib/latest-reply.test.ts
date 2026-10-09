@@ -5,7 +5,6 @@ import { buildBlocks } from "./harness";
 import { parseAnsi } from "./ansi";
 import { fold, locateReply, newestExchange, newestReply, replyProse, settleText, sourceOrderRows } from "./latest-reply";
 import type { TranscriptEntry, TranscriptPart } from "./types";
-import { wrappedTableAfter, wrappedTablePainted, wrappedTableSource } from "../test/sweep-loop-reply-data";
 
 // The predicates behind "the mirror is only showing the end of this reply". The cases that matter are
 // the ones where the two sides of the comparison are written differently — Markdown source against a
@@ -119,13 +118,13 @@ describe("newestExchange", () => {
   it("pairs the newest spoken reply with the prompt above it", () => {
     const exchange = newestExchange([ask("first q"), say("first a"), ask("second q"), say("second a")]);
     expect(replyProse(exchange!.reply)).toBe("second a");
-    expect(replyProse(exchange!.prompt!)).toBe("second q");
+    expect(replyProse(exchange!.prompt)).toBe("second q");
   });
 
   it("ignores a prompt written after the reply", () => {
     const exchange = newestExchange([ask("the q"), say("the a"), ask("the NEXT q")]);
     expect(replyProse(exchange!.reply)).toBe("the a");
-    expect(replyProse(exchange!.prompt!)).toBe("the q");
+    expect(replyProse(exchange!.prompt)).toBe("the q");
   });
 
   it("returns null instead of a reply-only exchange when the prompt is absent", () => {
@@ -214,13 +213,37 @@ describe("locateReply — where the reply ends", () => {
   });
 });
 
-// A real Claude pane, 2026-09-27: the reply ended in a Markdown table whose cells Claude wrapped. The
+// Laid out as a real Claude pane painted it, 2026-09-27, with neutral words: the reply ended in a
+// Markdown table whose cells Claude wrapped. The
 // renderer prints a wrapped row line by line ACROSS the columns, so the screen reads a row's cells in
 // a different order than the source does, and a tail probe that reached into the table missed.
 describe("locateReply — a reply that ends in a wrapped table", () => {
-  const source = wrappedTableSource;
-  const painted = wrappedTablePainted;
-  const after = wrappedTableAfter;
+  const source = [
+    "下面整理三盆植物的照顧方式，理由都寫在表格裡，可以逐盆對照。",
+    "",
+    "| 植物 | 照顧方式 | 難度 |",
+    "|---|---|---|",
+    "| 1. 窗台上的小盆薄荷 | 早上看一次土壤，摸起來乾了再澆水。夏天中午不要在太陽底下澆，水珠會把葉片曬傷，傍晚再補一次就好，冬天改成三天澆一次 | 低 |",
+    "| 2. 客廳角落的龜背芋 | 光線不用太強，放在離窗戶兩公尺的地方就夠。新葉剛長出來時不要轉動盆子，讓它自己朝光的方向長，一個月施一次薄肥 | 中 |",
+    "| 3. 浴室門口的大盆觀葉 | 葉子大又容易積灰，每兩週用濕布輕輕擦一次，盆土表面乾了五公分以上再澆水 | 高 |",
+    "",
+    "照顧方式都不難，先從最常澆水的薄荷開始，一週後再看葉片的狀況調整。",
+  ].join("\n");
+  // The screen as painted: the table's top has scrolled off, so the reply is clipped.
+  const painted = [
+    "  │ 1. 窗台上的小盆薄荷  │ 早上看一次土壤，摸起來乾了再澆水。夏天中午不要在太陽底下澆，水珠會把葉片曬傷，        │ 低   │",
+    "  │                      │ 傍晚再補一次就好，冬天改成三天澆一次                                                  │      │",
+    "  ├──────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┼──────┤",
+    "  │ 2. 客廳角落的龜背芋  │ 光線不用太強，放在離窗戶兩公尺的地方就夠。新葉剛長出來時不要轉動盆子，                │ 中   │",
+    "  │                      │ 讓它自己朝光的方向長，一個月施一次薄肥                                                │      │",
+    "  ├──────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┼──────┤",
+    "  │ 3.                   │ 葉子大又容易積灰，每兩週用濕布輕輕擦一次，盆土表面乾了五公分以上再澆水                │ 高   │",
+    "  │ 浴室門口的大盆觀葉   │                                                                                       │      │",
+    "  └──────────────────────┴───────────────────────────────────────────────────────────────────────────────────────┴──────┘",
+    "",
+    "  照顧方式都不難，先從最常澆水的薄荷開始，一週後再看葉片的狀況調整。",
+  ];
+  const after = ["", "✻ Cogitated for 36s · done 12:11 PM"];
 
   it("still finds the reply, and still ends it on its last row", () => {
     const { fit, endLine } = locateReply([...painted, ...after].join("\n"), turn("assistant", source));
@@ -239,6 +262,8 @@ describe("locateReply — a reply that ends in a wrapped table", () => {
   // read as a frame, or the table's last row stays interleaved and the reply reads as off-screen.
   it("still finds a Grok reply whose table rows end in the scrollbar cell", () => {
     const grokSource = [
+      "家庭用水先分清楚喝、洗、沖三種用途，再依水壓與水質決定要不要過濾或軟水。",
+      "",
       "一、建議怎麼配置",
       "",
       "| 用水位置 | 建議設備 |",
@@ -259,7 +284,7 @@ describe("locateReply — a reply that ends in a wrapped table", () => {
       "     └──────────────────────┴────────────────────────┘" + rail,
     ];
     const { fit, endLine } = locateReply(grokPainted.join("\n"), turn("assistant", grokSource));
-    expect(fit).toBe("whole");
+    expect(fit).toBe("clipped");
     expect(endLine).toBe(8);
 
     // The same reply as Grok paints it while the message is highlighted: a box round the whole
@@ -271,7 +296,7 @@ describe("locateReply — a reply that ends in a wrapped table", () => {
     });
     boxed.push(` └${"─".repeat(60)}┘${rail}`);
     const inBox = locateReply(boxed.join("\n"), turn("assistant", grokSource));
-    expect(inBox.fit).toBe("whole");
+    expect(inBox.fit).toBe("clipped");
     expect(inBox.endLine).toBe(8);
   });
 
@@ -302,6 +327,7 @@ describe("locateReply — a reply that ends in a wrapped table", () => {
     // The last source row spans two painted rows; the reply ends on the lower one, above the frame.
     expect(endLine).toBe(7);
   });
+
   // The table's floor ends it. Prose under the table and the next prompt each hold one `│`, the
   // count a one-column-boundary row carries, and must stay where they were painted: joined onto the
   // prompt row, the reply's end would move onto the operator's next message.
@@ -327,30 +353,31 @@ describe("locateReply — a reply that ends in a wrapped table", () => {
   });
 });
 
-// A real Claude pane, 2026-09-27 (paths shortened): the reply's last table linked each row to a file.
+// Laid out as a real Claude pane painted it, 2026-09-27, with neutral words: the reply's last table
+// linked each row to a file.
 // Claude painted only the link text, so the URL the journal holds was nowhere on screen and a tail
 // probe that reached into it missed.
 describe("locateReply — a reply whose tail holds Markdown links", () => {
   const source = [
-    "完整證據與未驗證範圍都在下表的連結裡，你可以逐項打開核對。這段是為了讓回覆夠長。",
+    "兩種做法的說明都在下表的連結裡，你可以逐項打開來看。這段是為了讓回覆夠長。",
     "",
-    "| 選項 | 處置 | 來源 |",
+    "| 做法 | 內容 | 說明 |",
     "|---|---|---|",
-    "| **a．推薦** | 只修已重現的目錄解析、補回歸測試 | [解析重現與延輪日期](file:///tmp/review-evidence/2026-09-27.md) |",
-    "| b | 不修改，原樣延輪；保留已知缺陷 | [現行函式的失敗重現](file:///tmp/review-evidence/2026-09-27.md) |",
+    "| **a．建議** | 每週澆一次水，夏天改成每三天一次 | [澆水頻率與季節調整](https://example.com/plants/watering.md) |",
+    "| b | 不調整，照原樣澆；葉子可能變黃 | [葉片變黃的常見原因](https://example.com/plants/watering.md) |",
     "",
-    "🔎 self-verify: COMPLIANT",
+    "🌱 That is all for now.",
   ].join("\n");
   const painted = [
     "  ┌─────────┬──────────────────────────────────┬────────────────────┐",
-    "  │  選項   │               處置               │        來源        │",
+    "  │  做法   │               內容               │        說明        │",
     "  ├─────────┼──────────────────────────────────┼────────────────────┤",
-    "  │ a．推薦 │ 只修已重現的目錄解析、補回歸測試 │ 解析重現與延輪日期 │",
+    "  │ a．建議 │ 每週澆一次水，夏天改成每三天一次 │ 澆水頻率與季節調整 │",
     "  ├─────────┼──────────────────────────────────┼────────────────────┤",
-    "  │ b       │ 不修改，原樣延輪；保留已知缺陷   │ 現行函式的失敗重現 │",
+    "  │ b       │ 不調整，照原樣澆；葉子可能變黃   │ 葉片變黃的常見原因 │",
     "  └─────────┴──────────────────────────────────┴────────────────────┘",
     "",
-    "  🔎 self-verify: COMPLIANT",
+    "  🌱 That is all for now.",
   ];
 
   it("finds the reply when only the link text was painted", () => {
@@ -360,10 +387,85 @@ describe("locateReply — a reply whose tail holds Markdown links", () => {
   });
 
   it("still finds it when the renderer printed the URL as well", () => {
-    const withUrls = painted.map((row) => row.replace("失敗重現 │", "失敗重現 (file:///tmp/review-evidence/2026-09-27.md) │"));
-    const tailOnly = "[現行函式的失敗重現](file:///tmp/review-evidence/2026-09-27.md) |\n\n🔎 self-verify: COMPLIANT";
-    expect(locateReply(withUrls.join("\n"), turn("assistant", `開頭不在畫面上的一段很長的前文。\n${tailOnly}`)).fit).toBe("clipped");
+    const withUrls = painted.map((row) => row.replace("常見原因 │", "常見原因 (https://example.com/plants/watering.md) │"));
+    const tailOnly = "[葉片變黃的常見原因](https://example.com/plants/watering.md) |\n\n🌱 That is all for now.";
+    expect(locateReply(withUrls.join("\n"), turn("assistant", `開頭不在畫面上的一段很長的前文，長到整則回覆超過兩個探針的長度，所以這裡多寫了幾句說明，讓它不會被當成短回覆。\n${tailOnly}`)).fit).toBe("clipped");
   });
+});
+
+describe("locateReply — a line the link pattern could backtrack on", () => {
+  const painted = "⏺ Pick a flag.\n\n  That is all for now, and the screen ends here.";
+  const tail = "\n\nThat is all for now, and the screen ends here.";
+  const lead = "A long lead that is not on the screen, written so that the whole reply is longer than two probes of text.\n";
+
+  it("returns quickly for a line with `[` and many double-backtick spans and no `](`", () => {
+    const spans = Array.from({ length: 40 }, (_, i) => `\`\`s${i}\`\``).join(", ");
+    const source = `${lead}Pick one of [${spans} for the flag.${tail}`;
+    const started = performance.now();
+    locateReply(painted, turn("assistant", source));
+    expect(performance.now() - started).toBeLessThan(200);
+  });
+
+  it("returns quickly for a 15k-character line of `[`", () => {
+    const source = `${lead}${"[".repeat(15_000)}${tail}`;
+    const started = performance.now();
+    locateReply(painted, turn("assistant", source));
+    expect(performance.now() - started).toBeLessThan(200);
+  });
+
+  it("still reads a link whose label is a double-backtick span, and a plain link, as links", () => {
+    const source = `${lead}See [\`\`x\`\`](https://example.com/a) and [the label](https://example.com/b).${tail}`;
+    const screen = "⏺ See ``x`` and the label.\n\n  That is all for now, and the screen ends here.";
+    expect(locateReply(screen, turn("assistant", source)).fit).toBe("clipped");
+  });
+});
+
+describe("locateReply — the link pattern runs in linear time", () => {
+  const painted = "⏺ Pick a flag.\n\n  That is all for now, and the screen ends here.";
+  const tail = "\n\nThat is all for now, and the screen ends here.";
+  const lead = "A long lead that is not on the screen, written so that the whole reply is longer than two probes of text.\n";
+
+  const hostile = {
+    "`[a](` and 20 000 spaces": "[a](" + " ".repeat(20_000),
+    "`[a](<` repeated": "[a](<".repeat(10_000),
+    "`![a](` repeated": "![a](".repeat(10_000),
+    "`[](` repeated": "[](".repeat(10_000),
+  } satisfies Record<string, string>;
+  for (const [name, body] of Object.entries(hostile)) {
+    it(`returns quickly for ${name}`, () => {
+      const source = `${lead}${body}${tail}`;
+      const started = performance.now();
+      locateReply(painted, turn("assistant", source));
+      expect(performance.now() - started).toBeLessThan(200);
+    });
+  }
+
+  it("returns quickly for a reply past the painted-spelling cap, and still locates it", () => {
+    const closing = "\n\nThat is all for now, and the screen ends here, with a sentence long enough for a probe.";
+    const source = `${lead}${"[a](<x> ".repeat(12_000)}${closing}`;
+    expect(source.length).toBeGreaterThan(65_536);
+    const screen = "⏺ Pick a flag." + closing;
+    const started = performance.now();
+    const placement = locateReply(screen, turn("assistant", source));
+    expect(performance.now() - started).toBeLessThan(200);
+    expect(placement.fit).toBe("clipped");
+  });
+
+  // The screen holds only the labels, so these match through the painted spelling alone.
+  const run = "Pick the flag that you want from the list below, then use the one that fits, which is ";
+  const forms = {
+    "a plain link": ["[label](https://x.y/z)", "label"],
+    "an angle-bracket target": ["[label](<https://x.y/z>)", "label"],
+    "a link with a title": ['[label](https://x.y "title")', "label"],
+    "a double-backtick label": ["[``x``](u)", "``x``"],
+  } satisfies Record<string, [string, string]>;
+  for (const [name, [link, label]] of Object.entries(forms)) {
+    it(`reads ${name} as its label`, () => {
+      const source = `${lead}${run}${link}`;
+      const screen = `⏺ ${run}${label}`;
+      expect(locateReply(screen, turn("assistant", source)).fit).toBe("clipped");
+    });
+  }
 });
 
 // More source that Claude does not paint as written. Each case pairs the journal's Markdown with the
@@ -403,6 +505,7 @@ describe("locateReply — source spelled differently on screen", () => {
     const painted = ["  這一句只是為了讓結尾比對用的四十八個字全部落在畫面上，所以先寫長一點再收尾：分工寫在 分工說明，路徑是 <repo>/wt"];
     expect(locateReply(painted.join("\n"), turn("assistant", source)).fit).toBe("clipped");
   });
+
   // An autolink is printed as its address. Read as a tag and dropped, a different address on screen
   // passed as this reply, and the right one ended the reply a row too early.
   it("keeps an autolink's address, so a different one on screen is not this reply", () => {
@@ -476,8 +579,7 @@ describe("settleText — what counts as the mirror holding still", () => {
   });
 });
 
-// Real Grok 1.0.46 panes (2026-10-08, Herdr 0.9.0, 130 columns), each with the reply its own journal
-// held. Each failed the identity check before its fix, so a terminal-view operator got no card.
+// Real Grok Build 1.0.46 panes, 2026-10-08: the reply's text, and the screen captured beside it.
 describe("locateReply — real Grok replies", () => {
   const pane = (name: string) =>
     readFileSync(join(import.meta.dirname, "..", "fixtures", "panes", `${name}.txt`), "utf8");
@@ -513,4 +615,3 @@ describe("locateReply — real Grok replies", () => {
     expect(locateReply(pane("grok--reply-short-time"), turn("assistant", short)).fit).toBe("whole");
   });
 });
-
