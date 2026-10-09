@@ -1507,5 +1507,11 @@ export const it: Dictionary = {
   "retell.plain": "Semplice",
   "settings.islandAddress.button": "Cambia",
   "settings.islandAddress.description": "Il Collie che questa app apre. Un nuovo indirizzo riparte da zero: associati di nuovo lì.",
+  "islandUpdate.title": "È disponibile una nuova versione dell’app per iPhone",
+  "islandUpdate.download": "Copia l’URL qui sotto e incollalo in Safari per scaricare l’IPA.",
+  "islandUpdate.install": "Usa lo stesso strumento di installazione per aggiornare sopra l’app esistente.",
+  "islandUpdate.keepApp": "Non eliminare prima l’app: perderesti l’associazione.",
+  "islandUpdate.dismiss": "Nascondi aggiornamento dell’app",
+
   "settings.islandAddress.title": "Indirizzo di Collie",
 };

@@ -61,6 +61,7 @@ const KEYS = new Map<string, KeyFate>([
   ["collie:zen-enabled:v1", { area: "local", prefix: false, fate: "kept", why: "preference" }],
   ["collie:auto-zen-enabled:v1", { area: "local", prefix: false, fate: "kept", why: "preference" }],
   ["collie:pins:v1", { area: "local", prefix: false, fate: "kept", why: "pinned pane ids, no content" }],
+  ["collie:island-build-dismissed:v1", { area: "local", prefix: false, fate: "kept", why: "a dismissed app build hint" }],
   ["collie:pin-hint:v1", { area: "local", prefix: false, fate: "kept", why: "a dismissed hint" }],
   ["collie:masked-hint:v1", { area: "local", prefix: false, fate: "kept", why: "a dismissed hint" }],
   ["collie:hidden-machines:v1", { area: "local", prefix: false, fate: "kept", why: "machine names hidden here" }],

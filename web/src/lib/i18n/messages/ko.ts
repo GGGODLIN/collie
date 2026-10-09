@@ -1384,6 +1384,12 @@ export const ko: Dictionary = {
   "settings.tour.description": "Collie가 하는 일, 그리고 이 설치가 어떻게 구성되는지 안내합니다.",
   "settings.tour.button": "표시",
   // --- settings.islandAddress ---
+  "islandUpdate.title": "새 iPhone 앱 버전이 있습니다",
+  "islandUpdate.download": "아래 URL을 복사해 Safari에 붙여넣고 IPA를 다운로드하세요.",
+  "islandUpdate.install": "기존 설치 도구로 현재 앱 위에 덮어써서 업데이트하세요.",
+  "islandUpdate.keepApp": "앱을 먼저 삭제하지 마세요. 삭제하면 페어링이 사라집니다.",
+  "islandUpdate.dismiss": "앱 업데이트 알림 닫기",
+
   "settings.islandAddress.title": "Collie 주소",
   "settings.islandAddress.description": "이 앱이 여는 Collie입니다. 새 주소에서는 처음부터 시작하므로 그곳에서 다시 페어링하세요.",
   "settings.islandAddress.button": "변경",

@@ -1401,6 +1401,12 @@ export const es: Dictionary = {
   "settings.tour.description": "Qué hace Collie y cómo es esta instalación.",
   "settings.tour.button": "Mostrar",
   // --- settings.islandAddress ---
+  "islandUpdate.title": "Hay una nueva versión de la app para iPhone",
+  "islandUpdate.download": "Copia la URL de abajo y pégala en Safari para descargar el IPA.",
+  "islandUpdate.install": "Usa la misma herramienta de instalación para actualizar sobre la app existente.",
+  "islandUpdate.keepApp": "No borres la app primero: perderías el emparejamiento.",
+  "islandUpdate.dismiss": "Ocultar actualización de la app",
+
   "settings.islandAddress.title": "Dirección de Collie",
   "settings.islandAddress.description": "El Collie que abre esta app. Una dirección nueva empieza de cero: vuelve a emparejar allí.",
   "settings.islandAddress.button": "Cambiar",

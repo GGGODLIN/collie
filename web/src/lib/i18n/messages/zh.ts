@@ -1371,6 +1371,12 @@ export const zh: Dictionary = {
   "settings.tour.description": "Collie 的功能，以及本次安装的形式。",
   "settings.tour.button": "显示",
   // --- settings.islandAddress ---
+  "islandUpdate.title": "iPhone app 有新版本",
+  "islandUpdate.download": "复制下面的网址，粘贴到 Safari 下载 IPA。",
+  "islandUpdate.install": "用原来的安装工具覆盖更新现有 app。",
+  "islandUpdate.keepApp": "不要先删除 app，删除会丢失配对。",
+  "islandUpdate.dismiss": "关闭 app 更新提示",
+
   "settings.islandAddress.title": "Collie 地址",
   "settings.islandAddress.description": "这个 app 打开的 Collie。换成新地址会从头开始，要在新的 Collie 上重新配对。",
   "settings.islandAddress.button": "更改",

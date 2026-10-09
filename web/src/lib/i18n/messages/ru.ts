@@ -1601,5 +1601,11 @@ export const ru: Dictionary = {
   "retell.plain": "Просто",
   "settings.islandAddress.button": "Изменить",
   "settings.islandAddress.description": "Collie, который открывает это приложение. Новый адрес начинается с нуля: сопрягитесь с ним заново.",
+  "islandUpdate.title": "Доступна новая версия приложения для iPhone",
+  "islandUpdate.download": "Скопируйте URL ниже и вставьте его в Safari, чтобы скачать IPA.",
+  "islandUpdate.install": "Используйте прежний инструмент установки и установите поверх существующего приложения.",
+  "islandUpdate.keepApp": "Не удаляйте приложение заранее: это удалит сопряжение.",
+  "islandUpdate.dismiss": "Скрыть обновление приложения",
+
   "settings.islandAddress.title": "Адрес Collie",
 };

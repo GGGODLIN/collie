@@ -18,6 +18,7 @@ import { ConnectionBanner, GREEN_MS } from "@/components/connection-banner";
 import { __resetConnectionHealth, markLive } from "@/lib/connection-health";
 import { TROUBLE_MS, CONNECTION_LOST_MS } from "@/hooks/use-connection-lost";
 import { UpdateRibbon } from "@/components/update-ribbon";
+import { IslandBuildNotice } from "@/components/island-build-notice";
 import { HeaderStatus } from "@/components/header-status";
 import { StatusArea } from "@/components/status-area";
 import { setStatus, clearStatus, type StatusTone } from "@/lib/status";
@@ -53,6 +54,7 @@ export function NoticesSection(): ReactNode {
     <Section def={DEF}>
       <Group title="The notice primitive">
         <NoticeMatrixCard />
+        <IslandBuildNoticeCard />
       </Group>
       <Group title="The band">
         <StripBandCard />
@@ -63,6 +65,30 @@ export function NoticesSection(): ReactNode {
         <StatusToastCard />
       </Group>
     </Section>
+  );
+}
+
+function IslandBuildNoticeCard() {
+  return (
+    <Card
+      state="island-build-update"
+      label="iPhone shell update, copy the IPA URL into Safari"
+      reach="On home and Settings inside Collie Island once a newer published build is recommended.
+        This release keeps build 1 / tag null, so the live app is silent; this preview forces the
+        next release's build 2 / v1.18.101 recommendation for an old shell without build metadata."
+      note="The real Settings surface stays visible after the home notice is dismissed. No GitHub
+        anchor: an old shell would navigate away from Collie. Copy, then open Safari yourself."
+      span={2}
+    >
+      <Stage>
+        <IslandBuildNotice
+          host={{ collieIsland: { openAddress: () => {} } }}
+          recommended={{ build: 2, tag: "v1.18.101" }}
+          dismissible={false}
+          className="p-4"
+        />
+      </Stage>
+    </Card>
   );
 }
 

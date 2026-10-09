@@ -86,6 +86,16 @@ the sideloading apart from your main account.
 The 8-hour restart (Control Center button or a Shortcuts automation) works the same as in a
 build from source; see "The 8-hour limit" below.
 
+### Update the app
+
+When the app is too old, Collie shows an update notice and a copyable IPA URL on the home screen
+and in Settings. Paste the URL into Safari to download it, then use your original installation
+tool to install over the existing app. **Do not delete the app first: that loses your pairing.**
+The web page updates with your Collie bridge; updating the native shell requires reinstalling the IPA.
+
+> **Untested (未實測).** If you installed with AltStore, use that same AltStore to install the new
+> IPA over the existing app. This update route has not been tested end to end.
+
 ### Keep it signed
 
 AltStore refreshes its apps in the background whenever AltServer is reachable, over the same

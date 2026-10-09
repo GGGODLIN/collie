@@ -5,6 +5,7 @@ import { RouteHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { BuildStamp } from "@/components/build-stamp";
 import { Card } from "@/components/ui/card";
+import { IslandBuildNotice } from "@/components/island-build-notice";
 import { InstallControl } from "@/components/install-control";
 import { hasExperiments } from "@/lib/experiments";
 import { useLocale } from "@/hooks/use-locale";
@@ -140,6 +141,7 @@ export function SettingsRoute() {
 
       <BandMain base={16} className="relative flex min-h-0 flex-1 flex-col space-y-4 overflow-y-auto p-4">
         <InstallControl />
+        <IslandBuildNotice dismissible={false} />
 
         {/* ONE card holding four rows, not four cards. They are a single list of siblings, and four
             separated cards would say they are four unrelated subjects. The divider is on the button
