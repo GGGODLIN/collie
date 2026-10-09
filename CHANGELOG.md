@@ -23,14 +23,16 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.18.100] - 2026-10-09
+
 ### Added
 
-- **Copyable blocks share one action and honest clipboard feedback.** A common UI wrapper copies the caller's original text and reports success only after the clipboard accepts it; without a clipboard API it leaves the content alone.
-- **Code, tables and tool cards copy their original text.** Markdown code blocks and tables gain Copy actions; command cards copy commands and output separately, and edit cards copy every diff hunk even when the preview is shortened.
+- **Copyable blocks share one action and honest clipboard feedback.** A common UI wrapper copies the caller's original text and reports success only after the clipboard accepts it; without a clipboard API it leaves the content alone. ([fd025e1f](https://github.com/GGGODLIN/collie/commit/fd025e1f))
+- **Code, tables and tool cards copy their original text.** Markdown code blocks and tables gain Copy actions; command cards copy commands and output separately, and edit cards copy every diff hunk even when the preview is shortened. ([b208bc91](https://github.com/GGGODLIN/collie/commit/b208bc91))
 
 ### Changed
 
-- **Built on upstream Collie 1.18.1.** AltanS/collie v1.18.1, commit cfaf95a9. The full-reply card keeps the linear-time link pattern, and still probes a short reply, drops a Grok reply's clock time, and ignores a redrawing statusline.
+- **Built on upstream Collie 1.18.1.** AltanS/collie v1.18.1, commit cfaf95a9. The full-reply card keeps the linear-time link pattern, and still probes a short reply, drops a Grok reply's clock time, and ignores a redrawing statusline. ([9be973df](https://github.com/GGGODLIN/collie/commit/9be973df))
 
 ## [1.18.1] - 2026-10-09
 
