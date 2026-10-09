@@ -23,9 +23,15 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.18.101] - 2026-10-09
+
 ### Added
 
-- **iPhone app updates gain a copyable, dismissible installation notice.** Older shells can see an IPA URL on the home screen and in Settings once a published native build is recommended; the recommendation stays at build 1 for this release. Native build 2 reports its build to Collie: reinstall the IPA over the existing app to receive this metadata, without deleting the app or losing pairing. A release check requires a higher native build whenever native inputs change.
+- **iPhone app updates gain a copyable, dismissible installation notice.** Older shells can see an IPA URL on the home screen and in Settings once a published native build is recommended; the recommendation stays at build 1 for this release. Native build 2 reports its build to Collie: reinstall the IPA over the existing app to receive this metadata, without deleting the app or losing pairing. A release check requires a higher native build whenever native inputs change. ([5b106856](https://github.com/GGGODLIN/collie/commit/5b106856))
+
+### Changed
+
+- **Built on upstream Collie 1.18.1.** AltanS/collie v1.18.1, commit cfaf95a9, unchanged since fork 1.18.100. ([9be973df](https://github.com/GGGODLIN/collie/commit/9be973df))
 
 ## [1.18.100] - 2026-10-09
 
