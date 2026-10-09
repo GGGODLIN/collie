@@ -23,6 +23,13 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.18.102] - 2026-10-09
+
+### Changed
+
+- **Built on upstream Collie 1.18.1.** AltanS/collie v1.18.1, commit cfaf95a9, unchanged since fork 1.18.100. ([9be973df](https://github.com/GGGODLIN/collie/commit/9be973df))
+- **Older iPhone apps now point to the new IPA.** A shell older than build 2 shows the update notice on the home screen and in Settings, with the fork 1.18.101 IPA URL to copy into Safari. Install it over the existing app; deleting the app first loses its pairing. ([daf767ba](https://github.com/GGGODLIN/collie/commit/daf767ba))
+
 ## [1.18.101] - 2026-10-09
 
 ### Added

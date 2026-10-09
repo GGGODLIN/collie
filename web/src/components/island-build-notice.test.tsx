@@ -41,10 +41,10 @@ describe("IslandBuildNotice", () => {
     expect(within(settings.container).queryByRole("button", { name: "Dismiss app update" })).toBeNull();
   });
 
-  it("stays absent outside the app and with this release's dormant recommendation", () => {
+  it("stays absent outside the app and in a shell already on the recommended build", () => {
     const { container, rerender } = render(<IslandBuildNotice host={{}} recommended={recommended} />);
     expect(container).toBeEmptyDOMElement();
-    rerender(<IslandBuildNotice host={host} />);
+    rerender(<IslandBuildNotice host={{ collieIsland: { build: 2, openAddress: vi.fn() } }} />);
     expect(container).toBeEmptyDOMElement();
   });
 });
