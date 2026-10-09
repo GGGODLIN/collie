@@ -59,6 +59,7 @@ import { StatusDot } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Collapse } from "@/components/ui/collapse";
+import { CopyableBlock } from "@/components/ui/copyable-block";
 import { OneOf } from "@/components/ui/one-of";
 import { SectionLabel } from "@/components/ui/section-label";
 import { useLocale } from "@/hooks/use-locale";
@@ -664,7 +665,9 @@ export function ToolCard({
             <ToolPath path={tool.path} />
           </ToolHead>
           {tool.diff && tool.diff.length > 0 && (
-            <HunkDiff hunks={tool.diff} path={tool.path} limit={preview ? 30 : 16} />
+            <CopyableBlock text={tool.diff.map((hunk) => [hunk.header, ...hunk.lines].join("\n")).join("\n")}>
+              <HunkDiff hunks={tool.diff} path={tool.path} limit={preview ? 30 : 16} />
+            </CopyableBlock>
           )}
           <WaitingArea waiting={waiting} />
         </Card>
@@ -965,14 +968,18 @@ function CommandBlock({ command, output, preview }: { command: string; output?: 
   const shown = all ? lines : lines.slice(-TAIL);
   return (
     <>
-      <div className={cn("mx-2 mb-2 overflow-hidden rounded-md font-mono text-[11px] leading-[1.4]", MIRROR_SPACE, MIRROR_INVERT)}>
-        <div className="px-2.5 py-2">
-          <div className="line-clamp-6 whitespace-pre-wrap break-words">
-            <span className="text-[#23d18b]">$</span> {command}
+      <div className="mx-2 mb-2 overflow-hidden rounded-md">
+        <CopyableBlock text={command} label={t("copyable.command")}>
+          <div className={cn("px-2.5 py-2 font-mono text-[11px] leading-[1.4]", MIRROR_SPACE, MIRROR_INVERT)}>
+            <div className="line-clamp-6 whitespace-pre-wrap break-words">
+              <span className="text-[#23d18b]">$</span> {command}
+            </div>
           </div>
-        </div>
+        </CopyableBlock>
         {open && lines.length > 0 && (
-          <pre className="m-0 overflow-x-auto border-t border-white/10 px-2.5 py-2 whitespace-pre">{shown.join("\n")}</pre>
+          <CopyableBlock text={output ?? ""} label={t("chat.copyOutput.label")}>
+            <pre className={cn("m-0 overflow-x-auto px-2.5 py-2 font-mono text-[11px] leading-[1.4] whitespace-pre", MIRROR_SPACE, MIRROR_INVERT)}>{shown.join("\n")}</pre>
+          </CopyableBlock>
         )}
       </div>
       {/* Output that arrives after the card is on screen (the run the reader just allowed) slides

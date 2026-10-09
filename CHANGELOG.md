@@ -26,6 +26,7 @@ Running a crew? Update the lead first; members follow on their own. Details:
 ### Added
 
 - **Copyable blocks share one action and honest clipboard feedback.** A common UI wrapper copies the caller's original text and reports success only after the clipboard accepts it; without a clipboard API it leaves the content alone.
+- **Code, tables and tool cards copy their original text.** Markdown code blocks and tables gain Copy actions; command cards copy commands and output separately, and edit cards copy every diff hunk even when the preview is shortened.
 
 ## [1.18.1] - 2026-10-09
 
