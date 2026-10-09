@@ -17,6 +17,7 @@ interface CopyableBlockProps {
 export function CopyableBlock({ text, children, label, className }: CopyableBlockProps): ReactNode {
   useLocale();
   const canCopy = !!navigator.clipboard;
+  const copyLabel = label ?? t("copyable.copy");
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text);
@@ -26,14 +27,20 @@ export function CopyableBlock({ text, children, label, className }: CopyableBloc
     }
   };
   return (
-    <div className={cn("min-w-0", className)}>
+    <div className={cn("relative min-w-0", className)}>
       {canCopy && (
-        <div className="flex justify-end font-sans">
-          <Button type="button" variant="ghost" size="lg" className="gap-1.5 px-2 text-xs" onClick={() => void copy()}>
-            <Copy aria-hidden className="size-3.5" />
-            {label ?? t("copyable.copy")}
-          </Button>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label={copyLabel}
+          title={copyLabel}
+          // The opaque overlay deliberately covers text; its 44px reach may overflow without reserving space.
+          className="absolute top-0.5 right-0.5 z-[1] size-6 bg-card text-card-foreground before:absolute before:-inset-[11px] before:content-['']"
+          onClick={() => void copy()}
+        >
+          <Copy aria-hidden className="size-3.5" />
+        </Button>
       )}
       {children}
     </div>

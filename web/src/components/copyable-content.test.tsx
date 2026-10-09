@@ -30,6 +30,10 @@ describe("copyable reading blocks", () => {
     await waitFor(() => expect(setStatus).toHaveBeenCalledWith("Copied to clipboard", "success"));
     expect(container.querySelector("pre")?.textContent).toBe(code);
     expect(container.querySelector("mark")?.textContent).toBe("ready");
+    const button = within(container).getByRole("button", { name: "Copy" });
+    expect(button.textContent).toBe("");
+    expect(button.parentElement).toBe(container.querySelector("pre")?.parentElement);
+    expect(button.parentElement?.className).toBe("relative min-w-0");
   });
 
   it("copies the table's exact Markdown, not its formatted or squared-off cells", async () => {
@@ -39,6 +43,10 @@ describe("copyable reading blocks", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(table));
     expect(container.querySelectorAll("table")).toHaveLength(1);
     expect(container.querySelector("table")?.parentElement?.className).toContain("overflow-x-auto");
+    const button = within(container).getByRole("button", { name: "Copy" });
+    expect(button.textContent).toBe("");
+    expect(button.parentElement).toBe(container.querySelector("table")?.parentElement?.parentElement);
+    expect(button.parentElement?.className).toBe("relative min-w-0");
     expect(within(container).getByText("after")).toBeInTheDocument();
   });
 
@@ -53,7 +61,18 @@ describe("copyable reading blocks", () => {
     expect(container.querySelector("pre")?.textContent).not.toContain("output 0\n");
     fireEvent.click(within(container).getByRole("button", { name: "Copy output" }));
     await waitFor(() => expect(writeText).toHaveBeenNthCalledWith(2, output));
-    expect(within(container).getByRole("button", { name: "Copy output" }).closest(".invert")).toBeNull();
+    const commandButton = within(container).getByRole("button", { name: "Copy command" });
+    const outputButton = within(container).getByRole("button", { name: "Copy output" });
+    expect(outputButton.closest(".invert")).toBeNull();
+    expect(commandButton.parentElement).not.toBe(outputButton.parentElement);
+    for (const button of [commandButton, outputButton]) {
+      expect(button.textContent).toBe("");
+      expect(button.className).toContain("absolute");
+      expect(button.parentElement?.className).toBe("relative min-w-0");
+      expect(button.parentElement?.className).not.toContain("[filter:");
+      expect(button.parentElement?.parentElement?.className).not.toContain("overflow-hidden");
+      expect(button.closest('[data-slot="card"]')?.className).not.toContain("overflow-hidden");
+    }
   });
 
   it("copies every diff hunk even while the card shows only its first lines", async () => {
@@ -66,6 +85,11 @@ describe("copyable reading blocks", () => {
     expect(container.textContent).not.toContain("line 19");
     fireEvent.click(within(container).getByRole("button", { name: "Copy" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(original));
+    const button = within(container).getByRole("button", { name: "Copy" });
+    expect(button.textContent).toBe("");
+    expect(button.parentElement?.className).toBe("relative min-w-0");
+    expect(button.closest('[data-slot="card"]')?.className).not.toContain("overflow-hidden");
+    expect(button.nextElementSibling?.className).toContain("overflow-hidden");
   });
 
   it("copies unnumbered diff headers without inventing line numbers", async () => {

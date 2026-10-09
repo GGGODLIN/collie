@@ -23,6 +23,13 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.18.103] - 2026-10-10
+
+### Changed
+
+- **Built on upstream Collie 1.18.1.** AltanS/collie v1.18.1, commit cfaf95a9, unchanged since fork 1.18.100. ([9be973df](https://github.com/GGGODLIN/collie/commit/9be973df))
+- **Copy is a small icon in each block's top-right corner.** Code blocks, tables, diffs, commands, output and the IPA URL lose the extra Copy row; an always-visible icon sits over the block's corner, keeps a 44px tap target and the same copied and failed notices, and may cover the end of the first line. ([569415f4](https://github.com/GGGODLIN/collie/commit/569415f4), [1e6da509](https://github.com/GGGODLIN/collie/commit/1e6da509))
+
 ## [1.18.102] - 2026-10-09
 
 ### Changed
