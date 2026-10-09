@@ -650,7 +650,7 @@ export function ToolCard({
   switch (tool.kind) {
     case "edit":
       return (
-        <Card data-waiting={anchor} className={cn("gap-0 overflow-hidden py-0", held)}>
+        <Card data-waiting={anchor} className={cn("gap-0 py-0", held)}>
           <ToolHead
             icon={tool.created ? FilePlusCorner : Pencil}
             label={t(tool.created ? "chat.card.create" : "chat.card.edit")}
@@ -674,7 +674,7 @@ export function ToolCard({
       );
     case "execute":
       return (
-        <Card data-waiting={anchor} className={cn("gap-0 overflow-hidden py-0", held)}>
+        <Card data-waiting={anchor} className={cn("gap-0 py-0", held)}>
           <ToolHead icon={SquareTerminal} label={t("chat.card.run")} status={status} exitCode={tool.exitCode}>
             {tool.description && (
               <span className="font-content min-w-0 truncate text-muted-foreground">{tool.description}</span>
@@ -968,9 +968,9 @@ function CommandBlock({ command, output, preview }: { command: string; output?: 
   const shown = all ? lines : lines.slice(-TAIL);
   return (
     <>
-      <div className="mx-2 mb-2 overflow-hidden rounded-md">
+      <div className="mx-2 mb-2 rounded-md">
         <CopyableBlock text={command} label={t("copyable.command")}>
-          <div className={cn("px-2.5 py-2 font-mono text-[11px] leading-[1.4]", MIRROR_SPACE, MIRROR_INVERT)}>
+          <div className={cn("rounded-t-md px-2.5 py-2 font-mono text-[11px] leading-[1.4]", !(open && lines.length > 0) && "rounded-b-md", MIRROR_SPACE, MIRROR_INVERT)}>
             <div className="line-clamp-6 whitespace-pre-wrap break-words">
               <span className="text-[#23d18b]">$</span> {command}
             </div>
@@ -978,7 +978,7 @@ function CommandBlock({ command, output, preview }: { command: string; output?: 
         </CopyableBlock>
         {open && lines.length > 0 && (
           <CopyableBlock text={output ?? ""} label={t("chat.copyOutput.label")}>
-            <pre className={cn("m-0 overflow-x-auto px-2.5 py-2 font-mono text-[11px] leading-[1.4] whitespace-pre", MIRROR_SPACE, MIRROR_INVERT)}>{shown.join("\n")}</pre>
+            <pre className={cn("m-0 overflow-x-auto rounded-b-md px-2.5 py-2 font-mono text-[11px] leading-[1.4] whitespace-pre", MIRROR_SPACE, MIRROR_INVERT)}>{shown.join("\n")}</pre>
           </CopyableBlock>
         )}
       </div>
@@ -1044,7 +1044,7 @@ function HunkDiff({ hunks, path, limit }: { hunks: Hunk[]; path: string; limit: 
   const max = open ? total : limit;
   const text = useMemo(() => numberedDiff(hunks, max), [hunks, max]);
   return (
-    <div className="border-t border-border">
+    <div className="overflow-hidden rounded-b-md border-t border-border">
       {text !== null ? <DiffView diff={text} path={path} /> : <PlainDiff hunks={hunks} path={path} limit={max} />}
       {/* The same sentence a command's output fold says, so one message serves both. */}
       {total > limit && (

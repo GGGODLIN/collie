@@ -19,7 +19,7 @@ describe("IslandBuildNotice", () => {
     expect(copy).toHaveAttribute("title", "Copy");
     expect(copy.textContent).toBe("");
     expect(copy.className).toContain("absolute");
-    expect(copy.parentElement?.className).toContain("pr-12");
+    expect(copy.parentElement?.className).toBe("relative min-w-0");
     await user.click(copy);
     await expect(navigator.clipboard.readText()).resolves.toBe(url);
   });

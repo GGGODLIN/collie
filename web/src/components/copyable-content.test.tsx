@@ -33,7 +33,7 @@ describe("copyable reading blocks", () => {
     const button = within(container).getByRole("button", { name: "Copy" });
     expect(button.textContent).toBe("");
     expect(button.parentElement).toBe(container.querySelector("pre")?.parentElement);
-    expect(button.parentElement?.className).toContain("pr-12");
+    expect(button.parentElement?.className).toBe("relative min-w-0");
   });
 
   it("copies the table's exact Markdown, not its formatted or squared-off cells", async () => {
@@ -46,7 +46,7 @@ describe("copyable reading blocks", () => {
     const button = within(container).getByRole("button", { name: "Copy" });
     expect(button.textContent).toBe("");
     expect(button.parentElement).toBe(container.querySelector("table")?.parentElement?.parentElement);
-    expect(button.parentElement?.className).toContain("pr-12");
+    expect(button.parentElement?.className).toBe("relative min-w-0");
     expect(within(container).getByText("after")).toBeInTheDocument();
   });
 
@@ -68,8 +68,10 @@ describe("copyable reading blocks", () => {
     for (const button of [commandButton, outputButton]) {
       expect(button.textContent).toBe("");
       expect(button.className).toContain("absolute");
-      expect(button.parentElement?.className).toContain("pr-12");
+      expect(button.parentElement?.className).toBe("relative min-w-0");
       expect(button.parentElement?.className).not.toContain("[filter:");
+      expect(button.parentElement?.parentElement?.className).not.toContain("overflow-hidden");
+      expect(button.closest('[data-slot="card"]')?.className).not.toContain("overflow-hidden");
     }
   });
 
@@ -85,7 +87,9 @@ describe("copyable reading blocks", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(original));
     const button = within(container).getByRole("button", { name: "Copy" });
     expect(button.textContent).toBe("");
-    expect(button.parentElement?.className).toContain("pr-12");
+    expect(button.parentElement?.className).toBe("relative min-w-0");
+    expect(button.closest('[data-slot="card"]')?.className).not.toContain("overflow-hidden");
+    expect(button.nextElementSibling?.className).toContain("overflow-hidden");
   });
 
   it("copies unnumbered diff headers without inventing line numbers", async () => {

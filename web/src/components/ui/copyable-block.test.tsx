@@ -31,16 +31,15 @@ describe("CopyableBlock", () => {
     expect(container.querySelector("pre")?.textContent).toBe("short preview");
   });
 
-  it("floats a small icon in a reserved corner without adding an action row", () => {
+  it("overlays an opaque icon inside the corner without reserving content space", () => {
     const { container } = render(<CopyableBlock text="raw"><pre>rendered</pre></CopyableBlock>);
     const button = within(container).getByRole("button", { name: "Copy" });
     const block = button.parentElement!;
     expect(block.className).toContain("relative");
-    expect(block.className).toContain("pr-12");
-    expect(block.className).toContain("min-h-11");
+    expect(block.className).toBe("relative min-w-0");
     expect(block.children).toHaveLength(2);
     expect(block.querySelector("pre")?.parentElement).toBe(block);
-    for (const utility of ["absolute", "top-2.5", "right-2.5", "size-6", "before:absolute", "before:-inset-[11px]", "before:content-['']", "bg-card", "text-card-foreground"]) {
+    for (const utility of ["absolute", "top-0.5", "right-0.5", "z-[1]", "size-6", "before:absolute", "before:-inset-[11px]", "before:content-['']", "bg-card", "text-card-foreground"]) {
       expect(button.className.split(" ")).toContain(utility);
     }
     expect(button.textContent).toBe("");
@@ -75,8 +74,7 @@ describe("CopyableBlock", () => {
     const { container } = render(<CopyableBlock text="raw"><pre>rendered</pre></CopyableBlock>);
     expect(within(container).queryByRole("button")).toBeNull();
     expect(container.querySelector("pre")?.textContent).toBe("rendered");
-    expect(container.firstElementChild?.className).not.toContain("pr-12");
-    expect(container.firstElementChild?.className).not.toContain("min-h-11");
+    expect(container.firstElementChild?.className).toBe("relative min-w-0");
     expect(writeText).not.toHaveBeenCalled();
   });
 

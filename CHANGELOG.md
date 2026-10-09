@@ -26,6 +26,7 @@ Running a crew? Update the lead first; members follow on their own. Details:
 ### Changed
 
 - **Copy actions move to small, always-visible top-right icons.** Code blocks, tables, diffs, commands, output and IPA URLs keep their accessible names and clipboard feedback without an extra action row; a reserved right gutter keeps text clear of each 44px tap target, including at the end of horizontal scrolling.
+- **Copy icons overlay content without reserving width or height.** Opaque icons sit inside each block's top-right corner, deliberately covering text beneath them. The full-width content keeps its own height; transparent 44px tap targets may extend beyond the block, while commands and output remain independently copyable.
 
 ## [1.18.102] - 2026-10-09
 
