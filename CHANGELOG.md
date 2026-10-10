@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Fixed
+
+- **A sheet opens whole after a slide into a pane.** The slide into a pane, or back to the dashboard, held its last frame, which made every sheet on that screen open shifted down by the header with its bottom row off screen: the pane menu lost its last row and short sheets lost their buttons.
+
 ## [1.19.2] - 2026-10-10
 
 ### Added
