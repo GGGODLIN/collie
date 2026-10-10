@@ -640,6 +640,8 @@ describe("solo zero-tax — routes", () => {
       // One picture under the Files root, as its bytes (ADR 0090): the Files read's checks and gate,
       // the type read off the bytes, forwarded to the owning member like `files`.
       "/^\\/api\\/pane\\/([^/]+)\\/files\\/image$/",
+      // A dev-server port of this machine, probed by connect only (ADR 9007); not forwarded.
+      "/^\\/api\\/pane\\/([^/]+)\\/port\\/([^/]+)$/",
       "/^\\/api\\/tab\\/([^/]+)\\/(rename|close)$/",
       // The Changes view asked by workspace (ADR 0065): the same read as the pane route's `changes`,
       // read-gated and forwarded with `?host=` to the member that owns the space.
