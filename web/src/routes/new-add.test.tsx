@@ -555,7 +555,7 @@ describe("Add your own: how adding works", () => {
     mount();
     await userEvent.click(await screen.findByRole("button", { name: "How adding works" }));
     const sheet = await screen.findByRole("dialog", { name: "How adding works" });
-    expect(within(sheet).getByText(/Collie builds the line from a fixed table/)).toBeInTheDocument();
+    expect(within(sheet).getByText(/Gaddi builds the line from a fixed table/)).toBeInTheDocument();
     expect(within(sheet).getByText("free_text = true")).toBeInTheDocument();
     expect(within(sheet).getByTestId("launcher-file")).toHaveTextContent(FILE);
     expect(within(sheet).getByRole("textbox", { name: "Example row for launchers.toml" })).toHaveValue(

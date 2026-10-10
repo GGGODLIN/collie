@@ -369,7 +369,7 @@ describe("unavailableText", () => {
     expect(unavailableText({ kind: "notFound" })).toBe("not installed");
     expect(unavailableText({ kind: "needsHerdr" })).toBe("needs Herdr");
     expect(unavailableText({ kind: "onlyOnLead", lead: "bluefin" })).toBe("only on bluefin");
-    expect(unavailableText({ kind: "olderCollie" })).toMatch(/older Collie/);
+    expect(unavailableText({ kind: "olderCollie" })).toMatch(/older Gaddi/);
     expect(unavailableText({ kind: "addsOff" })).toBe("turned off on this machine");
     expect(unavailableText({ kind: "freeTextOff" })).toBe("typed lines are turned off on this machine");
     expect(unavailableText({ kind: "commandRow" })).toBe("a command cannot start in a new worktree");

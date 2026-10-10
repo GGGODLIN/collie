@@ -320,7 +320,7 @@ describe("the New page: Agent and Command", () => {
     expect(select).toBeDisabled();
     expect(within(select).queryAllByRole("option").filter((o) => o.textContent !== "")).toEqual([]);
     // The note under the Agent select, and the worktree block's own reason: the same words, twice.
-    expect(screen.getAllByText(/runs an older Collie, which cannot start agents by name/)).toHaveLength(2);
+    expect(screen.getAllByText(/runs an older Gaddi, which cannot start agents by name/)).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Start" })).toBeDisabled();
   });
 
@@ -461,7 +461,7 @@ describe("the New page: Start", () => {
     const router = mount();
     await waitFor(async () => expect(await agentSelect()).toHaveValue("harness:claude"));
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
-    expect(await screen.findByRole("status")).toHaveTextContent("Collie could not confirm the start.");
+    expect(await screen.findByRole("status")).toHaveTextContent("Gaddi could not confirm the start.");
     expect(bodies).toHaveLength(1);
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/pane/w9%3Ap1"));
@@ -1313,7 +1313,7 @@ describe("the New page: Type a command", () => {
     await userEvent.selectOptions(await openShell(), "Type a command…");
     await userEvent.type(await commandField(), "htop");
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
-    expect(await screen.findByRole("status")).toHaveTextContent("Collie could not confirm the start.");
+    expect(await screen.findByRole("status")).toHaveTextContent("Gaddi could not confirm the start.");
     expect(bodies).toHaveLength(1);
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(bodies).toHaveLength(2));

@@ -520,7 +520,7 @@ describe("KeyBoardEditor: copy and import", () => {
 
     await user.click(input);
     await user.paste("hello");
-    expect(screen.getByText("That is not a Collie layout code.")).toBeInTheDocument();
+    expect(screen.getByText("That is not a Gaddi layout code.")).toBeInTheDocument();
     expect(importBtn).toBeDisabled();
 
     await user.clear(input);
@@ -545,7 +545,7 @@ describe("KeyBoardEditor: copy and import", () => {
     const bad = btoa(JSON.stringify({ v: 1, rows: 1, keys: [[0, "ctrl+nope"]] })).replace(/=+$/, "");
     for (const [code, line] of [
       [CODE_PREFIX + "###", "That code is damaged or cut short."],
-      [CODE_PREFIX + bad, "That layout holds a key Collie cannot send."],
+      [CODE_PREFIX + bad, "That layout holds a key Gaddi cannot send."],
       [CODE_PREFIX + "a".repeat(5000), "That code is too long to be a layout."],
     ] as const) {
       await user.clear(input);
