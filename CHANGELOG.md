@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Changed
+
+- **Gaddi recommends Collie Island build 3.** The iPhone app on build 2 or older is offered the v1.19.3 IPA, which opens new-tab links in the phone's browser.
+
 ## [1.19.3] - 2026-10-10
 
 ### Changed
