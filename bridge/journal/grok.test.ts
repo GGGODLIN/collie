@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
@@ -344,6 +344,22 @@ describe("GrokTranscriptSource.reconcile", () => {
     const listed = await grokHome(JSON.stringify([row(RESUMED)]));
     const src = new GrokTranscriptSource([broken, listed], alive);
     expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
+  });
+
+  // Only a list known to be absent is skipped. Here stat itself fails (no search permission on the
+  // folder), so the list may well hold the reported id. Where permissions do not bite (Windows, root)
+  // the list reads and still names STALE, so the case passes there without proving anything.
+  test("a list whose presence cannot be checked keeps the reported id although another root has a candidate", async () => {
+    const hidden = await grokHome(JSON.stringify([row(STALE)]));
+    const listed = await grokHome(JSON.stringify([row(RESUMED)]));
+    const src = new GrokTranscriptSource([hidden, listed], alive);
+    const home = join(hidden, "..");
+    await chmod(home, 0o000);
+    try {
+      expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
+    } finally {
+      await chmod(home, 0o755);
+    }
   });
 
   test("a root with no list at all does not stop the swap from another root", async () => {

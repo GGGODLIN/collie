@@ -70,7 +70,7 @@ import {
   PAIR_WINDOW_MS,
 } from "./pair-limit.ts";
 import { readFileSync } from "node:fs";
-import { mkdir, mkdtemp, rm, truncate, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, truncate, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -4235,6 +4235,21 @@ describe("journalRefOf — which session the history and chat routes read", () =
 
   test("an adapter without reconcile reads the reported ref as before", async () => {
     expect(await journalRefOf(adapter({}), pane({ agentSession: reported }))).toEqual(reported);
+  });
+
+  // The cases above stub reconcile; this one keeps the real grok adapter, so dropping its reconcile
+  // binding leaves the stale id in place and fails here.
+  test("the real grok adapter moves a stale id to the one live session grok lists", async () => {
+    const base = await realpath(await mkdtemp(join(tmpdir(), "collie-grok-wire-")));
+    try {
+      await mkdir(join(base, "sessions"), { recursive: true });
+      const row = { session_id: resumed.value, pid: process.pid, cwd: "/home/op/proj" };
+      await writeFile(join(base, "active_sessions.json"), JSON.stringify([row]));
+      const real = grokJournal([join(base, "sessions")]);
+      expect(await journalRefOf(real, pane({ agentSession: reported }))).toEqual(resumed);
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
   });
 
   // The cases above prove journalRefOf; this one proves the routes use it. Put a route back on the

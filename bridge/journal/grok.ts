@@ -29,7 +29,7 @@
 // itself keeps of the session each live process holds. That file is grok's own and undocumented,
 // so anything short of one unambiguous live match leaves Herdr's id alone.
 
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 import type { JsonObject, JsonValue } from "../json.ts";
@@ -109,6 +109,19 @@ export function pickLiveSession(
   if (live.some((s) => s.sessionId === reported)) return reported;
   const here = live.filter((s) => s.cwd === cwd);
   return here.length === 1 && here[0] !== undefined ? here[0].sessionId : reported;
+}
+
+/**
+ * Whether a path is known to be missing. Only ENOENT and ENOTDIR say so; any other stat failure (a
+ * folder without search permission, say) leaves it unknown, which is not the same as absent.
+ */
+async function knownAbsent(path: string): Promise<boolean> {
+  try {
+    await stat(path);
+    return false;
+  } catch (err) {
+    return err instanceof Error && "code" in err && (err.code === "ENOENT" || err.code === "ENOTDIR");
+  }
 }
 
 /** Whether a pid names a running process. EPERM means it runs as someone else, which is still alive. */
@@ -428,14 +441,15 @@ export class GrokTranscriptSource implements TranscriptSource {
 
   /**
    * Every root's `active_sessions.json`, which sits in `$GROK_HOME`, one level above `sessions`, or
-   * null when any of them exists and cannot be read whole. A root with no file holds no live grok.
+   * null when any of them may exist and cannot be read whole. A root known to have no file holds no
+   * live grok.
    */
   private async activeSessions(): Promise<GrokActiveSession[] | null> {
     const rows: GrokActiveSession[] = [];
     for (const root of this.roots) {
       const home = dirname(root);
       const path = join(home, "active_sessions.json");
-      if (!(await exists(path))) continue;
+      if (await knownAbsent(path)) continue;
       const real = await containedRealpath(path, home);
       if (real === null) return null;
       const text = await readFile(real, "utf8").catch(() => null);
