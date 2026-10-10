@@ -23,21 +23,25 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-10
+
 ### Changed
 
-- **Gaddi recommends Collie Island build 3.** The iPhone app on build 2 or older is offered the v1.19.3 IPA, which opens new-tab links in the phone's browser.
-- **The copy icon confirms on every screen and copies over plain HTTP.** It shows a check or an X for a moment, so History and Files give feedback too; a narrow table's icon sits at the table's corner; the command output icon reads "Copy command output"; and where the browser has no clipboard API, as on a tailnet page served over `http://`, the copy falls back to the browser's older copy command. From upstream 1.19.2.
+- **Built on upstream Collie 1.19.2.** AltanS/collie v1.19.2, commit aacece40. ([d0c9f1e2](https://github.com/GGGODLIN/collie/commit/d0c9f1e2))
+- **Gaddi numbers its own releases from 2.0.0.** Nothing you set up changes. Collie counts 1.19.3 to 2.0.0 as a major update, so take it once with the separate major update button on the phone, or `collie update --major` on the machine; later 2.x releases update as usual. ([26a16b78](https://github.com/GGGODLIN/collie/commit/26a16b78))
+- **Gaddi recommends Collie Island build 3.** The iPhone app on build 2 or older is offered the v1.19.3 IPA, which opens new-tab links in the phone's browser. ([51cb1719](https://github.com/GGGODLIN/collie/commit/51cb1719))
+- **The copy icon confirms on every screen and copies over plain HTTP.** It shows a check or an X for a moment, so History and Files give feedback too; a narrow table's icon sits at the table's corner; the command output icon reads "Copy command output"; and where the browser has no clipboard API, as on a tailnet page served over `http://`, the copy falls back to the browser's older copy command. From upstream 1.19.2. ([d0c9f1e2](https://github.com/GGGODLIN/collie/commit/d0c9f1e2))
 
 ### Fixed
 
-- **`--help` on a command prints its usage and changes nothing.** `collie update --help` used to start the real update, and `restart`, `uninstall` and `build` did the same. From upstream 1.19.1.
-- **The `/auth/` page tells an unpaired device to pair.** With no proxy in front of Collie, it says to run `collie pair` on the computer and enter the code in Settings. From upstream 1.19.1.
-- **A send no longer types into an opencode overlay box.** Collie refuses the send while a /models-style box holds the keyboard, and a send that stalls on a dialog, menu or overlay names it. From upstream 1.19.1.
-- **A Mac's memory figure leaves out the file cache.** Collie reports what Activity Monitor calls Memory Used, so a Mac no longer sits at 88 to 98 %. From upstream 1.19.1.
-- **An omp question whose options have descriptions gets its option card.** Each description shows on its option. From upstream 1.19.2.
-- **The unread-dialog card follows Wrap lines.** Its mirror of a wide pane wraps or pans as the pane mirror does. From upstream 1.19.2.
-- **A reply to Muse no longer stays in the box as an unsent draft.** Muse waits 350 ms after the text before the guarded Enter. From upstream 1.19.2.
-- **An installed iPhone app no longer hides its bottom row behind the home bar.** The home-screen web app's height no longer overshoots on iOS releases that report the large viewport too tall. From upstream 1.19.2.
+- **`--help` on a command prints its usage and changes nothing.** `collie update --help` used to start the real update, and `restart`, `uninstall` and `build` did the same. From upstream 1.19.1. ([d0c9f1e2](https://github.com/GGGODLIN/collie/commit/d0c9f1e2))
+- **The `/auth/` page tells an unpaired device to pair.** With no proxy in front of Collie, it says to run `collie pair` on the computer and enter the code in Settings. From upstream 1.19.1. ([d0c9f1e2](https://github.com/GGGODLIN/collie/commit/d0c9f1e2))
+- **A send no longer types into an opencode overlay box.** Collie refuses the send while a /models-style box holds the keyboard, and a send that stalls on a dialog, menu or overlay names it. From upstream 1.19.1. ([d0c9f1e2](https://github.com/GGGODLIN/collie/commit/d0c9f1e2))
+- **A Mac's memory figure leaves out the file cache.** Collie reports what Activity Monitor calls Memory Used, so a Mac no longer sits at 88 to 98 %. From upstream 1.19.1. ([d0c9f1e2](https://github.com/GGGODLIN/collie/commit/d0c9f1e2))
+- **An omp question whose options have descriptions gets its option card.** Each description shows on its option. From upstream 1.19.2. ([d0c9f1e2](https://github.com/GGGODLIN/collie/commit/d0c9f1e2))
+- **The unread-dialog card follows Wrap lines.** Its mirror of a wide pane wraps or pans as the pane mirror does. From upstream 1.19.2. ([d0c9f1e2](https://github.com/GGGODLIN/collie/commit/d0c9f1e2))
+- **A reply to Muse no longer stays in the box as an unsent draft.** Muse waits 350 ms after the text before the guarded Enter. From upstream 1.19.2. ([d0c9f1e2](https://github.com/GGGODLIN/collie/commit/d0c9f1e2))
+- **An installed iPhone app no longer hides its bottom row behind the home bar.** The home-screen web app's height no longer overshoots on iOS releases that report the large viewport too tall. From upstream 1.19.2. ([d0c9f1e2](https://github.com/GGGODLIN/collie/commit/d0c9f1e2))
 
 ## [1.19.3] - 2026-10-10
 
