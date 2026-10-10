@@ -174,13 +174,24 @@ function QueuedCard({ queued, sendNow }: { queued: readonly string[]; sendNow: (
  */
 const PIN_SEEK_PAGES = 10;
 
+/** When a jump to a prompt re-checks its landing while the blocks above take their real size. */
+const JUMP_SETTLE_MS = [100, 250, 500] as const;
+
 /**
  * The topmost block the reader can see, or -1 while the stream's top edge is on screen.
  *
  * "Can see" is measured from the scroller's padding edge, which is where the strip band ends, so a
  * block hidden under the band does not count as read. Binary search: blocks are in document order and
  * a long thread holds hundreds of them.
+ *
+ * A block's box is its content plus {@link STREAM_BLOCK}'s 12px padding on every side, pulled back by
+ * the same negative margin, so neighbours OVERLAP by 24px. Measuring the raw box let the block above
+ * reach 24px into a prompt just jumped to (its box top sits on the line), which then read as
+ * "answered further back" with the pin drawn over it (seen on a phone-sized screen, 2026-10-10). So a
+ * block counts as the top one only once it reaches past that overlap.
  */
+const BLOCK_OVERLAP_PX = 24;
+
 function topBlock(el: HTMLElement): number {
   const nodes = el.querySelectorAll<HTMLElement>(":scope > [data-block]");
   if (nodes.length === 0) return -1;
@@ -190,7 +201,7 @@ function topBlock(el: HTMLElement): number {
   let hi = nodes.length - 1;
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
-    if (nodes[mid]!.getBoundingClientRect().bottom > line) hi = mid;
+    if (nodes[mid]!.getBoundingClientRect().bottom - BLOCK_OVERLAP_PX > line) hi = mid;
     else lo = mid + 1;
   }
   return lo;
@@ -437,11 +448,34 @@ export function SessionStream({
   }, [blocks, listRef]);
   const pin = savedCopy === null ? pinAt(prompts, top, lastPrompt, holdsLastPrompt, window.hasOlder) : null;
 
+  // One scroll does not land: the blocks above the target are `content-visibility: auto`, and a page
+  // that just arrived has never been laid out, so each sits at its 64px placeholder until the jump
+  // brings it near the screen and it takes its real height, pushing the target down (a 293px reply
+  // left a prompt 89px below the top on 2026-10-10, measured AFTER the next frame had looked fine).
+  // So the jump re-aligns at a few checkpoints, and gives up the moment the reader touches the list:
+  // a correction that lands after their own scroll would be the app fighting them.
   const jumpToBlock = useCallback(
     (index: number) => {
-      const el = listRef.current?.getScrollElement();
+      const list = listRef.current;
+      const el = list?.getScrollElement();
       const node = el?.querySelectorAll<HTMLElement>(":scope > [data-block]")[index] ?? null;
-      listRef.current?.scrollToChild(node, true);
+      if (list === null || list === undefined || el === null || el === undefined || node === null) return;
+      let touched = false;
+      const stop = () => {
+        touched = true;
+      };
+      const inputs = ["pointerdown", "wheel", "touchstart", "keydown"] as const;
+      for (const type of inputs) el.addEventListener(type, stop, { once: true, passive: true });
+      const realign = () => {
+        if (touched) return;
+        if (Math.abs(node.getBoundingClientRect().top - el.getBoundingClientRect().top) > 1) list.scrollToChild(node, true);
+      };
+      list.scrollToChild(node, true);
+      requestAnimationFrame(realign);
+      for (const ms of JUMP_SETTLE_MS) setTimeout(realign, ms);
+      setTimeout(() => {
+        for (const type of inputs) el.removeEventListener(type, stop);
+      }, JUMP_SETTLE_MS.at(-1)! + 1);
     },
     [listRef],
   );

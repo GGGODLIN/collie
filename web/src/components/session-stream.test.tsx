@@ -542,11 +542,12 @@ describe("SessionStream — Send now", () => {
 // `index * 100 - scrolled` and the scroller a top of 0: block `i` is then the topmost visible one when
 // `scrolled` sits inside its row.
 describe("SessionStream — the prompt pin", () => {
-  function layOut(scrolled: number) {
+  /** `step` below 100 makes neighbouring rows overlap, the way a block's `-m-3 p-3` does. */
+  function layOut(scrolled: number, step = 100) {
     return vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
       if (!this.hasAttribute("data-block")) return DOMRect.fromRect({ x: 0, y: 0, width: 390, height: 600 });
       const index = [...(this.parentElement?.querySelectorAll(":scope > [data-block]") ?? [])].indexOf(this);
-      return DOMRect.fromRect({ x: 0, y: index * 100 - scrolled, width: 390, height: 100 });
+      return DOMRect.fromRect({ x: 0, y: index * step - scrolled, width: 390, height: 100 });
     });
   }
   const prompt = (uuid: string, seq: number, text: string) => entry(uuid, seq, text, { role: "user" });
@@ -617,6 +618,23 @@ describe("SessionStream — the prompt pin", () => {
       }),
     );
     expect(document.querySelector('[data-slot="prompt-pin"]')).toHaveTextContent("rename the route");
+  });
+
+  it("a jump that lands the prompt at the top pins nothing over it, though the block above overlaps it", () => {
+    // Neighbours overlap by 24px (each block's -12px margin, top and bottom). A jump puts the prompt's
+    // box top exactly on the line, so the reply above ends 24px below it. Found on a phone-sized screen
+    // on 2026-10-10: the pin read the reply above as the top block and drew "Asked further back" over
+    // the prompt itself.
+    layOut(76, 76);
+    renderStream(
+      feedOf({
+        status: { kind: "live" },
+        hasOlder: true,
+        entries: [entry("a", BASE + 9, "earlier reply"), prompt("p1", BASE + 10, "rename the route"), entry("b", BASE + 11, "two")],
+        lastPrompt: { uuid: "p1", ts: "", text: "rename the route" },
+      }),
+    );
+    expect(document.querySelector('[data-slot="prompt-pin"]')).toBeNull();
   });
 
   it("leaves the top edge alone when the prompt is held and on screen", () => {
