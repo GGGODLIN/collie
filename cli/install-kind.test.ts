@@ -332,9 +332,9 @@ describe("where updates come from", () => {
   });
 
   test("COLLIE_UPDATE_REPO is the one override, and Collie's own repo is the default", () => {
-    expect(updateRepoOf({})).toBe("GGGODLIN/collie");
+    expect(updateRepoOf({})).toBe("GGGODLIN/gaddi");
     expect(updateRepoOf({ COLLIE_UPDATE_REPO: "  my/collie  " })).toBe("my/collie");
-    expect(updateRepoOf({ COLLIE_UPDATE_REPO: "" })).toBe("GGGODLIN/collie");
+    expect(updateRepoOf({ COLLIE_UPDATE_REPO: "" })).toBe("GGGODLIN/gaddi");
   });
 
   test("originMatches normalises both sides — and an unreadable origin never matches", () => {
@@ -348,6 +348,14 @@ describe("where updates come from", () => {
     expect(originMatches({ kind: "unresolvable" }, "AltanS/collie")).toBe(false);
     // A non-GitHub remote can still be self-consistent for an operator who points both at it.
     expect(originMatches({ kind: "other", url: "/srv/collie.git" }, "/srv/collie")).toBe(true);
+  });
+
+  test("a clone made before the fork's rename still matches its new name, both ways", () => {
+    const old = { kind: "repo", repo: "GGGODLIN/collie" } as const;
+    expect(originMatches(old, "GGGODLIN/gaddi")).toBe(true);
+    expect(originMatches({ kind: "repo", repo: "GGGODLIN/gaddi" }, "GGGODLIN/collie")).toBe(true);
+    expect(originMatches(old, "AltanS/collie")).toBe(false);
+    expect(originMatches({ kind: "repo", repo: "AltanS/collie" }, "GGGODLIN/gaddi")).toBe(false);
   });
 });
 

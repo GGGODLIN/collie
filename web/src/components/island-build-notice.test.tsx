@@ -7,7 +7,7 @@ import { RECOMMENDED_ISLAND_BUILD } from "@/lib/island-build";
 
 const recommended = { build: 2, tag: "v1.18.101" };
 const host = { collieIsland: { openAddress: vi.fn() } };
-const url = "https://github.com/GGGODLIN/collie/releases/download/v1.18.101/CollieIsland.ipa";
+const url = "https://github.com/GGGODLIN/gaddi/releases/download/v1.18.101/CollieIsland.ipa";
 
 describe("IslandBuildNotice", () => {
   it("copies the IPA URL without navigating the old shell away from Collie", async () => {

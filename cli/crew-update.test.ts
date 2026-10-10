@@ -413,7 +413,7 @@ describe("crew update is a lead's verb, over named members", () => {
   test("a binary lead takes the same route", async () => {
     const h = harness({ installKind: { kind: "binary" }, probes: { "nas.example": binaryMember("1.0.0") } });
     expect(await cmdCrewUpdate(h.deps, ["--all"])).toBe(EXIT.OK);
-    expect(text(h.io)).toContain(`installing v${VERSION} from GGGODLIN/collie`);
+    expect(text(h.io)).toContain(`installing v${VERSION} from GGGODLIN/gaddi`);
   });
 
   test("a route override describes one machine, so it refuses a multi-member run", async () => {
@@ -1079,7 +1079,7 @@ describe("the release route", () => {
     expect(install.stdin?.startsWith("#!/bin/sh\n")).toBe(true);
     // The restart addresses the binary behind `current`, which is the one that will be running.
     expect(h.calls.find((c) => c.leg === "restart")!.script).toContain(MEMBER_CURRENT);
-    expect(text(h.io)).toContain(`installing v${VERSION} from GGGODLIN/collie at ${MEMBER_INSTALL_ROOT} on nas.example…`);
+    expect(text(h.io)).toContain(`installing v${VERSION} from GGGODLIN/gaddi at ${MEMBER_INSTALL_ROOT} on nas.example…`);
     expect(text(h.io)).toContain(`nas         updated  1.0.0 → ${VERSION}`);
   });
 

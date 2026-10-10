@@ -28,6 +28,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 - **A resumed Grok session is never matched from a partly read list.** When Grok's list of live sessions cannot be read whole, Chat and History keep the session Herdr reported instead of taking the only other Grok in the same folder, which could belong to another pane.
 - **A Grok list whose presence cannot be checked counts as unread.** Only a list that is known to be missing is skipped; a folder Collie may not look into keeps Herdr's session, as an unreadable list does.
 
+### Changed
+
+- **Gaddi's repository is now GGGODLIN/gaddi.** Updates, the update banner and the iPhone app download take releases from the new name. An install cloned from the old GGGODLIN/collie address keeps updating with nothing to change; GitHub forwards the old address.
+
 ## [2.0.0] - 2026-10-10
 
 ### Changed

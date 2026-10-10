@@ -174,9 +174,9 @@ macOS has no package yet. [mise](#mise) works on a Mac, as does the `aarch64-dar
 Run `install.ps1`. It needs no Bun, Git or `bash`:
 
 ```powershell
-$env:COLLIE_UPDATE_REPO = "GGGODLIN/collie"
+$env:COLLIE_UPDATE_REPO = "GGGODLIN/gaddi"
 Invoke-WebRequest -OutFile install.ps1 `
-  https://raw.githubusercontent.com/GGGODLIN/collie/main/scripts/install.ps1
+  https://raw.githubusercontent.com/GGGODLIN/gaddi/main/scripts/install.ps1
 notepad install.ps1
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```

@@ -102,7 +102,7 @@ const HEALTHY_ANSWERS: Scripted["answers"] = [
   ["herdr --version", { stdout: "herdr 0.9.3\n" }],
   // A healthy checkout can say where it came from: `update` asserts `origin` against the configured
   // update source before it fetches, so an origin-less checkout is a real (reported) problem.
-  [`git -C ${ROOT} remote get-url origin`, { stdout: "https://github.com/GGGODLIN/collie.git\n" }],
+  [`git -C ${ROOT} remote get-url origin`, { stdout: "https://github.com/GGGODLIN/gaddi.git\n" }],
   [`git -C ${ROOT} symbolic-ref --short HEAD`, { stdout: "main\n" }],
   ["herdr integration status", { stdout: INTEGRATION_OK }],
   [
@@ -977,7 +977,7 @@ describe("collie doctor — the local checks", () => {
     expect(f?.status).toBe("ok");
     expect(f?.detail).toContain("linked clone");
     expect(f?.detail).toContain("branch main");
-    expect(f?.detail).toContain("GGGODLIN/collie");
+    expect(f?.detail).toContain("GGGODLIN/gaddi");
   });
 
   test("install: a Herdr-managed checkout is named as one", async () => {
@@ -2421,7 +2421,7 @@ describe("POSIX parity (M43 spec 04)", () => {
   test("the plain doctor output on a POSIX host is byte-identical to the one before spec 04", async () => {
     const out = `${await render()}---\n${await render(blocked())}`;
     // 此 fork 的更新來源不同，其餘 POSIX 輸出仍逐 byte 比對。
-    const golden = readFileSync(GOLDEN, "utf8").replaceAll("AltanS/collie", "GGGODLIN/collie");
+    const golden = readFileSync(GOLDEN, "utf8").replaceAll("AltanS/collie", "GGGODLIN/gaddi");
     // Paths in the output are joined with the machine's own separator, so the byte comparison runs
     // where the golden was made (POSIX). Windows compares the check ids and statuses line by line.
     if (process.platform !== "win32") expect(out).toBe(golden);

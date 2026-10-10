@@ -880,7 +880,7 @@ Upstream reuses numbers this fork has published (both have a `v1.14.0`), so its 
 
 1. On `dev`, make the ordinary `chore(release): x.y.z` commit (*Versioning* above) with the
    upstream-base bullet, each CHANGELOG hash linked as
-   `https://github.com/GGGODLIN/collie/commit/<hash>`, and push it. Read what it ships with
+   `https://github.com/GGGODLIN/gaddi/commit/<hash>`, and push it. Read what it ships with
    `git diff --stat origin/main origin/dev`, not `git log <last tag>..HEAD`: a fork tag sits on
    `main`'s copied commit, which `dev` never contains, so that log lists all of `dev`'s history.
 2. Wait for CI on that `dev` commit to pass. Windows CI does not run on a `dev` push; the one manual

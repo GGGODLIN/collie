@@ -669,7 +669,7 @@ export const CONFIG_SETTINGS: readonly ConfigSetting[] = [
     section: "update",
     kind: "string",
     // Fork-only (FORK.md → *Updates come from this fork*).
-    default: "GGGODLIN/collie",
+    default: "GGGODLIN/gaddi",
     doc: "The owner/repo releases are taken from. Set it only when you run a fork on purpose.",
   },
   {

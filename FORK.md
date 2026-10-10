@@ -95,7 +95,8 @@ Each entry says what it is, where it lives, and what it assumes.
 ### Updates come from this fork (2026-09-27)
 
 - **What.** `collie update`, `collie doctor` and the in-app update banner take their releases from
-  `GGGODLIN/collie` unless `COLLIE_UPDATE_REPO` says otherwise, and the release and triage workflows
+  `GGGODLIN/gaddi` (named `GGGODLIN/collie` until the 2026-10-11 rename, which `originMatches` still
+  accepts in a clone's `origin`) unless `COLLIE_UPDATE_REPO` says otherwise, and the release and triage workflows
   skip the jobs that need upstream's site token, AUR key and model key.
 - **Where.** `DEFAULT_UPDATE_REPO` in [`cli/install-kind.ts`](/cli/install-kind.ts), which
   [`bridge/index.ts`](/bridge/index.ts) now reads too; the `update_repo` default in

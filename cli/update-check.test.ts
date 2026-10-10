@@ -73,7 +73,7 @@ const df = (availableKb: number): string =>
 const HEALTHY: NonNullable<Scripted["answers"]> = [
   [`${GIT} rev-parse --show-prefix`, { stdout: "" }],
   [`${GIT} symbolic-ref -q HEAD`, { code: 1 }],
-  [`${GIT} remote get-url origin`, { stdout: "https://github.com/GGGODLIN/collie.git\n" }],
+  [`${GIT} remote get-url origin`, { stdout: "https://github.com/GGGODLIN/gaddi.git\n" }],
   [`${GIT} status --porcelain --untracked-files=no`, { stdout: "" }],
   [`${GIT} ls-remote --tags`, { stdout: LS_REMOTE }],
   [`${GIT} rev-parse HEAD`, { stdout: "cccccccc\n" }],
@@ -539,7 +539,7 @@ describe("preflight — the upstream check", () => {
       await preflight(
         harness({
           answers: [
-            [`${GIT} remote get-url origin`, { stdout: "git@github.com:GGGODLIN/collie.git\n" }],
+            [`${GIT} remote get-url origin`, { stdout: "git@github.com:GGGODLIN/gaddi.git\n" }],
             [
               `${GIT} ls-remote --tags`,
               { code: 128, stderr: "git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n" },
@@ -556,11 +556,11 @@ describe("preflight — the upstream check", () => {
 
   test("a read-only tag listing needs no credential: an ssh origin is listed over https, with a timeout", async () => {
     const h = harness({
-      answers: [[`${GIT} remote get-url origin`, { stdout: "git@github.com:GGGODLIN/collie.git\n" }]],
+      answers: [[`${GIT} remote get-url origin`, { stdout: "git@github.com:GGGODLIN/gaddi.git\n" }]],
     });
     await preflight(h.deps);
     const listing = h.exec.calls.find((c) => c.includes("ls-remote"))!;
-    expect(listing).toBe(`${GIT} ls-remote --tags https::https://github.com/GGGODLIN/collie.git`);
+    expect(listing).toBe(`${GIT} ls-remote --tags https::https://github.com/GGGODLIN/gaddi.git`);
     expect(h.exec.timeouts.find((t) => t.call.includes("ls-remote"))?.ms).toBe(15_000);
   });
 
@@ -592,7 +592,7 @@ describe("preflight — the upstream check", () => {
     );
     expect(check.verdict).toBe("red");
     expect(check.reason).toContain("github.com/fork/collie");
-    expect(check.reason).toContain("github.com/GGGODLIN/collie");
+    expect(check.reason).toContain("github.com/GGGODLIN/gaddi");
     expect(check.remedy).toContain("COLLIE_UPDATE_REPO=fork/collie");
   });
 });
@@ -1113,7 +1113,7 @@ describe("preflight — a folder a package manager owns", () => {
       },
     });
     expect(byId(await preflight(h.deps), "upstream").verdict).not.toBe("red");
-    expect(asked).toEqual(["http://127.0.0.1:8899/repos/GGGODLIN/collie/tags?per_page=100"]);
+    expect(asked).toEqual(["http://127.0.0.1:8899/repos/GGGODLIN/gaddi/tags?per_page=100"]);
 
     const wide = byId(await preflight(packaged({ env: { COLLIE_UPDATE_MIRROR: "http://10.0.0.5:8899" } }).deps), "upstream");
     expect(wide.verdict).toBe("red");
