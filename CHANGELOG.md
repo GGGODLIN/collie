@@ -23,6 +23,16 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.18.104] - 2026-10-10
+
+### Changed
+
+- **Built on upstream Collie 1.18.1.** AltanS/collie v1.18.1, commit cfaf95a9, unchanged since fork 1.18.100. ([9be973df](https://github.com/GGGODLIN/collie/commit/9be973df))
+
+### Fixed
+
+- **A short command's copy icon copies the command again.** With a one-line command's output open, the bottom of the command's icon copied the output instead; the command block now stays tall enough to keep both 44px tap targets apart, and the line between command and output is back. ([c92d29b7](https://github.com/GGGODLIN/collie/commit/c92d29b7))
+
 ## [1.18.103] - 2026-10-10
 
 ### Changed

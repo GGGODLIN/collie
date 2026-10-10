@@ -970,7 +970,9 @@ function CommandBlock({ command, output, preview }: { command: string; output?: 
     <>
       <div className="mx-2 mb-2 rounded-md">
         <CopyableBlock text={command} label={t("copyable.command")}>
-          <div className={cn("rounded-t-md px-2.5 py-2 font-mono text-[11px] leading-[1.4]", !(open && lines.length > 0) && "rounded-b-md", MIRROR_SPACE, MIRROR_INVERT)}>
+          {/* With the output open below, a one-line command is shorter than a copy icon's 44px reach,
+              and the output icon's reach would take the bottom of this one; min-h-11 keeps them apart. */}
+          <div className={cn("rounded-t-md px-2.5 py-2 font-mono text-[11px] leading-[1.4]", open && lines.length > 0 ? "min-h-11" : "rounded-b-md", MIRROR_SPACE, MIRROR_INVERT)}>
             <div className="line-clamp-6 whitespace-pre-wrap break-words">
               <span className="text-[#23d18b]">$</span> {command}
             </div>
@@ -978,7 +980,7 @@ function CommandBlock({ command, output, preview }: { command: string; output?: 
         </CopyableBlock>
         {open && lines.length > 0 && (
           <CopyableBlock text={output ?? ""} label={t("chat.copyOutput.label")}>
-            <pre className={cn("m-0 overflow-x-auto rounded-b-md px-2.5 py-2 font-mono text-[11px] leading-[1.4] whitespace-pre", MIRROR_SPACE, MIRROR_INVERT)}>{shown.join("\n")}</pre>
+            <pre className={cn("m-0 overflow-x-auto rounded-b-md border-t border-white/10 px-2.5 py-2 font-mono text-[11px] leading-[1.4] whitespace-pre", MIRROR_SPACE, MIRROR_INVERT)}>{shown.join("\n")}</pre>
           </CopyableBlock>
         )}
       </div>
