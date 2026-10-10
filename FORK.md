@@ -125,3 +125,17 @@ Each entry says what it is, where it lives, and what it assumes.
   [`.github/workflows/windows.yml`](/.github/workflows/windows.yml).
 - **Assumes.** This fork has no Windows VM, and the operator cannot configure one.
 - **To upstream.** Leave it out. Upstream's VM rehearsal requirement is unchanged.
+
+### The fork numbers its own releases (2026-10-10)
+
+- **What.** From fork 2.0.0 the fork's version is its own SemVer, picked from what each release
+  means to someone running Gaddi, and no longer derived from the upstream release it is built on.
+  Each release still names that upstream release in its first CHANGELOG bullet. The ADR 0038 test
+  clock reads that bullet instead of the package major, so the fork reaching 2.0.0 does not demand
+  the `collie pack` alias's removal before upstream makes it.
+- **Where.** [`CLAUDE.md`](/CLAUDE.md) → *Fork branches and releases* → *Version numbers*,
+  [ADR 9008](/.adr/9008-the-fork-numbers-its-own-releases.md), and the "`crew` alias is gone in
+  2.0.0" case in [`cli/program.test.ts`](/cli/program.test.ts).
+- **Assumes.** Every release's CHANGELOG section carries the "Built on upstream Collie X.Y.Z."
+  bullet.
+- **To upstream.** Leave it out. Upstream numbers its own releases already.

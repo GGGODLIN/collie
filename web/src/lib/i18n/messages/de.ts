@@ -368,6 +368,7 @@ export const de: Dictionary = {
   "chat.history.label": "Verlauf",
   "copyable.copy": "Kopieren",
   "copyable.command": "Befehl kopieren",
+  "copyable.output": "Befehlsausgabe kopieren",
   "copyable.done": "In die Zwischenablage kopiert",
   "copyable.failed": "Konnte nicht in die Zwischenablage kopiert werden",
   "chat.copyOutput.label": "Ausgabe kopieren",
@@ -1244,6 +1245,8 @@ export const de: Dictionary = {
     "Dies ist eine Passwortabfrage ohne Zeichenecho. Der Text konnte nicht bestätigt und daher nicht übermittelt werden. Die Eingabe steht bereits im Pane.",
   "reply.stalled.generic":
     "Die Nachricht hat das Eingabefeld nicht erreicht. Vermutlich wartet ein Dialog. Einzelne Tastendrücke zur Bestätigung wurden eventuell verarbeitet. Es wurde nichts gesendet.",
+  "reply.stalled.modal":
+    "Die Nachricht hat das Eingabefeld nicht erreicht: Ein Dialog, ein Menü oder ein Overlay hielt die Tastatur fest, der Text landete dort. Es wurde nichts gesendet.",
 
   // --- previewAction (the preview-select dialog's note flow, lib/preview-action.ts) ---
   "previewAction.note.notOpened": "Notizfeld konnte nicht geöffnet werden. Pane prüfen.",

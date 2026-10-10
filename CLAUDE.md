@@ -834,38 +834,32 @@ This fork keeps two branches and its own version line; both override upstream's 
 
 ### Version numbers
 
-The fork's number is derived from the upstream release it is built on, so it never reads as
-behind upstream and still leaves room for the fork's own releases. Fork `1.17.0` (built on
-upstream 1.17.2) is the last number under the older independent rule; the next release is the
-first under this one.
+From fork 2.0.0 the fork's number is its own SemVer; upstream's code still merges in, upstream's
+number does not ([ADR 9008](./.adr/9008-the-fork-numbers-its-own-releases.md), which also records
+the two rules before it). Fork `1.19.3` is the last number derived from upstream's.
 
-- **Major and minor are upstream's; the patch is upstream's patch times 100, plus the fork's own
-  count.** Built on upstream `X.Y.Z`, a release that only syncs it is `X.Y.(Z×100)`, and each fork
-  release after it on the same base adds one: upstream 1.17.2 gives fork `1.17.200`, then
-  `1.17.201`, `1.17.202`; upstream 1.17.3 gives `1.17.300`; upstream 1.18.0 gives `1.18.0`, then
-  `1.18.1`. Only a strict `vX.Y.Z` is ever offered to a stable install (`SEMVER_TAG` in
-  `bridge/update.ts`), which is why the fork's count lives inside the patch rather than in a fourth
-  number or a suffix.
-- **The axis follows from that, not from the *Versioning* recipe's step 1.** A sync takes whatever
-  axis upstream moved; a fork-only release is always a patch, so the phone folds it into the weekly
-  digest. A fork release the operator must take today carries the `**Urgent.**` line as usual. A
-  fork change the operator must act on has no number of its own: say so in its CHANGELOG bullet.
-- **If the rule gives a number at or below one already published, stop and ask.** It cannot happen
-  while upstream only moves forward; a re-cut or yanked upstream tag is the case it guards.
-- **The same number can mean two releases.** Fork `1.18.0` and upstream `1.18.0` differ; in docs,
-  commit messages and conversation, say "fork 1.18.0" or "upstream 1.18.0". No code compares this
-  fork's version with upstream's: crew skew is amber only, and features are keyed on the protocol
-  version.
-- **The fork's major trips upstream's 2.0 clock only when upstream's does.** `cli/program.test.ts`
-  fails once the package major reaches 2 until ADR 0038's `pack` names are gone
-  (`bridge/removal-schedule.test.ts` lists them); upstream does that removal in its own 2.0, and the
-  fork takes it in the sync.
+- **Pick the axis from what the release means to someone running Gaddi** (*Versioning* step 1). A
+  sync takes the axis its upstream changes amount to for them, which can differ from the one
+  upstream moved. A fork-only fix is a patch, a fork feature a minor.
+- **A fork major is a change the operator must act on, never a renumbering.** Crossing a major costs
+  every install a separate consent tap (ADR 0020), and only a strict `vX.Y.Z` is ever offered
+  (`SEMVER_TAG` in `bridge/update.ts`), so the number never takes a fourth part or a suffix.
+- **If the number is at or below one already published, stop and ask.** No install would take it.
+- **The same number can mean two releases.** Once upstream reaches 2.x, fork `2.1.0` and upstream
+  `2.1.0` differ; in docs, commit messages and conversation, say "fork 2.1.0" or "upstream 2.1.0".
+  No code compares this fork's version with upstream's: crew skew is amber only, and features are
+  keyed on the protocol version.
+- **Upstream's 2.0 clock reads the upstream base, not the fork's major.** The "`crew` alias is gone
+  in 2.0.0" case in `cli/program.test.ts` takes the major from the newest "Built on upstream Collie
+  X.Y.Z." line, so it fails in the sync that takes upstream's 2.0, which is the release that deletes
+  ADR 0038's `pack` names (`bridge/removal-schedule.test.ts` lists them).
 - **One release takes one number.** Several merges and changes may ship together; a `dev` commit or
   a merge never takes a number by itself. A published number is never reused or re-pointed.
 - **Every release names its upstream base,** as the first bullet under `### Changed`:
   `- **Built on upstream Collie X.Y.Z.** AltanS/collie vX.Y.Z, commit <short sha>.` It names the
   upstream release actually merged, not upstream's newest, and says so when only some of a
-  release's commits were taken or one was reverted.
+  release's commits were taken or one was reverted. This line, not the number, is how a reader
+  finds the upstream release a fork release contains.
 
 ### Upstream's tags
 

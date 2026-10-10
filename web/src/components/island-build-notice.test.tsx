@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { IslandBuildNotice } from "./island-build-notice";
+import { RECOMMENDED_ISLAND_BUILD } from "@/lib/island-build";
 
 const recommended = { build: 2, tag: "v1.18.101" };
 const host = { collieIsland: { openAddress: vi.fn() } };
@@ -49,7 +50,7 @@ describe("IslandBuildNotice", () => {
   it("stays absent outside the app and in a shell already on the recommended build", () => {
     const { container, rerender } = render(<IslandBuildNotice host={{}} recommended={recommended} />);
     expect(container).toBeEmptyDOMElement();
-    rerender(<IslandBuildNotice host={{ collieIsland: { build: 2, openAddress: vi.fn() } }} />);
+    rerender(<IslandBuildNotice host={{ collieIsland: { build: RECOMMENDED_ISLAND_BUILD.build, openAddress: vi.fn() } }} />);
     expect(container).toBeEmptyDOMElement();
   });
 });
