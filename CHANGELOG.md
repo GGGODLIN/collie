@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Fixed
+
+- **A short command's copy icon copies the command again.** With a one-line command's output open, the bottom of the command's icon copied the output instead; the command block now stays tall enough to keep both 44px tap targets apart, and the line between command and output is back.
+
 ## [1.18.103] - 2026-10-10
 
 ### Changed

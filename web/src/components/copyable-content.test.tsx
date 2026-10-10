@@ -65,6 +65,8 @@ describe("copyable reading blocks", () => {
     const outputButton = within(container).getByRole("button", { name: "Copy output" });
     expect(outputButton.closest(".invert")).toBeNull();
     expect(commandButton.parentElement).not.toBe(outputButton.parentElement);
+    expect(commandButton.nextElementSibling?.className).toContain("min-h-11");
+    expect(outputButton.nextElementSibling?.className).toContain("border-t");
     for (const button of [commandButton, outputButton]) {
       expect(button.textContent).toBe("");
       expect(button.className).toContain("absolute");
