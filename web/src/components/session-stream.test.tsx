@@ -537,3 +537,98 @@ describe("SessionStream — Send now", () => {
     }
   });
 });
+
+// The prompt pin. jsdom lays nothing out, so each case gives every block a 100px row whose top is
+// `index * 100 - scrolled` and the scroller a top of 0: block `i` is then the topmost visible one when
+// `scrolled` sits inside its row.
+describe("SessionStream — the prompt pin", () => {
+  function layOut(scrolled: number) {
+    return vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      if (!this.hasAttribute("data-block")) return DOMRect.fromRect({ x: 0, y: 0, width: 390, height: 600 });
+      const index = [...(this.parentElement?.querySelectorAll(":scope > [data-block]") ?? [])].indexOf(this);
+      return DOMRect.fromRect({ x: 0, y: index * 100 - scrolled, width: 390, height: 100 });
+    });
+  }
+  const prompt = (uuid: string, seq: number, text: string) => entry(uuid, seq, text, { role: "user" });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it("pins a held prompt once the reader has scrolled past it", () => {
+    layOut(250);
+    renderStream(
+      feedOf({
+        status: { kind: "live" },
+        entries: [prompt("p1", BASE, "fix the flaky test"), entry("a", BASE + 1, "one"), entry("b", BASE + 2, "two"), entry("c", BASE + 3, "three")],
+      }),
+    );
+    const pin = document.querySelector('[data-slot="prompt-pin"]');
+    expect(pin).toHaveTextContent("fix the flaky test");
+  });
+
+  it("pins nothing while the prompt itself is the top block", () => {
+    layOut(50);
+    renderStream(
+      feedOf({
+        status: { kind: "live" },
+        entries: [prompt("p1", BASE, "fix the flaky test"), entry("a", BASE + 1, "one")],
+      }),
+    );
+    expect(document.querySelector('[data-slot="prompt-pin"]')).toBeNull();
+  });
+
+  it("pins the bridge's report when the first page left the prompt out, and a tap walks back to it", async () => {
+    layOut(150);
+    const feed = feedOf({
+      status: { kind: "live" },
+      hasOlder: true,
+      entries: [entry("a", BASE + 10, "one"), entry("b", BASE + 11, "two"), entry("c", BASE + 12, "three")],
+      lastPrompt: { uuid: "p1", ts: "", text: "rename the route" },
+    });
+    renderStream(feed);
+    const pin = document.querySelector<HTMLButtonElement>('[data-slot="prompt-pin"]');
+    expect(pin).toHaveTextContent("rename the route");
+    await userEvent.click(pin!);
+    expect(feed.loadOlder).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers older turns when the prompt is neither held nor reported", async () => {
+    layOut(150);
+    const feed = feedOf({
+      status: { kind: "live" },
+      hasOlder: true,
+      entries: [entry("a", BASE + 10, "one"), entry("b", BASE + 11, "two"), entry("c", BASE + 12, "three")],
+    });
+    renderStream(feed);
+    const pin = document.querySelector<HTMLButtonElement>('[data-slot="prompt-pin"]');
+    expect(pin).toHaveTextContent("Asked further back");
+    await userEvent.click(pin!);
+    expect(feed.loadOlder).toHaveBeenCalledTimes(1);
+  });
+
+  it("pins over 'Load older' when the whole thread fits and its prompt is not held", () => {
+    // A long tool run folds into one card that fits the screen, so the top edge never scrolls away.
+    layOut(-40);
+    renderStream(
+      feedOf({
+        status: { kind: "live" },
+        hasOlder: true,
+        entries: [entry("a", BASE + 10, "one"), entry("b", BASE + 11, "two")],
+        lastPrompt: { uuid: "p1", ts: "", text: "rename the route" },
+      }),
+    );
+    expect(document.querySelector('[data-slot="prompt-pin"]')).toHaveTextContent("rename the route");
+  });
+
+  it("leaves the top edge alone when the prompt is held and on screen", () => {
+    layOut(-40);
+    renderStream(
+      feedOf({
+        status: { kind: "live" },
+        hasOlder: true,
+        entries: [prompt("p1", BASE + 10, "rename the route"), entry("b", BASE + 11, "two")],
+        lastPrompt: { uuid: "p1", ts: "", text: "rename the route" },
+      }),
+    );
+    expect(document.querySelector('[data-slot="prompt-pin"]')).toBeNull();
+  });
+});

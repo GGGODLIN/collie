@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { ArrowUpToLine, CornerDownLeft, History, Loader2 } from "lucide-react";
 
 import { ItemView, ToolGroup, groupRuns } from "@/components/chat-cards";
+import { PromptPin } from "@/components/prompt-pin";
 import { StatusDot } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { ChatMessageList, type ChatMessageListHandle } from "@/components/ui/chat/chat-message-list";
@@ -10,6 +11,7 @@ import type { ChatFeed } from "@/hooks/use-chat-window";
 import { itemsOf } from "@/lib/chat-items";
 import type { ChatStatus } from "@/lib/chat-window";
 import { t, type MessageKey } from "@/lib/i18n";
+import { pinAt, promptMap } from "@/lib/prompt-pin";
 import { recallScroll, rememberScroll } from "@/lib/scroll-memory";
 import { cn } from "@/lib/utils";
 
@@ -161,6 +163,37 @@ function QueuedCard({ queued, sendNow }: { queued: readonly string[]; sendNow: (
       ))}
     </div>
   );
+}
+
+/**
+ * How many older pages one tap on a reported prompt may fetch while walking back to it.
+ *
+ * The walk is the operator's own tap, so it may read past a screenful, but a prompt hundreds of turns
+ * back must not turn one tap into an unbounded read. Ten pages of 40 is past every tool run measured;
+ * a walk that runs out stops where it got to, and the pin still names the prompt.
+ */
+const PIN_SEEK_PAGES = 10;
+
+/**
+ * The topmost block the reader can see, or -1 while the stream's top edge is on screen.
+ *
+ * "Can see" is measured from the scroller's padding edge, which is where the strip band ends, so a
+ * block hidden under the band does not count as read. Binary search: blocks are in document order and
+ * a long thread holds hundreds of them.
+ */
+function topBlock(el: HTMLElement): number {
+  const nodes = el.querySelectorAll<HTMLElement>(":scope > [data-block]");
+  if (nodes.length === 0) return -1;
+  const line = el.getBoundingClientRect().top + (Number.parseFloat(getComputedStyle(el).paddingTop) || 0);
+  if (nodes[0]!.getBoundingClientRect().top >= line) return -1;
+  let lo = 0;
+  let hi = nodes.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (nodes[mid]!.getBoundingClientRect().bottom > line) hi = mid;
+    else lo = mid + 1;
+  }
+  return lo;
 }
 
 /** The top affordance, the same shape and the same words the mirror's own scrollback row uses. */
@@ -352,13 +385,13 @@ export function SessionStream({
   // Where the reader was FOLLOWING the tail, `useAutoScroll` re-pins after this, and that is the
   // right answer: they were at the bottom and they stay there.
   const anchor = useRef<{ height: number; top: number; firstId: string } | null>(null);
-  const onLoadOlder = () => {
+  const onLoadOlder = useCallback(() => {
     const el = listRef.current?.getScrollElement();
     const firstId = blocks[0]?.[0]?.id;
     anchor.current =
       el && firstId !== undefined ? { height: el.scrollHeight, top: el.scrollTop, firstId } : null;
     loadOlder();
-  };
+  }, [blocks, listRef, loadOlder]);
   useLayoutEffect(() => {
     const held = anchor.current;
     if (held === null) return;
@@ -371,6 +404,78 @@ export function SessionStream({
     if (el === null || el === undefined) return;
     el.scrollTop = held.top + (el.scrollHeight - held.height);
   }, [blocks, loadingOlder, listRef]);
+
+  // ── THE PROMPT PIN ──────────────────────────────────────────────────────────
+  // Which prompt the turns on screen answer, pinned over the top of the thread (lib/prompt-pin.ts
+  // decides, components/prompt-pin.tsx draws). Only the topmost visible block is measured here, on
+  // scroll and after every commit that changed the blocks, and the state moves only when that block
+  // changes, so a scroll inside one long reply re-renders nothing.
+  const prompts = useMemo(() => promptMap(blocks), [blocks]);
+  const lastPrompt = window.lastPrompt;
+  const holdsLastPrompt = useMemo(
+    () => lastPrompt !== null && window.entries.some((e) => e.uuid === lastPrompt.uuid && e.abandoned !== true),
+    [lastPrompt, window.entries],
+  );
+  const [top, setTop] = useState(-1);
+  useLayoutEffect(() => {
+    const el = listRef.current?.getScrollElement();
+    if (el === null || el === undefined) return;
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      setTop(topBlock(el));
+    };
+    measure();
+    const onScroll = () => {
+      if (frame === 0) frame = requestAnimationFrame(measure);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (frame !== 0) cancelAnimationFrame(frame);
+    };
+  }, [blocks, listRef]);
+  const pin = savedCopy === null ? pinAt(prompts, top, lastPrompt, holdsLastPrompt, window.hasOlder) : null;
+
+  const jumpToBlock = useCallback(
+    (index: number) => {
+      const el = listRef.current?.getScrollElement();
+      const node = el?.querySelectorAll<HTMLElement>(":scope > [data-block]")[index] ?? null;
+      listRef.current?.scrollToChild(node, true);
+    },
+    [listRef],
+  );
+
+  // A reported prompt the client does not hold yet: walk older pages until it arrives, then jump to
+  // it. Driven by an effect rather than a loop in the handler because each page is a merge and a
+  // render away, and the anchoring above must run on every one of them.
+  const [seeking, setSeeking] = useState(false);
+  const seekPages = useRef(0);
+  useEffect(() => {
+    if (!seeking || loadingOlder) return;
+    if (holdsLastPrompt && lastPrompt !== null) {
+      const index = blocks.findIndex((g) => g.length === 1 && g[0]!.kind === "user" && g[0]!.id.startsWith(`${lastPrompt.uuid}:`));
+      setSeeking(false);
+      if (index >= 0) jumpToBlock(index);
+      return;
+    }
+    if (window.hasOlder && seekPages.current < PIN_SEEK_PAGES) {
+      seekPages.current += 1;
+      onLoadOlder();
+      return;
+    }
+    setSeeking(false);
+  }, [seeking, loadingOlder, holdsLastPrompt, lastPrompt, blocks, window.hasOlder, onLoadOlder, jumpToBlock]);
+
+  const onPinTap = () => {
+    if (pin === null) return;
+    if (pin.kind === "held") jumpToBlock(pin.start);
+    else if (pin.kind === "earlier") onLoadOlder();
+    else {
+      seekPages.current = 0;
+      setSeeking(true);
+    }
+  };
 
   const sendNowKeys = window.sendQueuedNow;
   const sendNow =
@@ -401,6 +506,7 @@ export function SessionStream({
       // older turns is an ordinary act in this body and a rare one in that one.
       className="px-3 pt-0 pb-3"
       style={textTokens(fontSize)}
+      overlay={pin !== null ? <PromptPin pin={pin} busy={seeking || (pin.kind === "earlier" && loadingOlder)} onTap={onPinTap} /> : null}
     >
       {/* Top of the window. Older turns come off `hasOlder` and nothing else: what the live window
           has trimmed is the History read's job, reached through `?before=`, and the bridge holds
