@@ -4236,6 +4236,15 @@ describe("journalRefOf — which session the history and chat routes read", () =
   test("an adapter without reconcile reads the reported ref as before", async () => {
     expect(await journalRefOf(adapter({}), pane({ agentSession: reported }))).toEqual(reported);
   });
+
+  // The cases above prove journalRefOf; this one proves the routes use it. Put a route back on the
+  // reported ref and every case above still passes while the resumed session goes unread again.
+  test("every journal route reads the ref journalRefOf settles on, never the reported one", () => {
+    const src = readFileSync(join(import.meta.dir, "server.ts"), "utf8");
+    // history, chat, and the reply-file read (ADR 9006)
+    expect([...src.matchAll(/await journalRefOf\(adapter, pane\)/g)]).toHaveLength(3);
+    expect(src).not.toMatch(/pane\.agentSession \?\?/);
+  });
 });
 
 // M46 spec 05: the response headers every answer carries, and the blob cache rule.

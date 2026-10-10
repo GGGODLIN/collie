@@ -320,4 +320,36 @@ describe("GrokTranscriptSource.reconcile", () => {
     const src = new GrokTranscriptSource(root, alive);
     expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
   });
+
+  // A unique candidate proves nothing when part of the list could not be read: the unread part may
+  // hold the reported id, and the candidate may belong to another pane in the same folder.
+  test("a malformed row beside a valid candidate keeps the reported id", async () => {
+    const root = await grokHome(JSON.stringify([{ ...row(STALE), pid: "4242" }, row(RESUMED, CWD, 4343)]));
+    const src = new GrokTranscriptSource(root, alive);
+    expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
+  });
+
+  test("an unreadable list in one root keeps the reported id although another root has a candidate", async () => {
+    for (const unreadable of ["not json", '{"session_id":"x"}']) {
+      const broken = await grokHome(unreadable);
+      const listed = await grokHome(JSON.stringify([row(RESUMED)]));
+      const src = new GrokTranscriptSource([broken, listed], alive);
+      expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
+    }
+  });
+
+  test("a list that cannot be opened keeps the reported id although another root has a candidate", async () => {
+    const broken = await grokHome(null);
+    await mkdir(join(broken, "..", "active_sessions.json"));
+    const listed = await grokHome(JSON.stringify([row(RESUMED)]));
+    const src = new GrokTranscriptSource([broken, listed], alive);
+    expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: STALE });
+  });
+
+  test("a root with no list at all does not stop the swap from another root", async () => {
+    const empty = await grokHome(null);
+    const listed = await grokHome(JSON.stringify([row(RESUMED)]));
+    const src = new GrokTranscriptSource([empty, listed], alive);
+    expect(await src.reconcile({ kind: "id", value: STALE }, CWD)).toEqual({ kind: "id", value: RESUMED });
+  });
 });

@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Fixed
+
+- **A resumed Grok session is never matched from a partly read list.** When Grok's list of live sessions cannot be read whole, Chat and History keep the session Herdr reported instead of taking the only other Grok in the same folder, which could belong to another pane.
+
 ## [2.0.0] - 2026-10-10
 
 ### Changed
