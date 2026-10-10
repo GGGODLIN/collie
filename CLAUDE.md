@@ -575,7 +575,19 @@ lint guard, the crew-wire guard or the `flake.lock` guard.
   rows are the allowlist `POST /api/launch` matches exactly, so the client names a row and never
   supplies a command line. Same reader, same mtime liveness; no scope ladder, because a row that
   makes its own pane has nothing to address. Do not add a second allowlist and do not let the client
-  supply a command line.
+  supply a command line. The New page may also name an agent by id (`harness`), which the bridge
+  maps to ONE binary word in `bridge/harness-launch.ts` and reports per machine on `/api/launchers`;
+  a launch with a `requestId` replays from `launch-receipts.json` instead of opening a second pane
+  ([ADR 0091](./.adr/0091-launch-by-id-with-a-request-id.md)).
+  Rows a phone adds live in `<stateDir>/launchers-added.json` under the operator's `[phone]` switches,
+  never in `launchers.toml`; they are merged into the allowlist at read time, the operator's row wins
+  a duplicate line, a recipe row is rebuilt from `bridge/launcher-recipes.ts` and a free line is
+  re-checked at every read. The bridge never writes `launchers.toml`, and a revoke takes the device's
+  rows with it ([ADR 0094](./.adr/0094-launchers-added-from-a-phone.md)).
+  The one exception to "never a command line" is a one-off `run`: a paired device, the operator's
+  `[phone] run` switch and the same character rule, typed as a row is, never on a new branch, and
+  recorded in `<stateDir>/commands-recent.json`, never as a row; its audit line keeps the command word
+  and the length, not the line ([ADR 0095](./.adr/0095-one-off-commands-and-their-history.md)).
 - **Every user-facing string goes through `t()`/`tn()` from `@/lib/i18n`**, and a component that
   calls them subscribes via `useLocale()` so it re-renders on a locale (or lazy-dictionary) change.
   `messages/en.ts` is the source of truth; all six dictionary files change together, enforced by
@@ -684,11 +696,16 @@ the rule below: `stt.json` in the state dir when the operator ran `collie stt se
 font files under `<config-dir>/fonts`, served read-only through `bridge/operator-fonts.ts`
 ([ADR 0033](./.adr/0033-the-app-face-is-a-device-preference.md)).
 
-**The law is that a CLIENT-SUPPLIED value becomes a path in three places only: the journal, the
-Changes view, and the Files view** — in the journal it is a pane id, never a path. A deliverable
-read is not a fourth such place: the phone sends a pane id and an opaque id, and the path is the
-one the bridge finds again in that session's assistant reply
-([ADR 9006](./.adr/9006-a-reply-file-is-read-by-its-own-id.md)). The Changes view
+**The law is that a CLIENT-SUPPLIED value becomes a path in four places only: the journal, the
+Changes view, the Files view, and a branch's folder** — in the journal it is a pane id, never a path.
+A deliverable read is not a fifth such place: the phone sends a pane id and an opaque id, and the
+path is the one the bridge finds again in that session's assistant reply
+([ADR 9006](./.adr/9006-a-reply-file-is-read-by-its-own-id.md)).
+A branch's folder (`bridge/worktree-folder.ts`,
+[ADR 0093](./.adr/0093-a-branch-folder-is-named-by-its-parent.md)) is a PARENT the phone names and a
+child the bridge names after the branch; `resolveParentTarget` refuses a `..` as sent, a link below
+home, a folder outside home, in a dotdir or in the repo, and a child that exists, and it runs at plan
+and again at create. Don't call Herdr's `worktree.create` with a `path` that did not just pass it. The Changes view
 (`bridge/changes.ts`, [ADR 0065](./.adr/0065-the-changes-view-reads-git-read-only.md)) is bounded by
 a listed-paths rule: a diff is served only for a repo the bridge's own discovery returned and a path
 git listed there, and an untracked read goes through `containedRealpath` too. Its git runs are
@@ -701,7 +718,7 @@ inside the root's through `containedRealpath`; `.git` and the bridge's state and
 denied on top. It needs an authorised device (`device-read`), and its bytes go out as JSON, never as
 a document, with one exception: `files/image` ([ADR 0090](./.adr/0090-files-shows-images.md)) sends a
 picture's raw bytes, typed by `sniffImageType` from the bytes alone (PNG, JPEG, GIF, WebP, AVIF; no
-SVG), with `no-store` and a `default-src 'none'; sandbox` CSP, through the same `readFile` checks. `GET /api/fonts/<basename>` does not become a fourth such place: the request's name is **looked up** in the rows the operator's own
+SVG), with `no-store` and a `default-src 'none'; sandbox` CSP, through the same `readFile` checks. `GET /api/fonts/<basename>` does not become a fifth such place: the request's name is **looked up** in the rows the operator's own
 `theme.toml` declared and that row's path is taken, so a name nobody declared is refused before any path exists. The containment
 rule in [`files.ts`](./bridge/journal/files.ts) then runs anyway, on both surfaces and as an
 independent second check: **every** path on these rooted surfaces goes through `containedRealpath`
@@ -869,7 +886,9 @@ Upstream reuses numbers this fork has published (both have a `v1.14.0`), so its 
 
 1. On `dev`, make the ordinary `chore(release): x.y.z` commit (*Versioning* above) with the
    upstream-base bullet, each CHANGELOG hash linked as
-   `https://github.com/GGGODLIN/collie/commit/<hash>`, and push it.
+   `https://github.com/GGGODLIN/collie/commit/<hash>`, and push it. Read what it ships with
+   `git diff --stat origin/main origin/dev`, not `git log <last tag>..HEAD`: a fork tag sits on
+   `main`'s copied commit, which `dev` never contains, so that log lists all of `dev`'s history.
 2. Wait for CI on that `dev` commit to pass. Windows CI does not run on a `dev` push; the one manual
    run is *Windows VM rehearsal* below.
 3. Build `main`'s commit from that tree. Add `-p <upstream commit>` when this release is the first

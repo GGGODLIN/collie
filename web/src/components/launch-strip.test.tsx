@@ -1,11 +1,12 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { ROOT_ROUTE_ID, type HomeData } from "@/lib/loaders";
+import { NO_PROMPTS_KEY, noPromptsConfirmed } from "@/lib/no-prompts";
 import type { LaunchersState } from "@/lib/launchers";
-import type { DeviceAuth } from "@/lib/types";
+import type { DeviceAuth, Launcher } from "@/lib/types";
 import {
   launchHere,
   launchHome,
@@ -18,7 +19,7 @@ import {
 // Stub the launcher store at its seam — same idiom as operator-commands tests: the component
 // reads the hook, so we control what the hook returns per-case without touching the network.
 const { launchersValue } = vi.hoisted(() => {
-  const current: LaunchersState = { launchers: [], home: "" };
+  const current: LaunchersState = { launchers: [], home: "", harnesses: null, items: null, adding: null, loadedFor: null };
   return { launchersValue: { current } };
 });
 vi.mock("@/lib/launchers", () => ({
@@ -58,7 +59,7 @@ function homeData(device: DeviceAuth | undefined): HomeData {
   };
 }
 
-function makeRouter(device: DeviceAuth | undefined, open: boolean | null = null) {
+function makeRouter(device: DeviceAuth | undefined, open: boolean | null = null, scope?: { host?: string }) {
   return createMemoryRouter(
     [
       {
@@ -66,7 +67,7 @@ function makeRouter(device: DeviceAuth | undefined, open: boolean | null = null)
         path: "/",
         loader: () => homeData(device),
         element: <Outlet />,
-        children: [{ index: true, element: <LaunchStrip open={open} onOpenChange={onOpenChange} /> }],
+        children: [{ index: true, element: <LaunchStrip open={open} onOpenChange={onOpenChange} scope={scope} /> }],
       },
       { path: "/pane/:paneId", element: <div>pane</div> },
     ],
@@ -78,7 +79,7 @@ const onOpenChange = vi.fn();
 
 describe("LaunchStrip", () => {
   it("renders nothing when no launchers are configured", async () => {
-    launchersValue.current = { launchers: [], home: "" };
+    launchersValue.current = { launchers: [], home: "", harnesses: null, items: null, adding: null, loadedFor: null };
     mockLaunch.mockClear();
     render(<RouterProvider router={makeRouter(undefined)} />);
     // Empty → null, so an operator who never set `launchers.toml` sees today's dashboard byte
@@ -88,7 +89,7 @@ describe("LaunchStrip", () => {
   });
 
   it("renders one button per launcher using its label", async () => {
-    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome };
+    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome, harnesses: null, items: null, adding: null, loadedFor: null };
     mockLaunch.mockClear();
     render(<RouterProvider router={makeRouter(undefined)} />);
     expect(await screen.findByRole("button", { name: /Runs & quota/ })).toBeInTheDocument();
@@ -98,7 +99,7 @@ describe("LaunchStrip", () => {
   });
 
   it("a pinned row shows its folder shortened under home; an absent one shows nothing", async () => {
-    launchersValue.current = { launchers: [launchPeek, launchHere], home: launchHome };
+    launchersValue.current = { launchers: [launchPeek, launchHere], home: launchHome, harnesses: null, items: null, adding: null, loadedFor: null };
     render(<RouterProvider router={makeRouter(undefined)} />);
     // The dashboard implies home, so the folder only earns a suffix when it differs from it.
     expect(await screen.findByText("~/project")).toBeInTheDocument();
@@ -109,7 +110,7 @@ describe("LaunchStrip", () => {
   });
 
   it("tapping a button calls the launch API with that launcher command", async () => {
-    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome };
+    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome, harnesses: null, items: null, adding: null, loadedFor: null };
     mockLaunch.mockClear();
     const user = userEvent.setup();
     render(<RouterProvider router={makeRouter(undefined)} />);
@@ -124,7 +125,7 @@ describe("LaunchStrip", () => {
   });
 
   it("double tap launches once", async () => {
-    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome };
+    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome, harnesses: null, items: null, adding: null, loadedFor: null };
     mockLaunch.mockClear();
     // A launch is the slowest create there is — the bridge waits for the new shell to draw before
     // it types — so hold this one open and tap again, the way an impatient thumb does.
@@ -152,7 +153,7 @@ describe("LaunchStrip", () => {
   });
 
   it("a read-only device does not fire the launch API", async () => {
-    launchersValue.current = { launchers: [launchPeek], home: launchHome };
+    launchersValue.current = { launchers: [launchPeek], home: launchHome, harnesses: null, items: null, adding: null, loadedFor: null };
     mockLaunch.mockClear();
     const user = userEvent.setup();
     // Build the read-only record the way fixtures do: `enforced` + not `authorized` → read-only.
@@ -166,7 +167,7 @@ describe("LaunchStrip", () => {
   });
 
   it("folds to its header, keeping the count visible", async () => {
-    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome };
+    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome, harnesses: null, items: null, adding: null, loadedFor: null };
     render(<RouterProvider router={makeRouter(undefined, false)} />);
 
     // Folded, the buttons are gone but the header still says how many there are — the count is the
@@ -181,7 +182,7 @@ describe("LaunchStrip", () => {
   });
 
   it("reports a fold toggle to the dashboard, which persists it", async () => {
-    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome };
+    launchersValue.current = { launchers: [launchPeek, launchQuota], home: launchHome, harnesses: null, items: null, adding: null, loadedFor: null };
     onOpenChange.mockClear();
     const user = userEvent.setup();
     render(<RouterProvider router={makeRouter(undefined, null)} />);
@@ -189,5 +190,61 @@ describe("LaunchStrip", () => {
     // Un-chosen (`null`) resolves open at this count, so the toggle asks for closed.
     await user.click(await screen.findByRole("button", { name: /^Launch/ }));
     expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false);
+  });
+  // THE NO PROMPTS CONFIRM (ADR 0094), on the dashboard's Launch strip: a row that skips permission
+  // prompts asks once per device, machine and line before anything is sent.
+  describe("a row that skips permission prompts", () => {
+    const yolo: Launcher = { command: "claude --dangerously-skip-permissions", label: "Claude, no prompts", noPrompts: true, cwd: "/home/op/project" };
+
+    afterEach(() => localStorage.clear());
+
+    it("asks first, showing the line, the folder and a Cancel that sends nothing", async () => {
+      launchersValue.current = { launchers: [yolo, launchPeek], home: launchHome, harnesses: null, items: null, adding: null, loadedFor: null };
+      mockLaunch.mockClear();
+      const user = userEvent.setup();
+      render(<RouterProvider router={makeRouter(undefined)} />);
+      await user.click(await screen.findByRole("button", { name: /Claude, no prompts/ }));
+      const sheet = await screen.findByRole("dialog", { name: "Start without prompts?" });
+      expect(within(sheet).getByTestId("no-prompts-command")).toHaveTextContent("claude --dangerously-skip-permissions");
+      expect(within(sheet).getByText("~/project")).toBeInTheDocument();
+      expect(mockLaunch).not.toHaveBeenCalled();
+      await user.click(within(sheet).getByRole("button", { name: "Cancel" }));
+      expect(mockLaunch).not.toHaveBeenCalled();
+      expect(localStorage.getItem(NO_PROMPTS_KEY)).toBeNull();
+    });
+
+    it("Start remembers it for this machine and line, and the next tap launches at once", async () => {
+      launchersValue.current = { launchers: [yolo], home: launchHome, harnesses: null, items: null, adding: null, loadedFor: null };
+      mockLaunch.mockClear();
+      const user = userEvent.setup();
+      render(<RouterProvider router={makeRouter(undefined)} />);
+      await user.click(await screen.findByRole("button", { name: /Claude, no prompts/ }));
+      await user.click(within(await screen.findByRole("dialog", { name: "Start without prompts?" })).getByRole("button", { name: "Start" }));
+      await waitFor(() => expect(mockLaunch).toHaveBeenCalledTimes(1));
+      expect(mockLaunch.mock.calls[0]?.[0]).toBe("claude --dangerously-skip-permissions");
+      expect(noPromptsConfirmed("", "claude --dangerously-skip-permissions")).toBe(true);
+    });
+
+    it("a confirm kept for the lead does not cover a member's machine", async () => {
+      launchersValue.current = { launchers: [yolo], home: launchHome, harnesses: null, items: null, adding: null, loadedFor: null };
+      mockLaunch.mockClear();
+      const { rememberNoPromptsConfirm } = await import("@/lib/no-prompts");
+      rememberNoPromptsConfirm("", "claude --dangerously-skip-permissions");
+      const user = userEvent.setup();
+      render(<RouterProvider router={makeRouter(undefined, null, { host: "mini" })} />);
+      await user.click(await screen.findByRole("button", { name: /Claude, no prompts/ }));
+      expect(await screen.findByRole("dialog", { name: "Start without prompts?" })).toBeInTheDocument();
+      expect(mockLaunch).not.toHaveBeenCalled();
+    });
+
+    it("a row that does not skip prompts launches with no question", async () => {
+      launchersValue.current = { launchers: [yolo, launchPeek], home: launchHome, harnesses: null, items: null, adding: null, loadedFor: null };
+      mockLaunch.mockClear();
+      const user = userEvent.setup();
+      render(<RouterProvider router={makeRouter(undefined)} />);
+      await user.click(await screen.findByRole("button", { name: /Runs & quota/ }));
+      await waitFor(() => expect(mockLaunch).toHaveBeenCalledTimes(1));
+      expect(screen.queryByRole("dialog", { name: "Start without prompts?" })).toBeNull();
+    });
   });
 });
