@@ -40,6 +40,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { setStripsCollapsed, useStripsCollapsed } from "@/lib/strips-collapsed";
 import { ChatMessageList, type ChatMessageListHandle } from "@/components/ui/chat/chat-message-list";
 import { BottomSheet } from "@/components/ui/sheet";
+import { LocalLinks } from "@/components/local-links";
 import { DisplayPrefsContent } from "@/components/display-prefs";
 import { Collapse, CollapseSwap } from "@/components/ui/collapse";
 import { AuthedImageCard } from "@/components/authed-image-card";
@@ -1640,6 +1641,15 @@ export function AgentChat({
     // It wraps the WHOLE route, not the two strips, on purpose: a strip added to this screen later
     // cannot land outside it and end up 16px taller than its neighbours. That is the fault the old
     // per-strip `hideLabel` prop could not prevent, which is why this is a context and not a prop.
+    //
+    // LocalLinks sits outside it so the chat and the mirror both reach it: an agent's localhost link
+    // asks the bridge and opens the tailnet address, or offers to stage a fix here (ADR 9007).
+    <LocalLinks
+      paneId={paneId}
+      scope={scope}
+      canStage={!readOnly && !gone && !actsDisabledByCache && hostBlock === undefined}
+      onStage={(message) => composerRef.current?.stage(message)}
+    >
     <CompactStripLabels>
       {/* `max-w-[100dvw]` is the phone bound and it stays: a mirror line wider than the screen used
           to blow the viewport out sideways and let the whole page pan (85f777b, "viewport blowout").
@@ -2964,5 +2974,6 @@ export function AgentChat({
         {noPromptsSheet}
       </div>
     </CompactStripLabels>
+    </LocalLinks>
   );
 }

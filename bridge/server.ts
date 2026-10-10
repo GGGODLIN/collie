@@ -24,6 +24,7 @@ import {
   pathForToken,
   sessionBind,
 } from "./deliverables.ts";
+import { dialTcp, parseProbePort, probePort, tailnetIPv4 } from "./port-probe.ts";
 import { HOST } from "./host.ts";
 import {
   existingPaths,
@@ -458,6 +459,16 @@ const WORKSPACE_FILES_IMAGE_ROUTE = /^\/api\/workspace\/([^/]+)\/files\/image$/;
  * the crew wire. The lead answers 501 and the phone keeps the short title.
  */
 const PANE_DELIVERABLE_ROUTE = /^\/api\/pane\/([^/]+)\/deliverables(?:\/([^/]+))?$/;
+
+/**
+ * `GET /api/pane/<id>/port/<port>`: what answers on a dev-server port of the machine this collie runs
+ * on (ADR 9007), so the phone can open an agent's `localhost` link at the tailnet address. The pane
+ * id only addresses the machine, through `?host=` like every per-pane read; the probe reads nothing
+ * of the pane. The port is matched as an opaque segment and validated in the handler. Not in
+ * `FORWARDABLE`: a pane on a crew member answers the lead's 501, and the phone opens the link as it
+ * always did.
+ */
+const PANE_PORT_ROUTE = /^\/api\/pane\/([^/]+)\/port\/([^/]+)$/;
 
 /**
  * `GET /api/machines/<id>/history` and `POST /api/machines/<id>/alerts` (ADR 0084). The id is a
@@ -1652,6 +1663,18 @@ export function startServer(opts: {
         url,
         req,
       );
+    }
+
+    const portMatch = pathname.match(PANE_PORT_ROUTE);
+    if (portMatch) {
+      const denied = caller.gate("read");
+      if (denied) return denied;
+      if (req.method !== "GET") return text("method not allowed", 405);
+      const rt = await caller.resolve();
+      if (rt instanceof Response) return rt;
+      const port = parseProbePort(portMatch[2]!);
+      if (port === null) return text("bad port", 400);
+      return json(await probePort(port, tailnetIPv4(networkInterfaces()), dialTcp), req.headers.get("accept-encoding"));
     }
 
     // ── Worktrees: list / create / open / remove, all scoped to a space (ADR 0032) ──

@@ -142,6 +142,8 @@ describe("the route table read off server.ts", () => {
       // The Files image read (ADR 0090): bytes off the disk, so a missing token is refused here too.
       "/api/pane/id1/files/image",
       "/api/workspace/id1/files/image",
+      // The dev-server port probe (ADR 9007): a read of this machine, so it needs the token too.
+      "/api/pane/id1/port/id1",
     ]) {
       expect(paths).toContain(known);
     }
