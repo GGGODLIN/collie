@@ -26,6 +26,18 @@ Running a crew? Update the lead first; members follow on their own. Details:
 ### Changed
 
 - **Gaddi recommends Collie Island build 3.** The iPhone app on build 2 or older is offered the v1.19.3 IPA, which opens new-tab links in the phone's browser.
+- **The copy icon confirms on every screen and copies over plain HTTP.** It shows a check or an X for a moment, so History and Files give feedback too; a narrow table's icon sits at the table's corner; the command output icon reads "Copy command output"; and where the browser has no clipboard API, as on a tailnet page served over `http://`, the copy falls back to the browser's older copy command. From upstream 1.19.2.
+
+### Fixed
+
+- **`--help` on a command prints its usage and changes nothing.** `collie update --help` used to start the real update, and `restart`, `uninstall` and `build` did the same. From upstream 1.19.1.
+- **The `/auth/` page tells an unpaired device to pair.** With no proxy in front of Collie, it says to run `collie pair` on the computer and enter the code in Settings. From upstream 1.19.1.
+- **A send no longer types into an opencode overlay box.** Collie refuses the send while a /models-style box holds the keyboard, and a send that stalls on a dialog, menu or overlay names it. From upstream 1.19.1.
+- **A Mac's memory figure leaves out the file cache.** Collie reports what Activity Monitor calls Memory Used, so a Mac no longer sits at 88 to 98 %. From upstream 1.19.1.
+- **An omp question whose options have descriptions gets its option card.** Each description shows on its option. From upstream 1.19.2.
+- **The unread-dialog card follows Wrap lines.** Its mirror of a wide pane wraps or pans as the pane mirror does. From upstream 1.19.2.
+- **A reply to Muse no longer stays in the box as an unsent draft.** Muse waits 350 ms after the text before the guarded Enter. From upstream 1.19.2.
+- **An installed iPhone app no longer hides its bottom row behind the home bar.** The home-screen web app's height no longer overshoots on iOS releases that report the large viewport too tall. From upstream 1.19.2.
 
 ## [1.19.3] - 2026-10-10
 
