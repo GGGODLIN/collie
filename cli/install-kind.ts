@@ -347,7 +347,17 @@ export function detectInstall(deps: {
 // and an ASSERTION on the git paths (M14/01 §3.5, M14/02 amendment §1–2).
 
 // Fork-only (FORK.md → *Updates come from this fork*): upstream reads "AltanS/collie".
-export const DEFAULT_UPDATE_REPO = "GGGODLIN/collie";
+export const DEFAULT_UPDATE_REPO = "GGGODLIN/gaddi";
+
+// Fork-only: the fork's repo was GGGODLIN/collie until it was renamed. GitHub redirects the old
+// name, but a clone made before the rename still says it in `origin`; without this, `update`
+// refuses every such install as a stranger's fork.
+const RENAMED_FROM = "gggodlin/collie";
+
+function canonicalRepo(repo: string): string {
+  const key = repo.toLowerCase();
+  return key === RENAMED_FROM ? DEFAULT_UPDATE_REPO.toLowerCase() : key;
+}
 
 /** The `owner/repo` releases come from — `COLLIE_UPDATE_REPO`, or Collie's own repo. */
 export function updateRepoOf(env: { readonly COLLIE_UPDATE_REPO?: string | undefined }): string {
@@ -408,7 +418,7 @@ export function originMatches(origin: OriginVerdict, configured: string): boolea
   if (origin.kind === "unresolvable") return false;
   if (origin.kind === "repo") {
     const wanted = parseGithubRemote(want) ?? want;
-    return origin.repo.toLowerCase() === wanted.toLowerCase();
+    return canonicalRepo(origin.repo) === canonicalRepo(wanted);
   }
   return origin.url.trim().replace(/\/+$/, "").replace(/\.git$/, "") === want;
 }

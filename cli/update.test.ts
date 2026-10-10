@@ -99,7 +99,7 @@ function posixExec(scripted: Scripted = {}): FakeExec {
 // managed checkout is never re-linked.
 
 const GIT = `git -C ${ROOT}`;
-const TAG_REMOTE = "https::https://github.com/GGGODLIN/collie.git";
+const TAG_REMOTE = "https::https://github.com/GGGODLIN/gaddi.git";
 const DIST = `${ROOT}/web/dist`;
 
 // `git ls-remote --tags` as the remote actually answers: an ANNOTATED tag appears twice, and
@@ -165,7 +165,7 @@ const MANAGED: Scripted["answers"] = [[`${GIT} symbolic-ref -q HEAD`, { code: 1 
  *  `update` refuses to fetch a remote that is not the configured update source, so a fixture with no
  *  origin would be refused before it reached the strategy under test. */
 const ORIGIN: NonNullable<Scripted["answers"]> = [
-  [`${GIT} remote get-url origin`, { stdout: "https://github.com/GGGODLIN/collie.git\n" }],
+  [`${GIT} remote get-url origin`, { stdout: "https://github.com/GGGODLIN/gaddi.git\n" }],
 ];
 const LINKED: Scripted["answers"] = [[`${GIT} symbolic-ref -q HEAD`, { code: 0, stdout: "refs/heads/main\n" }]];
 const SHALLOW: Scripted["answers"] = [
@@ -709,7 +709,7 @@ describe("updateCheckout", () => {
   test("a non-git checkout names the reinstall command and fails", () => {
     const h = harness({ answers: [[`${GIT} rev-parse --show-prefix`, { code: 128 }]] });
     expect(updateCheckout(h.deps).code).toBe(EXIT.FAIL);
-    expect(h.io.stderr.join("\n")).toContain("herdr plugin install GGGODLIN/collie --yes");
+    expect(h.io.stderr.join("\n")).toContain("herdr plugin install GGGODLIN/gaddi --yes");
     expect(gitRuns(h.exec)).toEqual([]);
   });
 
@@ -1104,7 +1104,7 @@ describe("the origin assertion", () => {
     expect(await cmdUpdate(h.deps)).toBe(EXIT.FAIL);
     const said = h.io.stderr.join("\n");
     expect(said).toContain("youngsecurity/collie");
-    expect(said).toContain("GGGODLIN/collie");
+    expect(said).toContain("GGGODLIN/gaddi");
     expect(said).toContain("COLLIE_UPDATE_REPO=youngsecurity/collie");
     expect(said).toContain("docs/upgrading.md");
     // Nothing was fetched and nothing was checked out — the whole point of asserting first.
@@ -1185,7 +1185,7 @@ const apiTags = (...names: string[]) => names.map((name) => ({ name, commit: { s
 
 const manifestDoc = (over: JsonObject = {}) => ({
   schemaVersion: 1,
-  repo: "GGGODLIN/collie",
+  repo: "GGGODLIN/gaddi",
   tag: `v${NEW}`,
   version: NEW,
   artifacts: [
@@ -1415,8 +1415,8 @@ describe("collie update on a binary install", () => {
     };
     expect(await cmdUpdate(h.deps)).toBe(EXIT.OK);
     expect(asked).toEqual([
-      "https://api.github.com/repos/GGGODLIN/collie/tags?per_page=100",
-      "https://api.github.com/repos/GGGODLIN/collie/tags?per_page=100&page=2",
+      "https://api.github.com/repos/GGGODLIN/gaddi/tags?per_page=100",
+      "https://api.github.com/repos/GGGODLIN/gaddi/tags?per_page=100&page=2",
     ]);
     // The stable one, as before: the newer rc is still a prerelease and is not taken.
     expect(h.files.ops).toContain(`mv ${INST}/.staging/x/${PAYLOAD} ${INST}/versions/${NEW}`);
@@ -1459,9 +1459,9 @@ describe("collie update on a binary install", () => {
     expect(await cmdUpdate(h.deps)).toBe(EXIT.OK);
     const base = "http://127.0.0.1:8899";
     expect(asked).toEqual([
-      `${base}/repos/GGGODLIN/collie/tags?per_page=100`,
-      `${base}/GGGODLIN/collie/releases/download/v${NEW}/collie-${NEW}.manifest.json`,
-      `${base}/GGGODLIN/collie/releases/download/v${NEW}/${PAYLOAD}.tar.gz`,
+      `${base}/repos/GGGODLIN/gaddi/tags?per_page=100`,
+      `${base}/GGGODLIN/gaddi/releases/download/v${NEW}/collie-${NEW}.manifest.json`,
+      `${base}/GGGODLIN/gaddi/releases/download/v${NEW}/${PAYLOAD}.tar.gz`,
     ]);
     expect(h.io.stderr.join("\n")).toContain(`WARNING: COLLIE_UPDATE_MIRROR is set. This is a test seam: releases come from ${base}`);
   });
@@ -1495,9 +1495,9 @@ describe("collie update on a binary install", () => {
     const viaGithub = record(plain);
     expect(await cmdUpdate(plain.deps)).toBe(EXIT.OK);
     expect(viaGithub).toEqual([
-      { url: "https://api.github.com/repos/GGGODLIN/collie/tags?per_page=100", opts: undefined },
-      { url: `https://github.com/GGGODLIN/collie/releases/download/v${NEW}/collie-${NEW}.manifest.json`, opts: undefined },
-      { url: `https://github.com/GGGODLIN/collie/releases/download/v${NEW}/${PAYLOAD}.tar.gz`, opts: undefined },
+      { url: "https://api.github.com/repos/GGGODLIN/gaddi/tags?per_page=100", opts: undefined },
+      { url: `https://github.com/GGGODLIN/gaddi/releases/download/v${NEW}/collie-${NEW}.manifest.json`, opts: undefined },
+      { url: `https://github.com/GGGODLIN/gaddi/releases/download/v${NEW}/${PAYLOAD}.tar.gz`, opts: undefined },
     ]);
   });
 
@@ -1611,7 +1611,7 @@ describe("collie update on a binary install", () => {
       },
     };
     expect(await cmdUpdate(h.deps)).toBe(EXIT.OK);
-    expect(fetched).toEqual([`https://github.com/GGGODLIN/collie/releases/download/v${NEW}/${zip}`]);
+    expect(fetched).toEqual([`https://github.com/GGGODLIN/gaddi/releases/download/v${NEW}/${zip}`]);
     expect(h.exec.calls).toContain(`/Windows/System32/tar.exe -xf ${INST}/.staging/${zip} -C ${INST}/.staging/x`);
     expect(h.exec.calls.some((c) => c.startsWith("tar ") || c.startsWith("chmod "))).toBe(false);
     expect(h.files.ops).toContain(`mv ${INST}/.staging/x/${payload} ${INST}/versions/${NEW}`);
@@ -1840,7 +1840,7 @@ describe("collie update on a binary install", () => {
     const download = h.deps.net.download;
     h.deps.net = { ...h.deps.net, download: (url, dest) => (fetched.push(url), download(url, dest)) };
     expect(await cmdUpdate(h.deps)).toBe(EXIT.OK);
-    expect(fetched).toEqual([`https://github.com/GGGODLIN/collie/releases/download/v${NEW}/${PAYLOAD}.tar.gz`]);
+    expect(fetched).toEqual([`https://github.com/GGGODLIN/gaddi/releases/download/v${NEW}/${PAYLOAD}.tar.gz`]);
   });
 
   test("Windows: a release with no `windows-x64` entry says so plainly and changes nothing", async () => {
@@ -2211,7 +2211,7 @@ function stagedHarness(over: StagedOptions = {}): Harness {
       // A worktree of a tag is detached — which is exactly why the layout, not the HEAD, decides
       // that this install stages.
       [`git -C ${root} symbolic-ref -q HEAD`, { code: 1 }],
-      [`git -C ${root} remote get-url origin`, { stdout: "https://github.com/GGGODLIN/collie.git\n" }],
+      [`git -C ${root} remote get-url origin`, { stdout: "https://github.com/GGGODLIN/gaddi.git\n" }],
     ],
   });
   const seed: SeededFiles = {

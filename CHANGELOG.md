@@ -23,6 +23,18 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-10-11
+
+### Changed
+
+- **Built on upstream Collie 1.19.2.** AltanS/collie v1.19.2, commit aacece40.
+- **Gaddi's repository is now GGGODLIN/gaddi.** Updates, the update banner and the iPhone app download take releases from the new name. An install cloned from the old GGGODLIN/collie address keeps updating with nothing to change; GitHub forwards the old address. ([fc6c7de4](https://github.com/GGGODLIN/gaddi/commit/fc6c7de4))
+
+### Fixed
+
+- **A resumed Grok session is never matched from a partly read list.** When Grok's list of live sessions cannot be read whole, Chat and History keep the session Herdr reported instead of taking the only other Grok in the same folder, which could belong to another pane. ([a383b0f3](https://github.com/GGGODLIN/gaddi/commit/a383b0f3))
+- **A Grok list whose presence cannot be checked counts as unread.** Only a list that is known to be missing is skipped; a folder Collie may not look into keeps Herdr's session, as an unreadable list does. ([4f0b593c](https://github.com/GGGODLIN/gaddi/commit/4f0b593c))
+
 ## [2.0.0] - 2026-10-10
 
 ### Changed

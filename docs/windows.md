@@ -105,7 +105,7 @@ the installer script before you run it, see [Install](#install).
 2. Install Collie with its installer:
 
    ```powershell
-   $env:COLLIE_UPDATE_REPO = "GGGODLIN/collie"
+   $env:COLLIE_UPDATE_REPO = "GGGODLIN/gaddi"
    irm https://colliepwa.dev/install.ps1 | iex
    ```
 
@@ -174,16 +174,16 @@ What you should see after each step:
 What `install.ps1` does, and what you can change.
 
 ```powershell
-$env:COLLIE_UPDATE_REPO = "GGGODLIN/collie"
+$env:COLLIE_UPDATE_REPO = "GGGODLIN/gaddi"
 irm https://colliepwa.dev/install.ps1 | iex
 ```
 
 To read the script before you run it, save it, open it and run it as a file:
 
 ```powershell
-$env:COLLIE_UPDATE_REPO = "GGGODLIN/collie"
+$env:COLLIE_UPDATE_REPO = "GGGODLIN/gaddi"
 Invoke-WebRequest -OutFile install.ps1 `
-  https://raw.githubusercontent.com/GGGODLIN/collie/main/scripts/install.ps1
+  https://raw.githubusercontent.com/GGGODLIN/gaddi/main/scripts/install.ps1
 notepad install.ps1
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```

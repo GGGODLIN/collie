@@ -46,7 +46,7 @@ export function IslandBuildNotice({
       // Blocked storage still permits dismissal for this mounted view.
     }
   };
-  const url = `https://github.com/GGGODLIN/collie/releases/download/${tag}/CollieIsland.ipa`;
+  const url = `https://github.com/GGGODLIN/gaddi/releases/download/${tag}/CollieIsland.ipa`;
 
   return (
     <Collapse open={open} className={className}>

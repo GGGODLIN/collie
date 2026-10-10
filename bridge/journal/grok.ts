@@ -29,7 +29,7 @@
 // itself keeps of the session each live process holds. That file is grok's own and undocumented,
 // so anything short of one unambiguous live match leaves Herdr's id alone.
 
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 import type { JsonObject, JsonValue } from "../json.ts";
@@ -70,24 +70,27 @@ export interface GrokActiveSession {
   cwd: string;
 }
 
-/** The rows of `active_sessions.json` that read cleanly; a malformed file or row is skipped. */
-export function parseActiveSessions(text: string): GrokActiveSession[] {
+/**
+ * The rows of `active_sessions.json`, or null when the file or any row does not read cleanly. A
+ * skipped row could be the one holding the reported id, so a partial list is no list at all.
+ */
+export function parseActiveSessions(text: string): GrokActiveSession[] | null {
   let parsed: JsonValue;
   try {
     // SAFETY: `JSON.parse` output IS a JsonValue by construction — a string, number, boolean, null,
     // or an array/object of those. The array check and every field read below narrow it further.
     parsed = JSON.parse(text) as JsonValue;
   } catch {
-    return [];
+    return null;
   }
-  if (!Array.isArray(parsed)) return [];
+  if (!Array.isArray(parsed)) return null;
   const rows: GrokActiveSession[] = [];
   for (const row of parsed) {
-    if (row === null || typeof row !== "object" || Array.isArray(row)) continue;
+    if (row === null || typeof row !== "object" || Array.isArray(row)) return null;
     const { session_id: sessionId, pid, cwd } = row;
-    if (typeof sessionId !== "string" || !isGrokSessionId(sessionId)) continue;
-    if (typeof pid !== "number" || !Number.isInteger(pid) || pid <= 0) continue;
-    if (typeof cwd !== "string" || cwd === "") continue;
+    if (typeof sessionId !== "string" || !isGrokSessionId(sessionId)) return null;
+    if (typeof pid !== "number" || !Number.isInteger(pid) || pid <= 0) return null;
+    if (typeof cwd !== "string" || cwd === "") return null;
     rows.push({ sessionId, pid, cwd });
   }
   return rows;
@@ -106,6 +109,19 @@ export function pickLiveSession(
   if (live.some((s) => s.sessionId === reported)) return reported;
   const here = live.filter((s) => s.cwd === cwd);
   return here.length === 1 && here[0] !== undefined ? here[0].sessionId : reported;
+}
+
+/**
+ * Whether a path is known to be missing. Only ENOENT and ENOTDIR say so; any other stat failure (a
+ * folder without search permission, say) leaves it unknown, which is not the same as absent.
+ */
+async function knownAbsent(path: string): Promise<boolean> {
+  try {
+    await stat(path);
+    return false;
+  } catch (err) {
+    return err instanceof Error && "code" in err && (err.code === "ENOENT" || err.code === "ENOTDIR");
+  }
 }
 
 /** Whether a pid names a running process. EPERM means it runs as someone else, which is still alive. */
@@ -416,20 +432,30 @@ export class GrokTranscriptSource implements TranscriptSource {
    */
   async reconcile(ref: AgentSessionRef, cwd: string): Promise<AgentSessionRef> {
     if (ref.kind !== "id") return ref;
-    const live = (await this.activeSessions()).filter((s) => this.isAlive(s.pid));
+    const sessions = await this.activeSessions();
+    if (sessions === null) return ref;
+    const live = sessions.filter((s) => this.isAlive(s.pid));
     const value = pickLiveSession(ref.value, cwd, live);
     return value === ref.value ? ref : { kind: "id", value };
   }
 
-  /** Every root's `active_sessions.json`, which sits in `$GROK_HOME`, one level above `sessions`. */
-  private async activeSessions(): Promise<GrokActiveSession[]> {
+  /**
+   * Every root's `active_sessions.json`, which sits in `$GROK_HOME`, one level above `sessions`, or
+   * null when any of them may exist and cannot be read whole. A root known to have no file holds no
+   * live grok.
+   */
+  private async activeSessions(): Promise<GrokActiveSession[] | null> {
     const rows: GrokActiveSession[] = [];
     for (const root of this.roots) {
       const home = dirname(root);
-      const real = await containedRealpath(join(home, "active_sessions.json"), home);
-      if (real === null) continue;
+      const path = join(home, "active_sessions.json");
+      if (await knownAbsent(path)) continue;
+      const real = await containedRealpath(path, home);
+      if (real === null) return null;
       const text = await readFile(real, "utf8").catch(() => null);
-      if (text !== null) rows.push(...parseActiveSessions(text));
+      const parsed = text === null ? null : parseActiveSessions(text);
+      if (parsed === null) return null;
+      rows.push(...parsed);
     }
     return rows;
   }

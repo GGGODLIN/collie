@@ -4,7 +4,7 @@
   <img src="assets/social-card.png" alt="A pixel-art Gaddi dog watching a flock on a Himalayan slope, beside the name Gaddi and the line: your agent herd, from your phone." width="640">
 </p>
 
-> **Note.** Gaddi is [GGGODLIN's fork](https://github.com/GGGODLIN/collie) of
+> **Note.** Gaddi is [GGGODLIN's fork](https://github.com/GGGODLIN/gaddi) of
 > [ColliePWA](https://github.com/AltanS/collie) (AltanS/collie). It is not an official ColliePWA
 > project. It installs from source and publishes its own releases. Everything below the fork section
 > is upstream's README, unchanged, so it still says Collie.
@@ -62,7 +62,7 @@ zellij). Have the multiplexer running first: `start` mirrors the one it finds ru
 when there is none.
 
 ```bash
-git clone --single-branch https://github.com/GGGODLIN/collie.git ~/.local/share/collie &&
+git clone --single-branch https://github.com/GGGODLIN/gaddi.git ~/.local/share/collie &&
   cd ~/.local/share/collie && bash scripts/collie-ctl.sh build && bin/collie start
 ```
 
@@ -76,7 +76,7 @@ upstream install, say), the clone stops there and nothing is built over it; move
 ### Update, and roll back
 
 `collie update` and the in-app update banner follow [this fork's
-releases](https://github.com/GGGODLIN/collie/releases). The update pulls `main`, rebuilds and
+releases](https://github.com/GGGODLIN/gaddi/releases). The update pulls `main`, rebuilds and
 restarts:
 
 ```bash

@@ -51,7 +51,7 @@ function world(duringPull: (seed: string) => void) {
     // The origin assertion reads a GitHub URL; the remote itself is the local bare repo.
     capture: (tool, args, ...rest) =>
       tool === "git" && args.includes("get-url")
-        ? { code: 0, stdout: "https://github.com/GGGODLIN/collie.git\n", stderr: "", found: true }
+        ? { code: 0, stdout: "https://github.com/GGGODLIN/gaddi.git\n", stderr: "", found: true }
         : real.capture(tool, args, ...rest),
     runIn: (tool, args, ...rest) => {
       if (tool === "git" && args.includes("pull") && !fired) {
@@ -68,7 +68,7 @@ function world(duringPull: (seed: string) => void) {
     probe: () => Promise.resolve(unreachable),
   };
   const deps: UpdateDeps = {
-    ctx: context({ COLLIE_UPDATE_REPO: "GGGODLIN/collie" }, { root: clone }),
+    ctx: context({ COLLIE_UPDATE_REPO: "GGGODLIN/gaddi" }, { root: clone }),
     io: capture(),
     exec,
     files: realFiles,

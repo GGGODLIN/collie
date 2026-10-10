@@ -359,7 +359,7 @@ const GOLDEN: [file: string, script: string][] = [
     installReleaseScript({
       installRoot: "/home/pat/.local/share/collie",
       tag: "v1.2.3",
-      repo: "GGGODLIN/collie",
+      repo: "GGGODLIN/gaddi",
       version: "1.2.3",
     }),
   ],
@@ -828,7 +828,7 @@ describe("collie crew add", () => {
     expect(install.script).toContain(`COLLIE_TAG='v${VERSION}'`);
     expect(install.script).toContain("COLLIE_DIR=\"$DIR\"");
     expect(install.script).toContain(`DIR='${REMOTE_HOME}/.local/share/collie'`);
-    expect(text(h.io)).toContain(`installing v${VERSION} from GGGODLIN/collie`);
+    expect(text(h.io)).toContain(`installing v${VERSION} from GGGODLIN/gaddi`);
     expect(text(h.io)).toContain('✓ "nas" is a member of "the herd"');
   });
 
