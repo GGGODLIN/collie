@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Fixed
+
+- **The update button no longer stays greyed out until the app reloads.** When the phone's first update read failed or came back with no preflight, for example right after an update while the bridge was restarting, the card kept saying the preflight could not be run; it now asks again each time the card opens, and the bridge logs a preflight that cannot start.
+
 ## [1.18.104] - 2026-10-10
 
 ### Changed
