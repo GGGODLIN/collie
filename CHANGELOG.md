@@ -23,6 +23,35 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-10-10
+
+### Added
+
+- **One New page starts agents, commands and worktrees.** A "+ New" button on the Dashboard tab opens `/new`: the machine, Again, an Agent or Shell switch, the folder, a "New worktree" switch and Start. A machine, agent or command that cannot start stays listed, disabled, with the reason. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **Each machine says which agents it can start.** The bridge looks for Claude Code, Codex, opencode, pi, omp, Grok, Hermes, Muse and Antigravity on your login shell's PATH; in a crew each member answers for itself. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **A tapped Start never opens two panes.** Each start carries an id, so a retry after a lost reply shows the pane the first tap made. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **A new worktree starts where you choose.** Pick the repo's default branch or the pane's branch, and Herdr's worktree folder or a parent folder in your home; Collie shows the full path first and refuses an unsafe one. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **Add your own agent or command from the phone.** "Add your own" builds a launcher from a harness and option chips, or from a hand-written line when `[phone] free_text = true`; each machine keeps these rows in `launchers-added.json`, and revoking a device removes the rows it added. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **A start that skips permission prompts asks once first.** A "No prompts" row or line shows the command, folder and machine before its first start on each phone. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **Run a one-off command, and start it again from Recent.** Under Shell, "Type a command…" runs a line in a fresh shell; each machine keeps up to 12 recent lines in `commands-recent.json`, never one that looks like it holds a secret. `[phone] run = false` turns it off. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **Arrange the Keys pad to suit you.** A pencil beside KEYS opens an editor: drag, add, resize and rename keys, send sequences or sticky modifiers, and pick one of five presets or share a layout code. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **The pane shows which model its agent is on.** A small label above the belt names the model for Claude Code, Codex, opencode and pi. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+
+### Changed
+
+- **Built on upstream Collie 1.19.0.** AltanS/collie v1.19.0, commit 632a2bf7. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **The new-space sheet is gone, folded into the New page.** Open an existing worktree with `herdr worktree open` on the machine. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **The default Keys pad has a three-cell Space.** Enter moves to the left of the second row; Restore default in the Keys editor brings this pad back. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+
+### Fixed
+
+- **A message sent while Claude Code is working no longer vanishes from Chat.** Chat draws it as your message, at the time you sent it. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **A refused Start now shows why, and a bare folder name means a folder under home.** `projects` in the Folder field means `~/projects`, and a folder missing on that machine is refused before anything runs. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **The dashboard no longer offers a worktree on a multiplexer that cannot make one.** From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **Opening a sheet no longer scrolls the page behind it.** From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **A crew member told it lost the lead no longer freezes on a `tailscale` that does not answer.** Each call is killed after 30 seconds. From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+- **On Windows, a bridge that stops answering is restarted.** The launcher checks its health every 30 seconds and restarts it after three misses. Thanks @mqmalagris (#387). From upstream 1.19.0. ([79307f2f](https://github.com/GGGODLIN/collie/commit/79307f2f))
+
 ## [1.18.105] - 2026-10-10
 
 ### Changed
