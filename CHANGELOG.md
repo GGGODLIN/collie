@@ -23,13 +23,16 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.19.1] - 2026-10-10
+
 ### Added
 
-- **Chat pins the prompt a reply answers above the thread.** Scroll down a long run and the prompt it answers stays pinned at the top in two lines; tap it to jump back to it. When the first page left the prompt out, the pin shows it from the bridge and a tap loads older turns until it arrives. A bridge one release behind shows "Asked further back · Load older" instead.
+- **Chat pins the prompt a reply answers above the thread.** Scroll down a long run and the prompt it answers stays pinned at the top in two lines; tap it to jump back to it. When the first page left the prompt out, the pin shows it from the bridge and a tap loads older turns until it arrives. A bridge one release behind shows "Asked further back · Load older" instead. ([8275d5ec](https://github.com/GGGODLIN/collie/commit/8275d5ec), [9fc9cadb](https://github.com/GGGODLIN/collie/commit/9fc9cadb))
 
 ### Changed
 
-- **A Chat answer names the newest prompt it holds.** The live chat body gains `lastPrompt`, the newest turn the operator wrote, capped at 1000 characters, even when the first page of 40 turns leaves it out. A window that opened mid-run looks it up once in the History read, without delaying the answer. A note the agent sent itself never counts, and a bridge one release behind sends nothing (ADR 0073, amended).
+- **Built on upstream Collie 1.19.0.** AltanS/collie v1.19.0, commit 632a2bf7.
+- **A Chat answer names the newest prompt it holds.** The live chat body gains `lastPrompt`, the newest turn the operator wrote, capped at 1000 characters, even when the first page of 40 turns leaves it out. A window that opened mid-run looks it up once in the History read, without delaying the answer. A note the agent sent itself never counts, and a bridge one release behind sends nothing (ADR 0073, amended). ([9600787c](https://github.com/GGGODLIN/collie/commit/9600787c))
 
 ## [1.19.0] - 2026-10-10
 
