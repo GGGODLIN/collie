@@ -23,6 +23,16 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.18.105] - 2026-10-10
+
+### Changed
+
+- **Built on upstream Collie 1.18.1.** AltanS/collie v1.18.1, commit cfaf95a9, unchanged since fork 1.18.100. ([9be973df](https://github.com/GGGODLIN/collie/commit/9be973df))
+
+### Fixed
+
+- **The update button no longer stays greyed out until the app reloads.** When the phone's first update read failed or came back with no preflight, for example right after an update while the bridge was restarting, the card kept saying the preflight could not be run; it now asks again each time the card opens, and the bridge logs a preflight that cannot start. A phone already stuck needs one reload of the app to pick this release up. ([af7b8e4b](https://github.com/GGGODLIN/collie/commit/af7b8e4b))
+
 ## [1.18.104] - 2026-10-10
 
 ### Changed
