@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Changed
+
+- **A Chat answer names the newest prompt it holds.** The live chat body gains `lastPrompt`, the newest turn the operator wrote, capped at 1000 characters, even when the first page of 40 turns leaves it out. A window that opened mid-run looks it up once in the History read, without delaying the answer. A note the agent sent itself never counts, and a bridge one release behind sends nothing (ADR 0073, amended).
+
 ## [1.19.0] - 2026-10-10
 
 ### Added
