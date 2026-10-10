@@ -23,6 +23,17 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+## [1.19.3] - 2026-10-10
+
+### Changed
+
+- **Built on upstream Collie 1.19.0.** AltanS/collie v1.19.0, commit 632a2bf7.
+
+### Fixed
+
+- **A sheet opens whole after a slide into a pane.** The slide into a pane, or back to the dashboard, held its last frame, which made every sheet on that screen open shifted down by the header with its bottom row off screen: the pane menu lost its last row and short sheets lost their buttons. ([9ea2ef0c](https://github.com/GGGODLIN/collie/commit/9ea2ef0c))
+- **Collie Island opens external links in the phone's browser.** A link Collie opens in a new tab, including an agent's localhost link after its port check, did nothing in the iPhone app; it now opens in the phone's default browser. Reinstall the IPA over the existing app to get it; your pairing stays. ([0b2ae47e](https://github.com/GGGODLIN/collie/commit/0b2ae47e))
+
 ## [1.19.2] - 2026-10-10
 
 ### Added

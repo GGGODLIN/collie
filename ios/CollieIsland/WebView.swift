@@ -69,10 +69,41 @@ struct WebView: UIViewRepresentable {
         && Config.isCollie(scheme: origin.protocol, host: origin.host, port: origin.port)
     }
 
+    // A link Collie opens in a new tab: a target=_blank anchor, or the window.open that follows the
+    // localhost probe (ADR 9007). Without this method WebKit drops the request and the tap does
+    // nothing. Collie is handed a throwaway view, so its window.open sees a tab and shows no
+    // "Open in browser" fallback, and that view's first load goes to the phone's default browser
+    // instead (see `decidePolicyFor`). The page is someone else's and never runs beside the
+    // pairing token.
+    private var popups: [WKWebView] = []
+
+    func webView(
+      _ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
+      for action: WKNavigationAction, windowFeatures: WKWindowFeatures
+    ) -> WKWebView? {
+      let popup = WKWebView(frame: .zero, configuration: configuration)
+      popup.navigationDelegate = self
+      popups.append(popup)
+      return popup
+    }
+
+    private func handOff(_ popup: WKWebView, _ action: WKNavigationAction) {
+      popups.removeAll { $0 === popup }
+      guard let url = action.request.url, let scheme = url.scheme?.lowercased(),
+        scheme == "http" || scheme == "https"
+      else { return }
+      UIApplication.shared.open(url)
+    }
+
     func webView(
       _ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
       decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
     ) {
+      if webView !== view {
+        decisionHandler(.cancel)
+        handOff(webView, action)
+        return
+      }
       guard action.shouldPerformDownload else { decisionHandler(.allow); return }
       guard isLocalDownload(action) else { decisionHandler(.cancel); return }
       guard downloads.isEmpty, exportFile == nil else {
@@ -161,16 +192,18 @@ struct WebView: UIViewRepresentable {
       presenter?.present(alert, animated: true)
     }
 
+    // A handed-off popup reports its cancelled load here too; only Collie's own view may raise the
+    // load-failed screen.
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-      failed(error)
+      if webView === view { failed(error) }
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-      failed(error)
+      if webView === view { failed(error) }
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-      onLoaded()
+      if webView === view { onLoaded() }
     }
 
     // A load cut short by the next one (a pane link tapped mid-load) is not Collie being down.
