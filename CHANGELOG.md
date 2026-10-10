@@ -26,6 +26,7 @@ Running a crew? Update the lead first; members follow on their own. Details:
 ### Fixed
 
 - **A sheet opens whole after a slide into a pane.** The slide into a pane, or back to the dashboard, held its last frame, which made every sheet on that screen open shifted down by the header with its bottom row off screen: the pane menu lost its last row and short sheets lost their buttons.
+- **Collie Island opens external links in the phone's browser.** A link Collie opens in a new tab, including an agent's localhost link after its port check, did nothing in the iPhone app; it now opens in the phone's default browser. Reinstall the IPA over the existing app to get it; your pairing stays.
 
 ## [1.19.2] - 2026-10-10
 
