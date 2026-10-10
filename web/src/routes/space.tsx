@@ -6,7 +6,6 @@ import { ReadOnlyBanner } from "@/components/read-only-banner";
 import { SpaceStrip } from "@/components/space-strip";
 import { SpaceView } from "@/components/space-view";
 import { TabStrip } from "@/components/tab-strip";
-import { NewSpaceSheet } from "@/components/new-space-sheet";
 import { StatusArea } from "@/components/status-area";
 import { ToastViewport } from "@/components/ui/toast-viewport";
 import { BuildStamp } from "@/components/build-stamp";
@@ -17,7 +16,7 @@ import { usePaneOpen } from "@/hooks/use-pane-open";
 import { useListApproval } from "@/hooks/use-list-approval";
 import { useScrollMemory } from "@/hooks/use-scroll-memory";
 import { prefetchFolders } from "@/lib/folders";
-import { homePath, spacePath } from "@/lib/nav";
+import { homePath, newPath, spacePath } from "@/lib/nav";
 import { ambientHost } from "@/lib/hosts";
 import { scopeKey } from "@/lib/scope";
 import { setStatus } from "@/lib/status";
@@ -33,10 +32,9 @@ export function SpaceRoute() {
   const { spaceId = "" } = useParams();
   const nav = useNav();
   const revalidator = useRevalidator();
-  const { newTab, newSpace, creatingTab, creatingSpace } = useSpaceActions();
-  const [newSpaceOpen, setNewSpaceOpen] = useState(false);
-  // The new-space sheet's Favourites and Recent, read once ahead of the tap so the sheet opens at its
-  // final height (lib/folders.ts). Once per mount, for the machine this view shows.
+  const { newTab, creatingTab, creatingSpace } = useSpaceActions();
+  // The New page's Favourites and Recent, read once ahead of the tap so the page opens at its final
+  // height (lib/folders.ts). Once per mount, for the machine this view shows.
   const folderHost = data.scope?.host;
   const folderSession = data.scope?.session;
   useEffect(() => {
@@ -129,7 +127,7 @@ export function SpaceRoute() {
               host={navHost}
               selected={spaceId}
               onSelect={(id) => (id === null ? toDashboard() : switchSpace(id))}
-              onNewSpace={() => setNewSpaceOpen(true)}
+              onNewSpace={() => nav.down(newPath({ machine: data.scope.host, session: data.scope.session }))}
               creatingSpace={creatingSpace}
               onBack={toDashboard}
             />
@@ -183,7 +181,6 @@ export function SpaceRoute() {
       </ToastViewport>
 
       {approval.sheet}
-      <NewSpaceSheet open={newSpaceOpen} onClose={() => setNewSpaceOpen(false)} onCreate={newSpace} />
     </div>
   );
 }
