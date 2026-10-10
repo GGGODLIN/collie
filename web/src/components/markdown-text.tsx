@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 
 import { useFileLinks, type FileLinkTarget } from "@/components/file-links";
+import { useLocalLinks } from "@/components/local-links";
 import { CopyableBlock } from "@/components/ui/copyable-block";
 import { codeSpanPath, findFilePaths } from "@/lib/file-paths";
 import { headingAnchors, isLocalFileHref, parseMarkdown, spansText, type MdBlock, type MdSpan } from "@/lib/markdown";
@@ -187,12 +188,22 @@ function TextRun({ text }: { text: string }) {
 /** A code span: a chip, and a tappable one when the whole span is a path that resolves and exists. */
 function CodeSpan({ text }: { text: string }) {
   const open = useFileLinks();
+  const openLocal = useLocalLinks();
   const deliver = useContext(DeliverableContext);
   const inLink = useContext(InLinkContext);
   const file = !inLink && deliver !== null && isLocalFileHref(text.trim()) ? deliver(text.trim()) : null;
   if (file !== null && file.kind === "local") {
     return (
       <button type="button" onClick={file.onOpen} className={`${CHIP_CLASS} ${LINK_CLASS}`}>
+        <Hit text={text} />
+      </button>
+    );
+  }
+  // A code span that is one whole localhost URL is that link, as agents often print it (ADR 9007).
+  const onLocal = inLink ? null : (openLocal?.(text.trim()) ?? null);
+  if (onLocal !== null) {
+    return (
+      <button type="button" onClick={onLocal} className={`${CHIP_CLASS} ${LINK_CLASS} ${breakClass(text)}`}>
         <Hit text={text} />
       </button>
     );
@@ -210,6 +221,8 @@ function CodeSpan({ text }: { text: string }) {
 function LinkSpan({ span }: { span: Extract<MdSpan, { kind: "link" }> }) {
   const resolve = useContext(LinkContext);
   const deliver = useContext(DeliverableContext);
+  // An agent's localhost link opens at the machine's tailnet address (ADR 9007).
+  const openLocal = useLocalLinks();
   const label = (
     <InLinkContext.Provider value>
       <Spans spans={span.spans} />
@@ -235,11 +248,21 @@ function LinkSpan({ span }: { span: Extract<MdSpan, { kind: "link" }> }) {
     // Same break rule as a chip, and for the same reason: `http://bluefin:8788` is full of slashes
     // and colons, every one of them a wrap opportunity, and an address split across two lines is
     // one you have to reassemble in your head before you trust the tap.
+    const onLocal = openLocal?.(span.href) ?? null;
     return (
       <a
         href={span.href}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={
+          onLocal === null
+            ? undefined
+            : (e) => {
+                if (e.defaultPrevented || !isPlainClick(e)) return;
+                e.preventDefault();
+                onLocal();
+              }
+        }
         className={`${LINK_CLASS} ${breakClass(flatten(span.spans))}`}
       >
         {label}

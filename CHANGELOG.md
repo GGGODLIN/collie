@@ -23,6 +23,10 @@ Running a crew? Update the lead first; members follow on their own. Details:
 
 ## [Unreleased]
 
+### Added
+
+- **An agent's localhost link opens on the phone at the machine's tailnet address.** Tap `http://localhost:5173` in Chat or the terminal and the bridge checks the port on its own machine: a server listening beyond loopback opens at the tailnet IP with the path kept, one listening on loopback only (Vite and Astro by default) gets a sheet that can put a ready message in the composer asking the agent to rebind it, and nothing listening says so. A crew member's pane, or a bridge one release behind, opens the link as before.
+
 ## [1.19.1] - 2026-10-10
 
 ### Added

@@ -77,6 +77,11 @@ import { NoEchoNotice } from "@/components/no-echo-notice";
 export interface ComposerHandle {
   /** Focus the input and put the caret at the end — used by the mirror-tap-to-focus in AgentChat. */
   focusInput: () => void;
+  /**
+   * Put text in the input, after any draft, and focus it. Never sends: only the operator's Send
+   * does (ADR 9002). Used by the local-link sheet's "Ask the agent to fix it" (ADR 9007).
+   */
+  stage: (text: string) => void;
 }
 
 interface ComposerProps {
@@ -782,7 +787,11 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   const effectiveStable = suppressEcho(terminalDraft);
   const effectiveRaw = suppressEcho(rawTerminalDraft);
 
-  useImperativeHandle(ref, () => ({ focusInput: focusInputImmediately }), []);
+  useImperativeHandle(
+    ref,
+    () => ({ focusInput: focusInputImmediately, stage: (value: string) => insertCommandRef.current(value) }),
+    [],
+  );
 
   useEffect(
     () => () => {
@@ -1268,6 +1277,9 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     updateInputFrom((prev) => (prev.trim() ? `${prev.trimEnd()} ${value}` : value));
     focusInputEnd();
   }
+  // The handle is built once; this ref is how it reaches the current render's `direct`.
+  const insertCommandRef = useRef(insertCommand);
+  insertCommandRef.current = insertCommand;
 
   // Upload an attachment; on success it becomes a chip above the field, and its marker lands in the
   // draft where the caret stood (ADR 0060). Shared by the file picker and clipboard paste.

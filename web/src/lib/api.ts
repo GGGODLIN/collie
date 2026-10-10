@@ -1145,6 +1145,37 @@ export async function fetchDeliverables(
   };
 }
 
+/** What answers on a dev-server port of the pane's machine (ADR 9007, `bridge/port-probe.ts`). */
+export interface PortProbe {
+  port: number;
+  loopback: boolean;
+  /** Null when the machine has no tailnet address. */
+  tailnet: boolean | null;
+  /** The machine's tailnet IPv4 address, or null. */
+  address: string | null;
+}
+
+const PORT_PROBE_TIMEOUT_MS = 3_000;
+
+/**
+ * What answers on `port` of the machine `paneId` lives on, for an agent's `localhost` link. Short
+ * timeout: the operator is waiting on a tap. Throws on a fault, including a crew member's 501 and an
+ * older bridge's 404; the caller then opens the link as printed.
+ */
+export async function probePort(paneId: string, port: number, scope?: Scope, signal?: AbortSignal): Promise<PortProbe> {
+  const got = await doReq<JsonObject>(withScope(`/api/pane/${encodeURIComponent(paneId)}/port/${port}`, scope), {
+    signal,
+    timeoutMs: PORT_PROBE_TIMEOUT_MS,
+  });
+  const tailnet = asJsonBooleanSafe(got.tailnet);
+  return {
+    port: asJsonNumber(got.port) ?? port,
+    loopback: asJsonBooleanSafe(got.loopback) === true,
+    tailnet: tailnet ?? null,
+    address: asJsonString(got.address) ?? null,
+  };
+}
+
 function asJsonBooleanSafe(value: JsonValue | undefined): boolean | undefined {
   return value === true || value === false ? value : undefined;
 }

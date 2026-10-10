@@ -34,6 +34,7 @@ import { findMatches, splitSegment, type FindMatch } from "@/lib/find";
 import { findLinks, type LinkMatch } from "@/lib/links";
 import { findFilePaths } from "@/lib/file-paths";
 import { isPlainClick, useFileLinks, type FileLinkOpener } from "@/components/file-links";
+import { useLocalLinks } from "@/components/local-links";
 
 /**
  * A link in the mirror: an autolinked URL (opens a new tab), or a path the agent printed that
@@ -415,6 +416,8 @@ export const AnsiOutput = memo(function AnsiOutput({
   // stable across polls (components/file-links.tsx), so this re-runs when the text does, and when a
   // path it asked about turns out to exist.
   const openFile = useFileLinks();
+  // An agent's localhost link opens at the machine's tailnet address (ADR 9007).
+  const openLocal = useLocalLinks();
   const links = useMemo(() => mirrorLinks(haystack, urls, openFile), [haystack, urls, openFile]);
 
   useEffect(() => {
@@ -517,8 +520,24 @@ export const AnsiOutput = memo(function AnsiOutput({
           </a>
         );
       }
+      const onLocal = openLocal?.(link.href) ?? null;
       return (
-        <a key={i} href={link.href} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
+        <a
+          key={i}
+          href={link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={
+            onLocal === null
+              ? undefined
+              : (e) => {
+                  if (e.defaultPrevented || !isPlainClick(e)) return;
+                  e.preventDefault();
+                  onLocal();
+                }
+          }
+          className={LINK_CLASS}
+        >
           {renderFind(p.text, pieceStart)}
         </a>
       );
