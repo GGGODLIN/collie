@@ -177,6 +177,7 @@ the pointer, it was a supersede.
 | [9005](./9005-retell-is-a-one-shot-operator-child.md) | A retelling is one short-lived child the operator named in `retell.toml`, never a service or a prompt Collie owns | Accepted |
 | [9006](./9006-a-reply-file-is-read-by-its-own-id.md) | A reply file is read by its own id: the phone sends a pane id and an opaque id, the bridge re-reads that session's assistant reply, and no client path is opened (amends 0088 in scope) | Accepted |
 | [9007](./9007-a-localhost-link-opens-at-the-tailnet-address.md) | A localhost link opens at the tailnet address: the bridge dials only itself (loopback and its own tailnet IPv4, one connect each, nothing relayed), the phone opens the IP with the path kept, a loopback-only server gets an explanation and a staged English fix message, and no answer opens the link as printed (keeps 0001) | Accepted |
+| [9008](./9008-the-fork-numbers-its-own-releases.md) | The fork numbers its own releases: from fork 2.0.0 its own SemVer, the axis what a release means to someone running Gaddi, the upstream base named in the first CHANGELOG bullet, a fork major only for a change the operator must act on, and the ADR 0038 clock keyed on that upstream base | Accepted |
 
 Numbers are claimed across **both** branches: 0011–0016 were accepted here on `v1` while `main` was
 still at 0010, so a new ADR continues from the highest number in use anywhere, not the highest one on

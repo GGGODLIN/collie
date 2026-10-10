@@ -150,9 +150,12 @@ describe("the verb table", () => {
   // ADR 0038 removes the `collie pack` alias in 2.0.0. Today this passes because the version is
   // 1.x and the assertion is not reached; the day the major moves to 2, it fails until the entry
   // is deleted, so the removal is remembered by the test suite and not by anyone's memory.
+  // Fork-only (FORK.md, "The fork numbers its own releases"): this fork's major is its own, so the
+  // clock reads the upstream release the newest CHANGELOG entry is built on. It fires when a sync
+  // takes upstream's 2.0, the release that deletes the alias, not when the fork's number reaches 2.
   test("the `crew` alias is gone in 2.0.0", () => {
-    const pkg = readFileSync(new URL("../package.json", import.meta.url), "utf8");
-    const major = Number.parseInt(/"version": *"(\d+)\./.exec(pkg)?.[1] ?? "", 10);
+    const changelog = readFileSync(new URL("../CHANGELOG.md", import.meta.url), "utf8");
+    const major = Number.parseInt(/Built on upstream Collie (\d+)\./.exec(changelog)?.[1] ?? "", 10);
     expect(Number.isNaN(major)).toBe(false);
     if (major < 2) return;
     expect(COMMANDS.map((c) => c.name)).not.toContain("pack");
